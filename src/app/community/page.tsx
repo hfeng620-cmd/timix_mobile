@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -82,6 +83,35 @@ export default function CommunityPage() {
                 >
                   查看更多指南
                 </Link>
+              </div>
+            </div>
+
+            <div className="rounded-[32px] border border-[var(--color-line)] bg-white p-6 shadow-[0_18px_60px_rgba(13,25,48,0.07)]">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div className="max-w-md">
+                  <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
+                    加入 QQ 群
+                  </p>
+                  <h2 className="mt-2 text-2xl font-black tracking-tight">
+                    先加群，再一起补站点和价格变化
+                  </h2>
+                  <p className="mt-3 text-sm leading-7 text-[var(--color-muted)]">
+                    群里后面可以继续收集试用入口、倍率变化、避坑反馈和新站点线索。你也可以把管理员分工、审核节奏和协作规则先放在这里统一说明。
+                  </p>
+                  <div className="mt-5 inline-flex rounded-full bg-[var(--color-brand-soft)] px-4 py-2 text-sm font-bold text-[var(--color-brand-deep)]">
+                    QQ 群号：602190132
+                  </div>
+                </div>
+
+                <div className="rounded-[28px] border border-[var(--color-line)] bg-[var(--color-soft)] p-3">
+                  <Image
+                    src="/qq-group-qrcode.jpg"
+                    alt="Timin观察站 QQ群二维码"
+                    width={180}
+                    height={180}
+                    className="rounded-[20px]"
+                  />
+                </div>
               </div>
             </div>
 
