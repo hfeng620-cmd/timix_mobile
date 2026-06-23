@@ -1,44 +1,75 @@
 "use client";
 
-import { xDiscussionSeed, type XDiscussionPost, type XDiscussionReply } from "@/lib/site-data";
+import { type XDiscussionPost, type XDiscussionReply } from "@/lib/site-data";
 
-const STORAGE_KEY = "timin-x-discussion-feed";
+const LEGACY_STORAGE_KEY = "timin-x-discussion-feed";
+const STORAGE_KEY = "timin-discussion-feed-v2";
+const LEGACY_SEED_IDS = new Set([
+  "huhu-trial-thread",
+  "aether-main-choice",
+  "grocery-dual-pricing",
+  "dasuapi-needs-testing",
+  "xinjianya-grok-note",
+  "qq-group-collab-call",
+]);
 
 export type DiscussionPost = XDiscussionPost;
 export type DiscussionReply = XDiscussionReply;
 
-function cloneSeed() {
-  return xDiscussionSeed.map((post) => ({
-    ...post,
-    tags: [...post.tags],
-    stats: { ...post.stats },
-    replies: post.replies ? post.replies.map((reply) => ({ ...reply })) : [],
-  }));
+function normalizePosts(value: unknown): DiscussionPost[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .filter((post): post is DiscussionPost => {
+      return (
+        typeof post === "object" &&
+        post !== null &&
+        "id" in post &&
+        "body" in post &&
+        typeof post.id === "string" &&
+        typeof post.body === "string" &&
+        !LEGACY_SEED_IDS.has(post.id)
+      );
+    })
+    .map((post) => ({
+      ...post,
+      tags: Array.isArray(post.tags) ? post.tags : [],
+      stats: {
+        replies: post.stats?.replies ?? post.replies?.length ?? 0,
+        likes: post.stats?.likes ?? 0,
+        bookmarks: post.stats?.bookmarks ?? 0,
+      },
+      replies: Array.isArray(post.replies) ? post.replies : [],
+    }));
 }
 
 export function loadDiscussionPosts(): DiscussionPost[] {
   if (typeof window === "undefined") {
-    return cloneSeed();
+    return [];
   }
 
   try {
     const saved = window.localStorage.getItem(STORAGE_KEY);
-    if (!saved) {
-      const seeded = cloneSeed();
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(seeded));
-      return seeded;
+    if (saved) {
+      return normalizePosts(JSON.parse(saved));
     }
 
-    const parsed = JSON.parse(saved) as DiscussionPost[];
-    if (!Array.isArray(parsed) || parsed.length === 0) {
-      const seeded = cloneSeed();
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(seeded));
-      return seeded;
+    const legacySaved = window.localStorage.getItem(LEGACY_STORAGE_KEY);
+    if (legacySaved) {
+      const migrated = normalizePosts(JSON.parse(legacySaved));
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(migrated));
+      window.localStorage.removeItem(LEGACY_STORAGE_KEY);
+      return migrated;
     }
 
-    return parsed;
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify([]));
+    return [];
   } catch {
-    return cloneSeed();
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify([]));
+    window.localStorage.removeItem(LEGACY_STORAGE_KEY);
+    return [];
   }
 }
 

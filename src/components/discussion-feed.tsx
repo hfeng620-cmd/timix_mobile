@@ -241,15 +241,24 @@ export function DiscussionFeed({
       ) : null}
 
       <div className="divide-y divide-[var(--color-line)]">
+        {visiblePosts.length === 0 ? (
+          <div className="px-5 py-10 text-center sm:px-6">
+            <p className="text-base font-bold text-[var(--color-ink)]">还没有讨论。</p>
+            <p className="mt-2 text-sm text-[var(--color-muted)]">
+              在上面发第一条帖子，站点反馈会直接出现在这里。
+            </p>
+          </div>
+        ) : null}
+
         {visiblePosts.map((post) => {
           const expanded = expandedPostId === post.id;
 
           return (
             <article
               key={post.id}
-              className="px-6 py-5 transition hover:bg-[var(--color-hover)]"
+              className="px-5 py-5 transition hover:bg-[var(--color-hover)] sm:px-6"
             >
-              <div className="flex items-start justify-between gap-4">
+              <div className="flex items-start justify-between gap-3 sm:gap-4">
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <h3 className="font-black">{post.author}</h3>
@@ -336,9 +345,9 @@ export function DiscussionFeed({
                     )}
                   </div>
 
-                  <div className="mt-4 flex flex-wrap gap-3 border-t border-[var(--color-line)] pt-4">
+                  <div className="mt-4 flex flex-col gap-3 border-t border-[var(--color-line)] pt-4 sm:flex-row">
                     <input
-                      className="min-w-60 flex-1 rounded-full border border-[var(--color-line)] bg-[var(--color-input)] px-4 py-3 text-sm outline-none transition focus:border-[var(--color-brand)]"
+                      className="min-w-0 flex-1 rounded-full border border-[var(--color-line)] bg-[var(--color-input)] px-4 py-3 text-sm outline-none transition focus:border-[var(--color-brand)]"
                       onChange={(event) =>
                         setReplyDrafts((current) => ({
                           ...current,
@@ -349,7 +358,7 @@ export function DiscussionFeed({
                       value={replyDrafts[post.id] ?? ""}
                     />
                     <button
-                      className="rounded-full bg-[var(--color-brand)] px-4 py-3 text-sm font-bold text-[var(--color-on-brand)] transition hover:bg-[var(--color-brand-deep)]"
+                      className="rounded-full bg-[var(--color-brand)] px-4 py-3 text-sm font-bold text-[var(--color-on-brand)] transition hover:bg-[var(--color-brand-deep)] sm:w-auto"
                       onClick={() => handleReply(post.id)}
                       type="button"
                     >

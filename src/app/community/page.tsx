@@ -50,11 +50,9 @@ export default function CommunityPage() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-6 py-6 lg:px-10">
-        <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-[var(--color-line)] pb-3 text-sm text-[var(--color-muted)]">
-          <span>
-            讨论区：站点反馈、价格变化、试用线索。QQ群 602190132。
-          </span>
+      <section className="mx-auto max-w-6xl px-4 py-5 sm:px-6 lg:px-10">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-[var(--color-line)] pb-3 text-sm text-[var(--color-muted)]">
+          <span>站点反馈、价格变化、试用线索。</span>
           <a
             className="font-semibold text-[var(--color-brand-deep)] transition hover:text-[var(--color-brand)]"
             href={siteLinks.discussions}
@@ -65,17 +63,14 @@ export default function CommunityPage() {
           </a>
         </div>
 
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px] xl:items-start">
-          <div className="space-y-6">
-            <DiscussionFeed
-              key={feedRefreshKey}
-              hideComposer
-              title="讨论"
-              limit={8}
-            />
-          </div>
-
+        <div className="space-y-5">
           <CommunityPostPanel onPostCreated={() => setFeedRefreshKey((value) => value + 1)} />
+          <DiscussionFeed
+            key={feedRefreshKey}
+            hideComposer
+            title="讨论"
+            limit={8}
+          />
         </div>
       </section>
     </main>

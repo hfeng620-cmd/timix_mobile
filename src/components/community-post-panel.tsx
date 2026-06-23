@@ -12,7 +12,7 @@ export function CommunityPostPanel({ onPostCreated }: CommunityPostPanelProps) {
   const [open, setOpen] = useState(false);
   const [station, setStation] = useState("");
   const [body, setBody] = useState("");
-  const [status, setStatus] = useState("新帖会出现在左侧。");
+  const [status, setStatus] = useState("发布后会显示在下面。");
 
   function handleSubmit() {
     if (!body.trim()) {
@@ -40,35 +40,43 @@ export function CommunityPostPanel({ onPostCreated }: CommunityPostPanelProps) {
 
   return (
     <div
-      className="rounded-[8px] border border-[var(--color-line)] bg-[var(--color-panel)] p-4 shadow-[0_16px_50px_rgba(13,25,48,0.06)] backdrop-blur xl:sticky xl:top-24 xl:ml-auto xl:w-[320px]"
+      className="rounded-[8px] border border-[var(--color-line)] bg-[var(--color-panel)] p-3 shadow-[0_16px_50px_rgba(13,25,48,0.06)] backdrop-blur sm:p-4"
       data-selection-comments="off"
     >
-      <div className="flex items-center justify-between gap-3 border-b border-[var(--color-line)] pb-3">
-        <h2 className="text-lg font-black tracking-tight">发布讨论</h2>
-        <span className="text-xs text-[var(--color-muted)]">QQ群 602190132</span>
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--color-line)] pb-3">
+        <div>
+          <h2 className="text-lg font-black tracking-tight">发帖子</h2>
+          <p className="mt-1 text-xs text-[var(--color-muted)]">价格、稳定性、模型口径都可以先发这里。</p>
+        </div>
+        <a
+          className="rounded-full border border-[var(--color-line)] px-3 py-2 text-xs font-bold text-[var(--color-muted)] transition hover:border-[var(--color-brand)] hover:text-[var(--color-brand-deep)]"
+          href="https://github.com/hfeng620-cmd/timin_api_test_and_forum/discussions"
+          rel="noreferrer"
+          target="_blank"
+        >
+          GitHub Discussions
+        </a>
       </div>
 
       {!open ? (
-        <div className="mt-4">
-          <div className="grid gap-3">
+        <div className="mt-3 grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+          <button
+            className="min-h-12 rounded-[8px] border border-[var(--color-line)] bg-[var(--color-input)] px-4 py-3 text-left text-sm text-[var(--color-muted)] transition hover:border-[var(--color-brand)] hover:text-[var(--color-ink)]"
+            onClick={() => setOpen(true)}
+            type="button"
+          >
+            写站点反馈、试用活动、价格变化或避坑记录...
+          </button>
+          <div className="flex flex-wrap items-center gap-3 sm:justify-end">
             <button
-              className="w-full rounded-full bg-[var(--color-brand)] px-6 py-3 text-sm font-bold text-[var(--color-on-brand)] transition hover:bg-[var(--color-brand-deep)]"
+              className="rounded-full bg-[var(--color-brand)] px-6 py-3 text-sm font-bold text-[var(--color-on-brand)] transition hover:bg-[var(--color-brand-deep)]"
               onClick={() => setOpen(true)}
               type="button"
             >
-              发布新帖
+              发布帖子
             </button>
-            <a
-              className="w-full rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] px-5 py-3 text-center text-sm font-bold text-[var(--color-ink)] transition hover:border-[var(--color-brand)] hover:text-[var(--color-brand-deep)]"
-              href="https://github.com/hfeng620-cmd/timin_api_test_and_forum/discussions"
-              rel="noreferrer"
-              target="_blank"
-            >
-              GitHub Discussions
-            </a>
+            <span className="text-xs text-[var(--color-muted)]">{status}</span>
           </div>
-
-          <p className="mt-3 text-xs leading-6 text-[var(--color-muted)]">{status}</p>
         </div>
       ) : (
         <div className="mt-4">
@@ -86,7 +94,7 @@ export function CommunityPostPanel({ onPostCreated }: CommunityPostPanelProps) {
             value={body}
           />
 
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+          <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <button
               className="rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] px-4 py-2 text-sm font-semibold text-[var(--color-muted)] transition hover:bg-[var(--color-soft)] hover:text-[var(--color-ink)]"
               onClick={() => setOpen(false)}
