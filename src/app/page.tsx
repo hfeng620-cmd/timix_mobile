@@ -284,7 +284,7 @@ export default function Home() {
                     <p className="text-sm text-[var(--color-muted)]">长讨论沉淀</p>
                     <a
                       className="mt-1 inline-flex text-base font-black text-[var(--color-brand-deep)] transition hover:text-[var(--color-brand)]"
-                      href="https://github.com/hfeng620-cmd/api_test_and_forum/discussions"
+                      href="https://github.com/hfeng620-cmd/timin_api_test_and_forum/discussions"
                       rel="noreferrer"
                       target="_blank"
                     >

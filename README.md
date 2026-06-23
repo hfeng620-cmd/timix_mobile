@@ -10,9 +10,9 @@
 
 ## 在线访问
 
-- GitHub 仓库：[hfeng620-cmd/api_test_and_forum](https://github.com/hfeng620-cmd/api_test_and_forum)
-- GitHub Discussions：[社区讨论区](https://github.com/hfeng620-cmd/api_test_and_forum/discussions)
-- GitHub Pages 预期地址：`https://hfeng620-cmd.github.io/api_test_and_forum/`
+- GitHub 仓库：[hfeng620-cmd/timin_api_test_and_forum](https://github.com/hfeng620-cmd/timin_api_test_and_forum)
+- GitHub Discussions：[社区讨论区](https://github.com/hfeng620-cmd/timin_api_test_and_forum/discussions)
+- GitHub Pages 地址：`https://hfeng620-cmd.github.io/timin_api_test_and_forum/`
 
 如果第一次推送工作流后还没上线，需要到仓库 `Settings > Pages` 里确认来源为 `GitHub Actions`。
 

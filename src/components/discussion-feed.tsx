@@ -214,7 +214,7 @@ export function DiscussionFeed({
             </div>
             <a
               className="text-sm font-semibold text-[var(--color-muted)] transition hover:text-[var(--color-ink)]"
-              href="https://github.com/hfeng620-cmd/api_test_and_forum/discussions"
+              href="https://github.com/hfeng620-cmd/timin_api_test_and_forum/discussions"
               rel="noreferrer"
               target="_blank"
             >

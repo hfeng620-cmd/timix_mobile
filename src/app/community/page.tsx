@@ -95,7 +95,7 @@ export default function CommunityPage() {
             <div className="grid gap-3">
               <a
                 className="rounded-[24px] border border-[var(--color-line)] bg-[var(--color-soft)] px-4 py-4 transition hover:border-[var(--color-brand)]"
-                href="https://github.com/hfeng620-cmd/api_test_and_forum/discussions"
+                href="https://github.com/hfeng620-cmd/timin_api_test_and_forum/discussions"
                 rel="noreferrer"
                 target="_blank"
               >

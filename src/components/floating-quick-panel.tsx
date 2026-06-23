@@ -33,7 +33,7 @@ export function FloatingQuickPanel() {
           <div className="mt-4 grid gap-2">
             <a
               className="rounded-2xl border border-[var(--color-line)] bg-[var(--color-soft)] px-3 py-3 text-sm font-semibold text-[var(--color-ink)] transition hover:border-[var(--color-brand)] hover:text-[var(--color-brand-deep)]"
-              href="https://github.com/hfeng620-cmd/api_test_and_forum/discussions"
+              href="https://github.com/hfeng620-cmd/timin_api_test_and_forum/discussions"
               rel="noreferrer"
               target="_blank"
             >

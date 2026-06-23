@@ -5,7 +5,7 @@ import Link from "next/link";
 const footerLinks = [
   {
     label: "GitHub Discussions",
-    href: "https://github.com/hfeng620-cmd/api_test_and_forum/discussions",
+    href: "https://github.com/hfeng620-cmd/timin_api_test_and_forum/discussions",
     external: true,
   },
   {

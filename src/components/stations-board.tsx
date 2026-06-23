@@ -273,7 +273,7 @@ export function StationsBoard() {
                 进入站内讨论区
               </Link>
               <a
-                href="https://github.com/hfeng620-cmd/api_test_and_forum/discussions"
+                href="https://github.com/hfeng620-cmd/timin_api_test_and_forum/discussions"
                 rel="noreferrer"
                 target="_blank"
                 className="rounded-full border border-[var(--color-line)] bg-white px-5 py-3 text-center text-sm font-bold text-[var(--color-ink)] transition hover:border-[var(--color-brand)] hover:text-[var(--color-brand-deep)]"

@@ -335,12 +335,12 @@ export const collaborationChannels = [
   },
   {
     title: "GitHub Discussions",
-    href: "https://github.com/hfeng620-cmd/api_test_and_forum/discussions",
+    href: "https://github.com/hfeng620-cmd/timin_api_test_and_forum/discussions",
     note: "适合整理经验讨论、长期口径、模型分组说明和需要多人补证据的话题。",
   },
   {
     title: "GitHub Issues",
-    href: "https://github.com/hfeng620-cmd/api_test_and_forum/issues",
+    href: "https://github.com/hfeng620-cmd/timin_api_test_and_forum/issues",
     note: "适合提交明确纠错、缺失链接、过期价格和待核验站点，便于管理员逐条处理。",
   },
 ];

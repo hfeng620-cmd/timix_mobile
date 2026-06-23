@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const isGithubPages = process.env.GITHUB_ACTIONS === "true";
-const repoName = "api_test_and_forum";
+const repoName = "timin_api_test_and_forum";
 
 const nextConfig: NextConfig = {
   devIndicators: false,
