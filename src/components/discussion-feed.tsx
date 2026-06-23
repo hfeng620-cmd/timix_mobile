@@ -14,7 +14,6 @@ import {
 type DiscussionFeedProps = {
   compact?: boolean;
   title?: string;
-  subtitle?: string;
   hideComposer?: boolean;
   limit?: number;
 };
@@ -130,8 +129,7 @@ function ActionButton({
 
 export function DiscussionFeed({
   compact = false,
-  title = "最新讨论",
-  subtitle = "发一条价格变化、试用反馈或避坑结论，回复和点赞都直接留在这里。",
+  title = "讨论",
   hideComposer = false,
   limit,
 }: DiscussionFeedProps) {
@@ -140,6 +138,7 @@ export function DiscussionFeed({
   const [station, setStation] = useState("");
   const [expandedPostId, setExpandedPostId] = useState<string | null>(posts[0]?.id ?? null);
   const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
+  const [replyTargets, setReplyTargets] = useState<Record<string, string>>({});
   const [status, setStatus] = useState("这里是发帖讨论，不是划词批注。");
 
   const visiblePosts = useMemo(() => {
@@ -178,6 +177,11 @@ export function DiscussionFeed({
     setPosts(bookmarkDiscussionPost(id));
   }
 
+  function openReplyBox(postId: string, target = "楼主") {
+    setExpandedPostId(postId);
+    setReplyTargets((current) => ({ ...current, [postId]: target }));
+  }
+
   function handleReply(id: string) {
     const draft = replyDrafts[id]?.trim();
     if (!draft) {
@@ -188,39 +192,20 @@ export function DiscussionFeed({
     const updated = replyDiscussionPost(id, { body: draft });
     setPosts(updated);
     setReplyDrafts((current) => ({ ...current, [id]: "" }));
+    setReplyTargets((current) => ({ ...current, [id]: "楼主" }));
     setExpandedPostId(id);
     setStatus("回复已经挂到帖子下面了。");
   }
 
   return (
     <section
-      className="overflow-hidden rounded-[30px] border border-[var(--color-line)] bg-white shadow-[var(--shadow-card)]"
+      className="overflow-hidden rounded-[8px] border border-[var(--color-line)] bg-white shadow-[var(--shadow-card)]"
       data-selection-comments="off"
     >
-      <div className="border-b border-[var(--color-line)] bg-[linear-gradient(180deg,#ffffff,#f8fbff)] px-6 py-5">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--color-brand-deep)]">
-              {title}
-            </p>
-            <h2 className="mt-2 text-3xl font-black tracking-tight">帖子流先承接一线反馈</h2>
-            <p className="mt-3 max-w-2xl text-sm leading-7 text-[var(--color-muted)]">
-              {subtitle}
-            </p>
-          </div>
-          <div className="grid gap-2 text-left sm:text-right">
-            <div className="rounded-full bg-[var(--color-brand-soft)] px-4 py-2 text-sm font-bold text-[var(--color-brand-deep)]">
-              发帖、回复、点赞、收藏
-            </div>
-            <a
-              className="text-sm font-semibold text-[var(--color-muted)] transition hover:text-[var(--color-ink)]"
-              href="https://github.com/hfeng620-cmd/timin_api_test_and_forum/discussions"
-              rel="noreferrer"
-              target="_blank"
-            >
-              去 GitHub Discussions 看长讨论 →
-            </a>
-          </div>
+      <div className="border-b border-[var(--color-line)] px-5 py-4">
+        <div className="flex items-center justify-between gap-4">
+          <h1 className="text-2xl font-black tracking-tight">{title}</h1>
+          <span className="text-sm text-[var(--color-muted)]">{visiblePosts.length} 条</span>
         </div>
       </div>
 
@@ -266,12 +251,13 @@ export function DiscussionFeed({
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-3">
+                  <div className="flex flex-wrap items-center gap-2">
                     <h3 className="font-black">{post.author}</h3>
                     <span className="text-sm text-[var(--color-muted)]">{post.handle}</span>
+                    <span className="text-sm text-[var(--color-muted)]">·</span>
                     <span className="text-sm text-[var(--color-muted)]">{post.postedAt}</span>
                     {post.station ? (
-                      <span className="rounded-full border border-[var(--color-line)] bg-[var(--color-soft)] px-3 py-1 text-xs font-bold text-[var(--color-brand-deep)]">
+                      <span className="rounded-full bg-[var(--color-soft)] px-2.5 py-1 text-xs font-bold text-[var(--color-brand-deep)]">
                         {post.station}
                       </span>
                     ) : null}
@@ -279,11 +265,11 @@ export function DiscussionFeed({
                   <p className="mt-3 max-w-4xl text-[15px] leading-7 text-[var(--color-ink)]">
                     {post.body}
                   </p>
-                  <div className="mt-4 flex flex-wrap gap-2">
+                  <div className="mt-3 flex flex-wrap gap-2">
                     {post.tags.map((tag) => (
                       <span
                         key={`${post.id}-${tag}`}
-                        className="rounded-full border border-[var(--color-line)] bg-white px-3 py-1 text-xs font-semibold text-[var(--color-muted)]"
+                        className="text-xs font-semibold text-[var(--color-muted)]"
                       >
                         #{tag}
                       </span>
@@ -292,7 +278,7 @@ export function DiscussionFeed({
                 </div>
 
                 <button
-                  className="rounded-full border border-[var(--color-line)] bg-white px-3 py-1.5 text-xs font-bold text-[var(--color-muted)] transition hover:border-[var(--color-brand)] hover:text-[var(--color-brand-deep)]"
+                  className="text-xs font-bold text-[var(--color-muted)] transition hover:text-[var(--color-brand-deep)]"
                   onClick={() => setExpandedPostId(expanded ? null : post.id)}
                   type="button"
                 >
@@ -300,11 +286,11 @@ export function DiscussionFeed({
                 </button>
               </div>
 
-              <div className="mt-5 flex flex-wrap items-center gap-8">
+              <div className="mt-4 flex flex-wrap items-center gap-7">
                 <ActionButton
                   count={post.stats.replies}
                   icon="comment"
-                  onClick={() => setExpandedPostId(expanded ? null : post.id)}
+                  onClick={() => openReplyBox(post.id)}
                 />
                 <ActionButton
                   count={post.stats.likes}
@@ -319,36 +305,38 @@ export function DiscussionFeed({
               </div>
 
               {expanded ? (
-                <div className="mt-5 rounded-[24px] border border-[var(--color-line)] bg-[var(--color-soft)] p-4">
-                  <div className="mb-4 flex items-center justify-between gap-3">
-                    <p className="text-sm font-bold text-[var(--color-ink)]">回复区</p>
-                    <p className="text-xs text-[var(--color-muted)]">
-                      先在这里接短回复，长讨论再整理进 Discussions
-                    </p>
-                  </div>
-                  <div className="space-y-3">
+                <div className="mt-4 border-l-2 border-[var(--color-line)] pl-4">
+                  <div className="space-y-4">
                     {(post.replies ?? []).length === 0 ? (
-                      <p className="text-sm text-[var(--color-muted)]">还没有回复，你可以先接一条。</p>
+                      <p className="text-sm text-[var(--color-muted)]">暂无回复。</p>
                     ) : (
                       (post.replies ?? []).map((reply, index) => (
                         <div
                           key={`${post.id}-reply-${index}`}
-                          className="rounded-[18px] bg-white px-4 py-4"
+                          className="group"
                         >
-                          <div className="flex flex-wrap items-center gap-3 text-sm">
+                          <div className="flex flex-wrap items-center gap-2 text-sm">
                             <span className="font-bold text-[var(--color-ink)]">{reply.author}</span>
                             <span className="text-[var(--color-muted)]">{reply.handle}</span>
+                            <span className="text-[var(--color-muted)]">·</span>
                             <span className="text-[var(--color-muted)]">{reply.postedAt}</span>
                           </div>
-                          <p className="mt-2 text-sm leading-7 text-[var(--color-ink)]">
+                          <p className="mt-1 text-sm leading-7 text-[var(--color-ink)]">
                             {reply.body}
                           </p>
+                          <button
+                            className="mt-1 text-xs font-semibold text-[var(--color-muted)] transition hover:text-[var(--color-brand-deep)]"
+                            onClick={() => openReplyBox(post.id, reply.author)}
+                            type="button"
+                          >
+                            回复
+                          </button>
                         </div>
                       ))
                     )}
                   </div>
 
-                  <div className="mt-4 flex flex-wrap gap-3">
+                  <div className="mt-4 flex flex-wrap gap-3 border-t border-[var(--color-line)] pt-4">
                     <input
                       className="min-w-60 flex-1 rounded-full border border-[var(--color-line)] bg-white px-4 py-3 text-sm outline-none transition focus:border-[var(--color-brand)]"
                       onChange={(event) =>
@@ -357,15 +345,15 @@ export function DiscussionFeed({
                           [post.id]: event.target.value,
                         }))
                       }
-                      placeholder="回一条，例如：我刚测过，这个倍率还有效。"
+                      placeholder={`回复 ${replyTargets[post.id] ?? "楼主"}`}
                       value={replyDrafts[post.id] ?? ""}
                     />
                     <button
-                      className="rounded-full border border-[var(--color-line)] bg-white px-4 py-3 text-sm font-bold transition hover:border-[var(--color-brand)] hover:text-[var(--color-brand-deep)]"
+                      className="rounded-full bg-[var(--color-brand)] px-4 py-3 text-sm font-bold text-white transition hover:bg-[var(--color-brand-deep)]"
                       onClick={() => handleReply(post.id)}
                       type="button"
                     >
-                      回复这条
+                      发送
                     </button>
                   </div>
                 </div>
