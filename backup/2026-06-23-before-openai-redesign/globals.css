@@ -52,9 +52,7 @@ html {
 
 body {
   background:
-    radial-gradient(circle at top left, rgba(37, 99, 235, 0.08), transparent 26%),
-    radial-gradient(circle at top right, rgba(15, 23, 42, 0.04), transparent 22%),
-    linear-gradient(180deg, #ffffff 0%, #f7f9fc 38%, #f2f6fb 100%);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.94) 0%, rgba(247, 249, 252, 0.98) 100%);
   color: var(--foreground);
   font-family: var(--font-geist-sans), "PingFang SC", "Microsoft YaHei", sans-serif;
 }
@@ -65,10 +63,11 @@ body::before {
   inset: 0;
   pointer-events: none;
   background:
-    radial-gradient(circle at 18% 6%, rgba(255, 255, 255, 0.9), transparent 18%),
-    radial-gradient(circle at 74% 0%, var(--color-panel-glow), transparent 24%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.18), transparent 70%);
-  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.52), transparent 88%);
+    radial-gradient(circle at 12% 0%, var(--color-panel-glow), transparent 22%),
+    linear-gradient(rgba(148, 163, 184, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.08) 1px, transparent 1px);
+  background-size: auto, 28px 28px, 28px 28px;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.28), transparent 78%);
   z-index: -1;
 }
 
