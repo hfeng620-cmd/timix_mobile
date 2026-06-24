@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { useForumAuth } from "@/lib/forum-auth";
 
@@ -35,19 +35,60 @@ export function ForumAuthModal({ open, onClose }: ForumAuthModalProps) {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
+  const panelRef = useRef<HTMLDivElement>(null);
   const normalizedEmail = useMemo(() => email.trim().toLowerCase(), [email]);
 
   useEffect(() => {
     if (!open) return;
 
+    const FOCUSABLE =
+      'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+    function getFocusable(): HTMLElement[] {
+      const el = panelRef.current;
+      if (!el) return [];
+      return Array.from(el.querySelectorAll<HTMLElement>(FOCUSABLE));
+    }
+
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
         onClose();
+        return;
+      }
+
+      if (event.key === "Tab") {
+        const focusable = getFocusable();
+        if (focusable.length === 0) return;
+
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+
+        if (event.shiftKey) {
+          if (document.activeElement === first) {
+            event.preventDefault();
+            last.focus();
+          }
+        } else {
+          if (document.activeElement === last) {
+            event.preventDefault();
+            first.focus();
+          }
+        }
       }
     }
 
+    const timer = setTimeout(() => {
+      const focusable = getFocusable();
+      if (focusable.length > 0) {
+        focusable[0].focus();
+      }
+    }, 0);
+
     document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
   }, [open, onClose]);
 
 
@@ -116,7 +157,7 @@ export function ForumAuthModal({ open, onClose }: ForumAuthModalProps) {
         if (event.target === event.currentTarget) onClose();
       }}
     >
-      <div className="w-full max-w-md rounded-[12px] border border-[var(--color-line)] bg-[var(--color-panel)] p-6 shadow-[0_24px_80px_rgba(15,23,42,0.14)]">
+      <div ref={panelRef} className="w-full max-w-md rounded-[12px] border border-[var(--color-line)] bg-[var(--color-panel)] p-6 shadow-[0_24px_80px_rgba(15,23,42,0.14)]">
         {!isConfigured ? (
           <div className="space-y-4">
             <div>

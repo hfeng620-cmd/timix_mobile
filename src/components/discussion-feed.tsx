@@ -111,6 +111,7 @@ export function DiscussionFeed({
   const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
   const [replyTargets, setReplyTargets] = useState<Record<string, string>>({});
   const [status, setStatus] = useState("发帖讨论。");
+  const [submitting, setSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
 
@@ -159,6 +160,8 @@ export function DiscussionFeed({
       return;
     }
 
+    if (submitting) return;
+
     if (!body.trim()) {
       setStatus("先写点内容再发帖。");
       return;
@@ -169,6 +172,7 @@ export function DiscussionFeed({
       .map((item) => item.trim())
       .filter(Boolean);
 
+    setSubmitting(true);
     setStatus("发布中...");
     try {
       await createDiscussionPost({
@@ -184,6 +188,8 @@ export function DiscussionFeed({
       setStatus("已发布。");
     } catch {
       setStatus("发布失败，请检查网络后重试。");
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -352,7 +358,7 @@ export function DiscussionFeed({
                 >
                   {uploadingImage ? "上传中..." : "📷 插图"}
                 </button>
-                <span className="text-xs text-[var(--color-muted)]">{status}</span>
+                <span aria-live="polite" className="text-xs text-[var(--color-muted)]">{status}</span>
               </div>
               <button
                 className="rounded-full bg-[var(--color-brand)] px-5 py-2.5 text-sm font-bold text-[var(--color-on-brand)] transition hover:bg-[var(--color-brand-deep)]"
