@@ -13,7 +13,7 @@ interface Particle {
   createdAt: number;
 }
 
-const MAX_PARTICLES = 18;
+const MAX_PARTICLES = 12;
 const PARTICLE_LIFETIME_MS = 800;
 const PARTICLE_RADIUS = 3.5;
 const PARTICLE_MAX_OPACITY = 0.4;

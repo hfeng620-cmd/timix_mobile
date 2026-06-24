@@ -117,7 +117,7 @@ export default function UserRankPanel() {
       )}
 
       {!loading && !error && users.length === 0 && (
-        <p className="mt-4 text-sm text-[var(--color-muted)]">暂无数据</p>
+        <p className="mt-4 text-sm text-[var(--color-muted)]">还没有用户排名数据。参与讨论和回复后，会根据活跃度生成排名。</p>
       )}
 
       {!loading && !error && users.length > 0 && (

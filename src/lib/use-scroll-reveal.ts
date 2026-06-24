@@ -14,6 +14,9 @@ export default function useScrollReveal<T extends HTMLElement>(options?: {
     const el = ref.current;
     if (!el) return;
 
+    // If already revealed, skip re-observation (prevents double-init in strict mode)
+    if (el.classList.contains("reveal-visible")) return;
+
     el.classList.add("reveal-hidden");
 
     const observer = new IntersectionObserver(

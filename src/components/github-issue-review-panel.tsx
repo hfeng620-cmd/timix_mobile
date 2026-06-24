@@ -97,13 +97,39 @@ export function GithubIssueReviewPanel() {
           </p>
           <h2 className="mt-2 text-2xl font-black">论坛待审核帖子</h2>
         </div>
-        <button
-          className="rounded-full border border-[var(--color-line)] bg-white px-4 py-2 text-sm font-bold text-[var(--color-ink)] transition hover:bg-[var(--color-soft)]"
-          onClick={() => (isConnected ? void loadPending() : showAuthModal())}
-          type="button"
-        >
-          {isConnected ? "刷新" : "登录邮箱"}
-        </button>
+        <div className="flex flex-wrap gap-3">
+          <button
+            className="rounded-full border border-[var(--color-line)] bg-white px-4 py-2 text-sm font-bold text-[var(--color-ink)] transition hover:bg-[var(--color-soft)]"
+            onClick={() => (isConnected ? void loadPending() : showAuthModal())}
+            type="button"
+          >
+            {isConnected ? "刷新" : "登录邮箱"}
+          </button>
+          {isConnected && posts.length > 0 && (
+            <button
+              className="rounded-full bg-[#15803d] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#166534] disabled:opacity-50"
+              onClick={async () => {
+                if (!window.confirm(`确定要通过全部 ${posts.length} 条待审核帖子吗？`)) return;
+                setStatus("正在批量通过...");
+                let ok = 0;
+                let fail = 0;
+                for (const post of posts) {
+                  try {
+                    await approveDiscussionPost(post.issueNumber);
+                    ok++;
+                  } catch {
+                    fail++;
+                  }
+                }
+                setStatus(`批量通过完成：${ok} 条成功${fail > 0 ? `，${fail} 条失败` : ""}。`);
+                await loadPending();
+              }}
+              type="button"
+            >
+              全部通过 ({posts.length})
+            </button>
+          )}
+        </div>
       </div>
 
       <p className="mt-4 text-sm leading-7 text-[var(--color-muted)]">{status}</p>

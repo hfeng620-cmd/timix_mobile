@@ -80,7 +80,7 @@ export default function HotTopicsPanel({ onTopicClick }: HotTopicsPanelProps) {
 
       {/* Empty state */}
       {!loading && !error && topics.length === 0 && (
-        <p className="mt-4 text-sm text-[var(--color-muted)]">暂无热门讨论</p>
+        <p className="mt-4 text-sm text-[var(--color-muted)]">还没有热门讨论。去讨论区发帖或参与回复，热度高的帖子会出现在这里。</p>
       )}
 
       {/* Topic list */}

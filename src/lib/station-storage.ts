@@ -134,14 +134,18 @@ function editRecordFromRow(row: Record<string, unknown>): StationEditRecord {
 
 /** Load all approved stations (from the view), ordered by sort_order. */
 export async function loadStations(): Promise<Station[]> {
-  assertConfigured();
-  const { data, error } = await getSupabaseClient()
-    .from("stations_with_editor")
-    .select("*")
-    .order("sort_order", { ascending: true });
+  if (!isSupabaseConfigured()) return [];
+  try {
+    const { data, error } = await getSupabaseClient()
+      .from("stations_with_editor")
+      .select("*")
+      .order("sort_order", { ascending: true });
 
-  if (error) throw error;
-  return ((data ?? []) as Record<string, unknown>[]).map(stationFromRow);
+    if (error) throw error;
+    return ((data ?? []) as Record<string, unknown>[]).map(stationFromRow);
+  } catch {
+    return [];
+  }
 }
 
 /** Get a single station by id (from the view). */

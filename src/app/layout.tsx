@@ -49,6 +49,10 @@ export default function RootLayout({
       data-scroll-behavior="smooth"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
+      <head>
+        <link rel="preconnect" href="https://svksgdsuquhkwyliavfn.supabase.co" />
+        <link rel="preconnect" href="https://api.github.com" />
+      </head>
       <body className="min-h-full">
         <a
           className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-full focus:bg-[var(--color-brand)] focus:px-5 focus:py-3 focus:text-sm focus:font-bold focus:text-[var(--color-on-brand)]"

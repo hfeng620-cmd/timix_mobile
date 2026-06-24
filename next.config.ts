@@ -1,15 +1,28 @@
 import type { NextConfig } from "next";
 
-const isGithubPages = process.env.GITHUB_ACTIONS === "true";
+// DEPLOY_TARGET env var controls the build mode:
+//   "server"  → Next.js server (node_modules/.bin/next start) for cloud / VPS
+//   unset     → static export (`output: "export"`) for GitHub Pages / CDN
+const isServerDeploy = process.env.DEPLOY_TARGET === "server";
+const isGithubPages =
+  !isServerDeploy && process.env.GITHUB_ACTIONS === "true";
 const repoName = "timin_api_test_and_forum";
 
 const nextConfig: NextConfig = {
   devIndicators: false,
-  output: "export",
-  trailingSlash: true,
-  images: {
-    unoptimized: true,
-  },
+
+  // Static-export settings — only active for GitHub Pages builds.
+  // When DEPLOY_TARGET=server we omit `output` so Next.js runs its own server.
+  ...(isServerDeploy
+    ? {}
+    : {
+        output: "export" as const,
+        trailingSlash: true,
+        images: {
+          unoptimized: true,
+        },
+      }),
+
   basePath: isGithubPages ? `/${repoName}` : "",
   assetPrefix: isGithubPages ? `/${repoName}/` : undefined,
 };

@@ -233,14 +233,24 @@ export function StationsBoard() {
   // ---- Data loading ---------------------------------------------------------
   useEffect(() => {
     let cancelled = false;
+    let timeout: ReturnType<typeof setTimeout>;
+    // 10s fallback — don't hang forever if Supabase is unreachable
+    timeout = setTimeout(() => {
+      if (!cancelled && loading) {
+        setError("加载超时，请刷新页面重试。");
+        setLoading(false);
+      }
+    }, 10_000);
     loadStations()
       .then((data) => {
+        clearTimeout(timeout);
         if (!cancelled) { setStations(data); setLoading(false); }
       })
-      .catch((err) => {
-        if (!cancelled) { setError(err instanceof Error ? err.message : "加载失败"); setLoading(false); }
+      .catch(() => {
+        clearTimeout(timeout);
+        if (!cancelled) { setError("数据暂时加载失败，请稍后刷新重试。"); setLoading(false); }
       });
-    return () => { cancelled = true; };
+    return () => { cancelled = true; clearTimeout(timeout); };
   }, []);
 
   // ---- Edit history loading -----------------------------------------------
@@ -367,15 +377,18 @@ export function StationsBoard() {
     [stations],
   );
 
+  const nowRef = useRef(Date.now());
+  // Keep the ref current on every render so freshnessStats reads the latest time
+  // when it recomputes, without making the useMemo impure.
+  nowRef.current = Date.now();
+
   const freshnessStats = useMemo(() => {
-    // eslint-disable-next-line react-hooks/purity
-    const now = Date.now();
     const week = 7 * 24 * 60 * 60 * 1000;
     let updatedThisWeek = 0;
     for (const s of stations) {
       if (s.lastEditAt) {
         const t = new Date(s.lastEditAt).getTime();
-        if (!isNaN(t) && now - t <= week) updatedThisWeek++;
+        if (!isNaN(t) && nowRef.current - t <= week) updatedThisWeek++;
       }
     }
     return { updatedThisWeek, total: stations.length };
@@ -622,7 +635,7 @@ export function StationsBoard() {
         {historyLoading ? (
           <p className="text-sm text-[var(--color-muted)]">加载中...</p>
         ) : editHistory.length === 0 ? (
-          <p className="text-sm text-[var(--color-muted)]">暂无编辑记录</p>
+          <p className="text-sm text-[var(--color-muted)]">暂无编辑记录。发现信息有变化？点击编辑按钮来更新。</p>
         ) : (
           <ul className="space-y-2">
             {editHistory.map((record) => (

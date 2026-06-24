@@ -1,0 +1,19 @@
+# =============================================================================
+# Docker Compose configuration for the Timin Next.js application
+# =============================================================================
+
+services:
+  app:
+    # Build from the Dockerfile in the current directory
+    build: .
+
+    # Map host port 3000 to container port 3000
+    ports:
+      - "3000:3000"
+
+    # Load environment variables from .env.local
+    env_file:
+      - .env.local
+
+    # Automatically restart unless explicitly stopped
+    restart: unless-stopped

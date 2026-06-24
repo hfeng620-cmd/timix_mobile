@@ -30,7 +30,7 @@ export function FloatingQuickPanel() {
           </div>
           <div className="mt-4 grid gap-2">
             <a
-              className="rounded-[14px] border border-[var(--color-line)] bg-[var(--color-soft)] px-3 py-3 text-sm font-semibold text-[var(--color-ink)] transition-all duration-300 hover:border-[var(--color-brand)] hover:bg-[var(--color-brand-soft)] hover:text-[var(--color-brand-deep)]"
+              className="rounded-[14px] border border-[var(--color-line)] bg-[var(--color-soft)] px-3 py-3.5 text-sm font-semibold text-[var(--color-ink)] transition-all duration-300 hover:border-[var(--color-brand)] hover:bg-[var(--color-brand-soft)] hover:text-[var(--color-brand-deep)]"
               href={siteLinks.pages}
               rel="noreferrer"
               target="_blank"
@@ -38,7 +38,7 @@ export function FloatingQuickPanel() {
               打开线上站点
             </a>
             <a
-              className="rounded-[14px] border border-[var(--color-line)] bg-[var(--color-soft)] px-3 py-3 text-sm font-semibold text-[var(--color-ink)] transition-all duration-300 hover:border-[var(--color-brand)] hover:bg-[var(--color-brand-soft)] hover:text-[var(--color-brand-deep)]"
+              className="rounded-[14px] border border-[var(--color-line)] bg-[var(--color-soft)] px-3 py-3.5 text-sm font-semibold text-[var(--color-ink)] transition-all duration-300 hover:border-[var(--color-brand)] hover:bg-[var(--color-brand-soft)] hover:text-[var(--color-brand-deep)]"
               href={siteLinks.discussions}
               rel="noreferrer"
               target="_blank"
@@ -46,7 +46,7 @@ export function FloatingQuickPanel() {
               打开 GitHub Discussions
             </a>
             <a
-              className="rounded-[14px] border border-[var(--color-line)] bg-[var(--color-soft)] px-3 py-3 text-sm font-semibold text-[var(--color-ink)] transition-all duration-300 hover:border-[var(--color-brand)] hover:bg-[var(--color-brand-soft)] hover:text-[var(--color-brand-deep)]"
+              className="rounded-[14px] border border-[var(--color-line)] bg-[var(--color-soft)] px-3 py-3.5 text-sm font-semibold text-[var(--color-ink)] transition-all duration-300 hover:border-[var(--color-brand)] hover:bg-[var(--color-brand-soft)] hover:text-[var(--color-brand-deep)]"
               href={siteLinks.repo}
               rel="noreferrer"
               target="_blank"
@@ -54,7 +54,7 @@ export function FloatingQuickPanel() {
               打开 GitHub 仓库
             </a>
             <Link
-              className="rounded-[14px] border border-[var(--color-line)] bg-[var(--color-soft)] px-3 py-3 text-sm font-semibold text-[var(--color-ink)] transition-all duration-300 hover:border-[var(--color-brand)] hover:bg-[var(--color-brand-soft)] hover:text-[var(--color-brand-deep)]"
+              className="rounded-[14px] border border-[var(--color-line)] bg-[var(--color-soft)] px-3 py-3.5 text-sm font-semibold text-[var(--color-ink)] transition-all duration-300 hover:border-[var(--color-brand)] hover:bg-[var(--color-brand-soft)] hover:text-[var(--color-brand-deep)]"
               href="/community"
             >
               打开站内讨论区
@@ -72,7 +72,7 @@ export function FloatingQuickPanel() {
         onClick={() => setOpen((current) => !current)}
         type="button"
       >
-        快捷入口
+        配色
       </button>
     </div>
   );

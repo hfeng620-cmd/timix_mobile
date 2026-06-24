@@ -11,7 +11,7 @@ export function AuthButton() {
       <div className="flex items-center gap-2">
         {needsPassword ? (
           <button
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--color-brand)] text-xs font-bold text-[var(--color-on-brand)] transition hover:bg-[var(--color-brand-deep)]"
+            className="flex min-h-11 min-w-11 items-center justify-center rounded-full bg-[var(--color-brand)] text-xs font-bold text-[var(--color-on-brand)] transition hover:bg-[var(--color-brand-deep)]"
             onClick={showAuthModal}
             title="设置密码和昵称"
             type="button"
@@ -20,7 +20,7 @@ export function AuthButton() {
           </button>
         ) : (
           <button
-            className="flex h-9 min-w-[3rem] items-center justify-center rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] px-3 text-xs font-bold text-[var(--color-brand-deep)] transition hover:bg-[var(--color-soft)]"
+            className="flex min-h-11 min-w-[3rem] items-center justify-center rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] px-3 text-xs font-bold text-[var(--color-brand-deep)] transition hover:bg-[var(--color-soft)]"
             onClick={showAuthModal}
             title={email ?? undefined}
             type="button"
@@ -30,7 +30,7 @@ export function AuthButton() {
         )}
         <button
           aria-label="退出登录"
-          className="hidden h-9 w-9 items-center justify-center rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] text-xs font-bold text-[var(--color-muted)] transition hover:bg-[var(--color-soft)] hover:text-[var(--color-ink)] sm:flex"
+          className="hidden min-h-11 min-w-11 items-center justify-center rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] text-xs font-bold text-[var(--color-muted)] transition hover:bg-[var(--color-soft)] hover:text-[var(--color-ink)] sm:flex"
           onClick={() => signOut()}
           title="退出登录"
           type="button"
@@ -44,7 +44,7 @@ export function AuthButton() {
   return (
     <button
       aria-label="登录"
-      className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--color-brand)] text-sm font-bold text-[var(--color-on-brand)] transition hover:bg-[var(--color-brand-deep)] shadow-[0_8px_20px_var(--color-panel-glow)]"
+      className="flex min-h-11 min-w-11 items-center justify-center rounded-full bg-[var(--color-brand)] text-sm font-bold text-[var(--color-on-brand)] transition hover:bg-[var(--color-brand-deep)] shadow-[0_8px_20px_var(--color-panel-glow)]"
       onClick={showAuthModal}
       title="登录"
       type="button"

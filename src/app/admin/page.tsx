@@ -319,7 +319,7 @@ export default function AdminPage() {
         <div className="rounded-[34px] border border-[var(--color-line)] bg-white p-10 text-center shadow-[0_18px_60px_rgba(13,25,48,0.07)]">
           <p className="text-2xl font-black">需要管理员权限</p>
           <p className="mt-3 text-sm text-[var(--color-muted)]">
-            当前邮箱 {email ?? "未设置"} 不在管理员名单中。请在 Supabase forum_admins 表中添加此邮箱。
+            当前邮箱 {email ?? "未设置"} 暂无管理员权限。请联系站点所有者授权。
           </p>
         </div>
       </main>
@@ -408,7 +408,7 @@ export default function AdminPage() {
         <nav className="mb-6 flex gap-2 rounded-2xl border border-[var(--color-line)] bg-[var(--color-panel)] p-1.5 w-fit">
           {(
             [
-              ["posts", "帖子审核"],
+              ["posts", `帖子审核${stats && stats.pending_posts > 0 ? ` (${stats.pending_posts})` : ""}`],
               ["stations", "站点管理"],
               ["import", "数据导入导出"],
             ] as const
@@ -505,7 +505,7 @@ export default function AdminPage() {
                     </div>
                   ) : forumHistory.length === 0 ? (
                     <div className="rounded-[24px] bg-[var(--color-soft)] px-4 py-5 text-sm leading-7 text-[var(--color-muted)]">
-                      暂无已审核论坛帖子
+                      暂无已审核论坛帖子。在「帖子审核」中通过帖子后，会显示在这里。
                     </div>
                   ) : (
                     forumHistory.map((item) => (
@@ -515,21 +515,40 @@ export default function AdminPage() {
                       >
                         <div className="flex flex-wrap items-center justify-between gap-3">
                           <p className="text-sm leading-6 text-[var(--color-muted)] line-clamp-2">
-                            {item.body.length > 120
-                              ? item.body.slice(0, 120) + "..."
+                            {item.body.length > 100
+                              ? item.body.slice(0, 100) + "..."
                               : item.body}
                           </p>
                           <span className="shrink-0 rounded-full bg-[#ecfdf3] px-3 py-1 text-xs font-bold text-[#15803d]">
                             已通过
                           </span>
                         </div>
-                        <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+                        <div className="mt-2 flex flex-wrap items-center gap-3">
+                          <p className="flex items-center gap-2 text-xs text-[var(--color-muted)]">
+                            <span className="font-mono">{item.id}</span>
+                            <button
+                              className="rounded-full border border-[var(--color-line)] bg-white px-2 py-0.5 text-[10px] font-bold text-[var(--color-muted)] transition hover:bg-[var(--color-soft)] hover:text-[var(--color-ink)]"
+                              onClick={() => {
+                                void navigator.clipboard.writeText(item.id);
+                              }}
+                              title="复制帖子 ID"
+                              type="button"
+                            >
+                              复制
+                            </button>
+                          </p>
+                        </div>
+                        <div className="mt-1 flex flex-wrap items-center justify-between gap-2">
                           <p className="text-xs text-[var(--color-muted)]">
                             {new Date(item.time).toLocaleString("zh-CN")}
                           </p>
                           <button
                             className="rounded-full bg-[#fff1f2] px-3 py-1 text-xs font-bold text-[#be123c] transition hover:bg-[#ffe4e6]"
-                            onClick={() => void handleDeletePost(item.id)}
+                            onClick={() => {
+                              if (window.confirm("确定要删除这条帖子吗？此操作不可撤销。")) {
+                                void handleDeletePost(item.id);
+                              }
+                            }}
                             type="button"
                           >
                             删除
@@ -563,6 +582,21 @@ export default function AdminPage() {
                     ))
                   )}
                 </div>
+                {auditLog.length > 0 && (
+                  <div className="mt-4">
+                    <button
+                      className="rounded-full border border-[var(--color-line)] bg-white px-4 py-2 text-xs font-bold text-[var(--color-muted)] transition hover:bg-[var(--color-soft)] hover:text-[var(--color-ink)]"
+                      onClick={() => {
+                        if (window.confirm("确定要清空所有操作日志吗？")) {
+                          setAuditLog([]);
+                        }
+                      }}
+                      type="button"
+                    >
+                      清空审计日志
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>

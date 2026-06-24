@@ -108,6 +108,7 @@ export function DiscussionFeed({
   const [body, setBody] = useState("");
   const [station, setStation] = useState("");
   const [expandedPostId, setExpandedPostId] = useState<string | null>(null);
+  const [expandedBodies, setExpandedBodies] = useState<Set<string>>(new Set());
   const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
   const [replyTargets, setReplyTargets] = useState<Record<string, string>>({});
   const [status, setStatus] = useState("发帖讨论。");
@@ -361,7 +362,7 @@ export function DiscussionFeed({
                 <span aria-live="polite" className="text-xs text-[var(--color-muted)]">{status}</span>
               </div>
               <button
-                className="rounded-full bg-[var(--color-brand)] px-5 py-2.5 text-sm font-bold text-[var(--color-on-brand)] transition hover:bg-[var(--color-brand-deep)]"
+                className="rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-bold text-[var(--color-on-brand)] transition hover:bg-[var(--color-brand-deep)]"
                 onClick={handleSubmitPost}
                 type="button"
               >
@@ -399,7 +400,34 @@ export function DiscussionFeed({
                       </span>
                     ) : null}
                   </div>
-                  <p className="mt-3 max-w-4xl text-[15px] leading-7 text-[var(--color-ink)]">{post.body}</p>
+                  {post.body.length > 500 ? (
+                    <>
+                      <p className="mt-3 max-w-4xl text-[15px] leading-7 text-[var(--color-ink)]">
+                        {expandedBodies.has(post.issueNumber)
+                          ? post.body
+                          : `${post.body.slice(0, 500)}...`}
+                      </p>
+                      <button
+                        className="mt-1 text-xs font-semibold text-[var(--color-brand-deep)] transition hover:text-[var(--color-brand)]"
+                        onClick={() => {
+                          setExpandedBodies((prev) => {
+                            const next = new Set(prev);
+                            if (next.has(post.issueNumber)) {
+                              next.delete(post.issueNumber);
+                            } else {
+                              next.add(post.issueNumber);
+                            }
+                            return next;
+                          });
+                        }}
+                        type="button"
+                      >
+                        {expandedBodies.has(post.issueNumber) ? "收起" : "展开全文"}
+                      </button>
+                    </>
+                  ) : (
+                    <p className="mt-3 max-w-4xl text-[15px] leading-7 text-[var(--color-ink)]">{post.body}</p>
+                  )}
                   <div className="mt-3 flex flex-wrap gap-2">
                     {post.tags.map((tag) => (
                       <span key={`${post.issueNumber}-${tag}`} className="text-xs font-semibold text-[var(--color-muted)]">
@@ -429,7 +457,7 @@ export function DiscussionFeed({
                     {comments === undefined ? (
                       <p className="text-sm text-[var(--color-muted)]">正在加载回复...</p>
                     ) : comments.length === 0 ? (
-                      <p className="text-sm text-[var(--color-muted)]">暂无回复。</p>
+                      <p className="text-sm text-[var(--color-muted)]">还没有回复。来抢沙发，第一个回复这条讨论吧。</p>
                     ) : (
                       comments.map((reply) => (
                         <div key={reply.id} className="group">

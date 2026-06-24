@@ -159,7 +159,7 @@ export function CommunityPostPanel({ onPostCreated }: CommunityPostPanelProps) {
 
           <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <button
-              className="rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] px-4 py-2 text-sm font-semibold text-[var(--color-muted)] transition hover:bg-[var(--color-soft)] hover:text-[var(--color-ink)]"
+              className="rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] px-4 py-3 text-sm font-semibold text-[var(--color-muted)] transition hover:bg-[var(--color-soft)] hover:text-[var(--color-ink)]"
               onClick={() => setOpen(false)}
               type="button"
             >
@@ -167,7 +167,7 @@ export function CommunityPostPanel({ onPostCreated }: CommunityPostPanelProps) {
             </button>
 
             <button
-              className="rounded-full bg-[var(--color-brand)] px-5 py-2.5 text-sm font-bold text-[var(--color-on-brand)] transition hover:bg-[var(--color-brand-deep)] disabled:opacity-60"
+              className="rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-bold text-[var(--color-on-brand)] transition hover:bg-[var(--color-brand-deep)] disabled:opacity-60"
               disabled={submitting}
               onClick={handleSubmit}
               type="button"
