@@ -116,7 +116,7 @@ export function ForumAuthModal({ open, onClose }: ForumAuthModalProps) {
         if (event.target === event.currentTarget) onClose();
       }}
     >
-      <div className="w-full max-w-md rounded-[8px] border border-[var(--color-line)] bg-[var(--color-panel)] p-6 shadow-[0_24px_80px_rgba(15,23,42,0.14)]">
+      <div className="w-full max-w-md rounded-[12px] border border-[var(--color-line)] bg-[var(--color-panel)] p-6 shadow-[0_24px_80px_rgba(15,23,42,0.14)]">
         {!isConfigured ? (
           <div className="space-y-4">
             <div>
@@ -162,7 +162,7 @@ export function ForumAuthModal({ open, onClose }: ForumAuthModalProps) {
                   请设置密码和昵称。
                 </p>
                 <input
-                  className="w-full rounded-[8px] border border-[var(--color-line)] bg-[var(--color-input)] px-4 py-3 text-sm outline-none transition focus:border-[var(--color-brand)]"
+                  className="w-full rounded-[12px] border border-[var(--color-line)] bg-[var(--color-input)] px-4 py-3 text-sm outline-none transition focus:border-[var(--color-brand)]"
                   onChange={(event) => {
                     setDisplayNameInput(event.target.value);
                     setError("");
@@ -173,7 +173,7 @@ export function ForumAuthModal({ open, onClose }: ForumAuthModalProps) {
                   maxLength={80}
                 />
                 <input
-                  className="w-full rounded-[8px] border border-[var(--color-line)] bg-[var(--color-input)] px-4 py-3 text-sm outline-none transition focus:border-[var(--color-brand)]"
+                  className="w-full rounded-[12px] border border-[var(--color-line)] bg-[var(--color-input)] px-4 py-3 text-sm outline-none transition focus:border-[var(--color-brand)]"
                   onChange={(event) => {
                     setPasswordValue(event.target.value);
                     setError("");
@@ -183,7 +183,7 @@ export function ForumAuthModal({ open, onClose }: ForumAuthModalProps) {
                   value={password}
                 />
                 <input
-                  className="w-full rounded-[8px] border border-[var(--color-line)] bg-[var(--color-input)] px-4 py-3 text-sm outline-none transition focus:border-[var(--color-brand)]"
+                  className="w-full rounded-[12px] border border-[var(--color-line)] bg-[var(--color-input)] px-4 py-3 text-sm outline-none transition focus:border-[var(--color-brand)]"
                   onChange={(event) => {
                     setConfirmPassword(event.target.value);
                     setError("");
@@ -207,7 +207,7 @@ export function ForumAuthModal({ open, onClose }: ForumAuthModalProps) {
                   已登录为 <span className="font-semibold text-[var(--color-ink)]">{signedInEmail}</span>
                 </p>
                 <input
-                  className="w-full rounded-[8px] border border-[var(--color-line)] bg-[var(--color-input)] px-4 py-3 text-sm outline-none transition focus:border-[var(--color-brand)]"
+                  className="w-full rounded-[12px] border border-[var(--color-line)] bg-[var(--color-input)] px-4 py-3 text-sm outline-none transition focus:border-[var(--color-brand)]"
                   onChange={(event) => {
                     setDisplayNameInput(event.target.value);
                     setError("");
@@ -307,7 +307,7 @@ export function ForumAuthModal({ open, onClose }: ForumAuthModalProps) {
 
             <div className="space-y-3">
               <input
-                className="w-full rounded-[8px] border border-[var(--color-line)] bg-[var(--color-input)] px-4 py-3 text-sm outline-none transition focus:border-[var(--color-brand)]"
+                className="w-full rounded-[12px] border border-[var(--color-line)] bg-[var(--color-input)] px-4 py-3 text-sm outline-none transition focus:border-[var(--color-brand)]"
                 onChange={(event) => {
                   setEmail(event.target.value);
                   setError("");
@@ -320,7 +320,7 @@ export function ForumAuthModal({ open, onClose }: ForumAuthModalProps) {
               {mode === "password" ? (
                 <>
                   <input
-                    className="w-full rounded-[8px] border border-[var(--color-line)] bg-[var(--color-input)] px-4 py-3 text-sm outline-none transition focus:border-[var(--color-brand)]"
+                    className="w-full rounded-[12px] border border-[var(--color-line)] bg-[var(--color-input)] px-4 py-3 text-sm outline-none transition focus:border-[var(--color-brand)]"
                     onChange={(event) => {
                       setPasswordValue(event.target.value);
                       setError("");

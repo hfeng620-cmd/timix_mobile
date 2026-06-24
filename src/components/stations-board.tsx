@@ -1,17 +1,36 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { StationDetailModal } from "@/components/station-detail-modal";
 import { SubmissionPanel } from "@/components/submission-panel";
+import { useForumAuth } from "@/lib/forum-auth";
 import {
-  prioritizedStationNames,
-  stationComparisonRows,
-  stationLinkMap,
-} from "@/lib/site-data";
+  createStation,
+  deleteStation,
+  loadStationEditHistory,
+  loadStations,
+  updateStation,
+  type Station,
+  type StationEditRecord,
+} from "@/lib/station-storage";
+
+// ---------------------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------------------
 
 type FilterId = "all" | "featured" | "trial" | "free" | "lowRate" | "pending";
-type StationRow = (typeof stationComparisonRows)[number];
+
+type SortOption = "default" | "priceAsc" | "recentUpdate";
+
+const sortOptions: { value: SortOption; label: string }[] = [
+  { value: "default", label: "默认排序" },
+  { value: "priceAsc", label: "价格从低到高" },
+  { value: "recentUpdate", label: "最近更新" },
+];
+
+const FEATURED_NAMES = ["虎虎", "Aether", "杂货铺", "秋天中转站"];
 
 const filters: { id: FilterId; label: string; description: string }[] = [
   { id: "all", label: "全部站点", description: "完整总表" },
@@ -22,39 +41,106 @@ const filters: { id: FilterId; label: string; description: string }[] = [
   { id: "pending", label: "待补测", description: "缺数据" },
 ];
 
-function matchesFilter(filter: FilterId, row: StationRow) {
-  if (filter === "all") {
-    return true;
-  }
+/** Editable fields shown in the edit / create form. */
+const EDITABLE_FIELDS: { key: keyof Station; label: string; type: "input" | "textarea" }[] = [
+  { key: "name", label: "站点名", type: "input" },
+  { key: "url", label: "网址", type: "input" },
+  { key: "entry", label: "入口 / 地址", type: "input" },
+  { key: "price", label: "标称价格", type: "input" },
+  { key: "multiplier", label: "倍率", type: "input" },
+  { key: "packageType", label: "收费方式", type: "input" },
+  { key: "status", label: "状态", type: "input" },
+  { key: "models", label: "模型", type: "textarea" },
+  { key: "uptime", label: "在线率", type: "input" },
+  { key: "latency", label: "延迟", type: "input" },
+  { key: "source", label: "来源", type: "input" },
+  { key: "verdict", label: "评价", type: "input" },
+  { key: "note", label: "备注", type: "textarea" },
+  { key: "advantage", label: "优势", type: "textarea" },
+  { key: "risk", label: "风险", type: "textarea" },
+  { key: "badge", label: "标签", type: "input" },
+  { key: "groupName", label: "分组", type: "input" },
+  { key: "sortOrder", label: "排序", type: "input" },
+];
+
+/** Human-readable labels for snake_case field names returned from edit history. */
+const FIELD_LABELS: Record<string, string> = {
+  name: "站点名",
+  url: "网址",
+  price: "标称价格",
+  multiplier: "倍率",
+  entry: "入口 / 地址",
+  package_type: "收费方式",
+  status: "状态",
+  models: "模型",
+  uptime: "在线率",
+  latency: "延迟",
+  source: "来源",
+  verdict: "评价",
+  note: "备注",
+  advantage: "优势",
+  risk: "风险",
+  badge: "标签",
+  group_name: "分组",
+  sort_order: "排序",
+};
+
+const EMPTY_FORM: Partial<Station> = {
+  name: "",
+  url: "",
+  entry: "",
+  price: "",
+  multiplier: "",
+  packageType: "",
+  status: "",
+  models: "",
+  uptime: "",
+  latency: "",
+  source: "",
+  verdict: "",
+  note: "",
+  advantage: "",
+  risk: "",
+  badge: "",
+  groupName: "",
+};
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function matchesFilter(filter: FilterId, station: Station) {
+  if (filter === "all") return true;
 
   if (filter === "featured") {
-    return prioritizedStationNames.includes(row.name);
+    return FEATURED_NAMES.includes(station.name);
   }
 
   if (filter === "trial") {
     return (
-      row.badge.includes("试用") ||
-      row.note.includes("试用") ||
-      row.note.includes("注册送") ||
-      row.status.includes("试用")
+      station.badge.includes("试用") ||
+      station.note.includes("试用") ||
+      station.note.includes("注册送") ||
+      station.status.includes("试用")
     );
   }
 
   if (filter === "free") {
-    return row.badge.includes("免费") || row.price.includes("免费");
+    return station.badge.includes("免费") || station.price.includes("免费");
   }
 
   if (filter === "lowRate") {
-    return ["0.058x", "0.06x", "0.12x", "0.15x"].some((value) =>
-      row.multiplier.includes(value),
+    return ["0.058x", "0.06x", "0.15x"].some((value) =>
+      station.multiplier.includes(value),
     );
   }
 
+  // pending
   return (
-    row.badge.includes("待补") ||
-    row.badge.includes("未实测") ||
-    row.status.includes("待") ||
-    row.status.includes("缺")
+    station.badge.includes("待补") ||
+    station.badge.includes("未实测") ||
+    station.status.includes("待") ||
+    station.status.includes("缺")
   );
 }
 
@@ -62,53 +148,548 @@ function rankingBadge(index: number) {
   return `#${(index + 1).toString().padStart(2, "0")}`;
 }
 
+function freshnessInfo(lastEditAt: string | undefined): {
+  label: string;
+  isRecent: boolean;
+  isThisWeek: boolean;
+} | null {
+  if (!lastEditAt) return null;
+  const updated = new Date(lastEditAt).getTime();
+  if (isNaN(updated)) return null;
+  const hours = (Date.now() - updated) / (1000 * 60 * 60);
+  if (hours <= 24) return { label: "最近更新", isRecent: true, isThisWeek: true };
+  if (hours <= 24 * 7) return { label: "本周更新", isRecent: false, isThisWeek: true };
+  const d = new Date(updated);
+  return {
+    label: `${d.getMonth() + 1}/${d.getDate()}更新`,
+    isRecent: false,
+    isThisWeek: false,
+  };
+}
+
+function formatTime(iso: string): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return iso;
+  const pad = (n: number) => n.toString().padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function fieldLabel(snakeName: string): string {
+  return FIELD_LABELS[snakeName] ?? snakeName;
+}
+
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
+
 export function StationsBoard() {
+  const { isConnected, displayName } = useForumAuth();
+
+  // ---- data ---------------------------------------------------------------
+  const [stations, setStations] = useState<Station[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // ---- filters ------------------------------------------------------------
   const [query, setQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState<FilterId>("all");
   const [showAllRows, setShowAllRows] = useState(false);
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+  const [sortBy, setSortBy] = useState<SortOption>("default");
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
-  const featuredRows = useMemo<StationRow[]>(
+  // ---- editing ------------------------------------------------------------
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<Partial<Station>>({});
+  const [saving, setSaving] = useState(false);
+  const [addingNew, setAddingNew] = useState(false);
+
+  // ---- detail modal -------------------------------------------------------
+  const [detailStation, setDetailStation] = useState<Station | null>(null);
+
+  // ---- history ------------------------------------------------------------
+  const [historyStationId, setHistoryStationId] = useState<string | null>(null);
+  const [editHistory, setEditHistory] = useState<StationEditRecord[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+
+  // =========================================================================
+  // Data loading
+  // =========================================================================
+
+  const refreshStations = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await loadStations();
+      setStations(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "加载站点数据失败");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // ---- Data loading ---------------------------------------------------------
+  useEffect(() => {
+    let cancelled = false;
+    loadStations()
+      .then((data) => {
+        if (!cancelled) { setStations(data); setLoading(false); }
+      })
+      .catch((err) => {
+        if (!cancelled) { setError(err instanceof Error ? err.message : "加载失败"); setLoading(false); }
+      });
+    return () => { cancelled = true; };
+  }, []);
+
+  // ---- Edit history loading -----------------------------------------------
+  useEffect(() => {
+    if (!historyStationId) return;
+    let cancelled = false;
+    loadStationEditHistory(historyStationId)
+      .then((records) => {
+        if (!cancelled) setEditHistory(records);
+      })
+      .catch(() => {
+        if (!cancelled) setEditHistory([]);
+      })
+      .finally(() => {
+        if (!cancelled) setHistoryLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [historyStationId]);
+
+  // ---- Debounce search query -----------------------------------------------
+  useEffect(() => {
+    if (!query.trim()) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setDebouncedQuery("");
+      return;
+    }
+    const timer = setTimeout(() => {
+      setDebouncedQuery(query.trim().toLowerCase());
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [query]);
+
+  // ---- Ctrl+K keyboard shortcut -------------------------------------------
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "k") {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
+
+  // =========================================================================
+  // Derived data
+  // =========================================================================
+
+  const featuredStations = useMemo<Station[]>(
     () =>
-      prioritizedStationNames
-        .map((name) => stationComparisonRows.find((row) => row.name === name))
-        .filter((row): row is StationRow => Boolean(row)),
-    [],
+      FEATURED_NAMES.map((name) => stations.find((s) => s.name === name)).filter(
+        (s): s is Station => Boolean(s),
+      ),
+    [stations],
   );
 
   const filteredRows = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
+    return stations.filter((station) => {
+      const matchFilter = matchesFilter(activeFilter, station);
+      if (!matchFilter) return false;
 
-    return stationComparisonRows.filter((row) => {
-      const matchFilter = matchesFilter(activeFilter, row);
-      if (!matchFilter) {
-        return false;
-      }
-
-      if (!normalizedQuery) {
-        return true;
-      }
+      if (!debouncedQuery) return true;
 
       const haystacks = [
-        row.name,
-        row.group,
-        row.entry,
-        row.packageType,
-        row.models,
-        row.price,
-        row.multiplier,
-        row.status,
-        row.note,
-        row.badge,
+        station.name,
+        station.groupName,
+        station.entry,
+        station.packageType,
+        station.models,
+        station.price,
+        station.multiplier,
+        station.status,
+        station.note,
+        station.badge,
       ];
 
-      return haystacks.some((value) => value.toLowerCase().includes(normalizedQuery));
+      return haystacks.some((value) => value.toLowerCase().includes(debouncedQuery));
     });
-  }, [activeFilter, query]);
+  }, [activeFilter, debouncedQuery, stations]);
 
-  const visibleRows = showAllRows ? filteredRows : filteredRows.slice(0, 8);
+  const sortedRows = useMemo(() => {
+    if (sortBy === "default") return filteredRows;
+
+    return [...filteredRows].sort((a, b) => {
+      if (sortBy === "priceAsc") {
+        const numA = parseFloat(a.multiplier.replace(/[xX]/, ""));
+        const numB = parseFloat(b.multiplier.replace(/[xX]/, ""));
+        const validA = !isNaN(numA) && numA > 0;
+        const validB = !isNaN(numB) && numB > 0;
+        if (validA && validB) return numA - numB;
+        if (validA) return -1;
+        if (validB) return 1;
+        return 0;
+      }
+      if (sortBy === "recentUpdate") {
+        const timeA = a.lastEditAt ? new Date(a.lastEditAt).getTime() : 0;
+        const timeB = b.lastEditAt ? new Date(b.lastEditAt).getTime() : 0;
+        return timeB - timeA;
+      }
+      return 0;
+    });
+  }, [filteredRows, sortBy]);
+
+  const visibleRows = showAllRows ? sortedRows : sortedRows.slice(0, 8);
+
+  const lowestMultiplier = useMemo(() => {
+    const nums = stations
+      .map((s) => parseFloat(s.multiplier.replace(/[xX]/, "")))
+      .filter((n) => !isNaN(n) && n > 0);
+    if (nums.length === 0) return "--";
+    return Math.min(...nums) + "x";
+  }, [stations]);
+
+  const trialCount = useMemo(
+    () =>
+      stations.filter(
+        (s) =>
+          s.badge.includes("试用") ||
+          s.note.includes("试用") ||
+          s.status.includes("试用"),
+      ).length,
+    [stations],
+  );
+
+  const freshnessStats = useMemo(() => {
+    // eslint-disable-next-line react-hooks/purity
+    const now = Date.now();
+    const week = 7 * 24 * 60 * 60 * 1000;
+    let updatedThisWeek = 0;
+    for (const s of stations) {
+      if (s.lastEditAt) {
+        const t = new Date(s.lastEditAt).getTime();
+        if (!isNaN(t) && now - t <= week) updatedThisWeek++;
+      }
+    }
+    return { updatedThisWeek, total: stations.length };
+  }, [stations]);
+
+  // =========================================================================
+  // Edit / create / delete handlers
+  // =========================================================================
+
+  const startEdit = useCallback((station: Station) => {
+    setEditingId(station.id);
+    setAddingNew(false);
+    setEditForm({ ...station });
+  }, []);
+
+  const cancelEdit = useCallback(() => {
+    setEditingId(null);
+    setEditForm({});
+  }, []);
+
+  const saveEdit = useCallback(async () => {
+    if (!editingId) return;
+    const editorName = displayName || "匿名用户";
+    setSaving(true);
+    try {
+      await updateStation(editingId, editForm, editorName);
+      await refreshStations();
+      setEditingId(null);
+      setEditForm({});
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "保存失败，请稍后重试。");
+    } finally {
+      setSaving(false);
+    }
+  }, [editingId, editForm, displayName, refreshStations]);
+
+  const handleDelete = useCallback(
+    async (id: string) => {
+      if (!window.confirm("确定要删除这个站点吗？此操作不可撤销。")) return;
+      try {
+        await deleteStation(id);
+        await refreshStations();
+        if (editingId === id) {
+          setEditingId(null);
+          setEditForm({});
+        }
+      } catch (err) {
+        alert(err instanceof Error ? err.message : "删除失败，请稍后重试。");
+      }
+    },
+    [editingId, refreshStations],
+  );
+
+  const startAdd = useCallback(() => {
+    setAddingNew(true);
+    setEditingId(null);
+    setEditForm({ ...EMPTY_FORM });
+  }, []);
+
+  const cancelAdd = useCallback(() => {
+    setAddingNew(false);
+    setEditForm({});
+  }, []);
+
+  const saveNew = useCallback(async () => {
+    if (!editForm.name?.trim()) {
+      alert("站点名不能为空。");
+      return;
+    }
+    setSaving(true);
+    try {
+      await createStation({
+        name: editForm.name.trim(),
+        url: editForm.url,
+        price: editForm.price,
+        multiplier: editForm.multiplier,
+        entry: editForm.entry,
+        packageType: editForm.packageType,
+        status: editForm.status,
+        models: editForm.models,
+        uptime: editForm.uptime,
+        latency: editForm.latency,
+        source: editForm.source,
+        verdict: editForm.verdict,
+        note: editForm.note,
+        advantage: editForm.advantage,
+        risk: editForm.risk,
+        badge: editForm.badge,
+        groupName: editForm.groupName,
+      });
+      await refreshStations();
+      setAddingNew(false);
+      setEditForm({});
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "创建失败，请稍后重试。");
+    } finally {
+      setSaving(false);
+    }
+  }, [editForm, refreshStations]);
+
+  const toggleHistory = useCallback((stationId: string) => {
+    setHistoryStationId((prev) => (prev === stationId ? null : stationId));
+  }, []);
+
+  const updateField = useCallback((key: keyof Station, value: string) => {
+    setEditForm((prev) => ({ ...prev, [key]: value }));
+  }, []);
+
+  // =========================================================================
+  // Sub-renderers
+  // =========================================================================
+
+  function renderEditPanel() {
+    return (
+      <div className="bg-[var(--color-soft)] rounded-[18px] p-5 my-2 border border-[var(--color-line)]">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {EDITABLE_FIELDS.map(({ key, label, type }) => {
+            const value = editForm[key] ?? "";
+            const inputClass =
+              "w-full rounded-xl border border-[var(--color-line)] bg-[var(--color-panel)] px-4 py-2.5 text-sm outline-none transition focus:border-[var(--color-brand)] focus:bg-white";
+
+            return (
+              <div key={key} className={type === "textarea" ? "sm:col-span-2 lg:col-span-3" : ""}>
+                <label className="mb-1.5 block text-xs font-bold uppercase tracking-[0.12em] text-[var(--color-muted)]">
+                  {label}
+                </label>
+                {type === "textarea" ? (
+                  <textarea
+                    className={inputClass}
+                    rows={2}
+                    value={String(value)}
+                    onChange={(e) => updateField(key, e.target.value)}
+                  />
+                ) : (
+                  <input
+                    className={inputClass}
+                    type="text"
+                    value={String(value)}
+                    onChange={(e) => updateField(key, e.target.value)}
+                  />
+                )}
+              </div>
+            );
+          })}
+        </div>
+        <div className="mt-5 flex flex-wrap items-center gap-3 border-t border-[var(--color-line)] pt-4">
+          <button
+            className="rounded-full bg-[var(--color-brand)] px-5 py-2.5 text-sm font-bold text-[var(--color-on-brand)] shadow-[0_10px_24px_var(--color-panel-glow)] transition hover:bg-[var(--color-brand-deep)] disabled:opacity-50"
+            disabled={saving}
+            onClick={saveEdit}
+            type="button"
+          >
+            {saving ? "保存中..." : "保存修改"}
+          </button>
+          <button
+            className="rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] px-5 py-2.5 text-sm font-bold text-[var(--color-muted)] transition hover:border-[var(--color-brand)] hover:text-[var(--color-brand-deep)]"
+            onClick={cancelEdit}
+            type="button"
+          >
+            取消
+          </button>
+          <span className="flex-1" />
+          <button
+            className="rounded-full border border-red-200 bg-red-50 px-4 py-2 text-sm font-bold text-red-600 transition hover:bg-red-100"
+            onClick={() => editingId && handleDelete(editingId)}
+            type="button"
+          >
+            删除站点
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  function renderCreatePanel() {
+    return (
+      <div className="bg-[var(--color-soft)] rounded-[18px] p-5 my-4 mx-6 border border-dashed border-[var(--color-brand-soft)]">
+        <h3 className="mb-4 text-lg font-black text-[var(--color-brand-deep)]">添加新站点</h3>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {EDITABLE_FIELDS.map(({ key, label, type }) => {
+            const value = editForm[key] ?? "";
+            const inputClass =
+              "w-full rounded-xl border border-[var(--color-line)] bg-[var(--color-panel)] px-4 py-2.5 text-sm outline-none transition focus:border-[var(--color-brand)] focus:bg-white";
+
+            return (
+              <div key={key} className={type === "textarea" ? "sm:col-span-2 lg:col-span-3" : ""}>
+                <label className="mb-1.5 block text-xs font-bold uppercase tracking-[0.12em] text-[var(--color-muted)]">
+                  {label}
+                </label>
+                {type === "textarea" ? (
+                  <textarea
+                    className={inputClass}
+                    rows={2}
+                    value={String(value)}
+                    onChange={(e) => updateField(key, e.target.value)}
+                  />
+                ) : (
+                  <input
+                    className={inputClass}
+                    type="text"
+                    value={String(value)}
+                    onChange={(e) => updateField(key, e.target.value)}
+                  />
+                )}
+              </div>
+            );
+          })}
+        </div>
+        <div className="mt-5 flex flex-wrap items-center gap-3 border-t border-[var(--color-line)] pt-4">
+          <button
+            className="rounded-full bg-[var(--color-brand)] px-5 py-2.5 text-sm font-bold text-[var(--color-on-brand)] shadow-[0_10px_24px_var(--color-panel-glow)] transition hover:bg-[var(--color-brand-deep)] disabled:opacity-50"
+            disabled={saving}
+            onClick={saveNew}
+            type="button"
+          >
+            {saving ? "创建中..." : "创建站点"}
+          </button>
+          <button
+            className="rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] px-5 py-2.5 text-sm font-bold text-[var(--color-muted)] transition hover:border-[var(--color-brand)] hover:text-[var(--color-brand-deep)]"
+            onClick={cancelAdd}
+            type="button"
+          >
+            取消
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  function renderHistoryPanel(station: Station) {
+    return (
+      <div className="bg-[var(--color-soft)] rounded-[18px] p-5 my-2 border border-[var(--color-line)]">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+          <h4 className="text-sm font-bold text-[var(--color-brand-deep)]">
+            {station.name} 编辑历史
+          </h4>
+          {station.lastEditorName && (
+            <span className="text-xs text-[var(--color-muted)]">
+              最后编辑：{station.lastEditorName}
+              {station.lastEditAt ? ` · ${formatTime(station.lastEditAt)}` : ""}
+            </span>
+          )}
+        </div>
+        {historyLoading ? (
+          <p className="text-sm text-[var(--color-muted)]">加载中...</p>
+        ) : editHistory.length === 0 ? (
+          <p className="text-sm text-[var(--color-muted)]">暂无编辑记录</p>
+        ) : (
+          <ul className="space-y-2">
+            {editHistory.map((record) => (
+              <li
+                key={record.id}
+                className="rounded-xl bg-[var(--color-panel)] px-4 py-2.5 text-sm leading-6"
+              >
+                <span className="font-bold text-[var(--color-ink)]">{record.editorName}</span>
+                <span className="text-[var(--color-muted)]"> 把 </span>
+                <span className="font-semibold text-[var(--color-brand-deep)]">
+                  {fieldLabel(record.fieldName)}
+                </span>
+                <span className="text-[var(--color-muted)]"> 从 &quot;</span>
+                <span className="text-[var(--color-ink)]">
+                  {record.oldValue || "(空)"}
+                </span>
+                <span className="text-[var(--color-muted)]">&quot; 改为 &quot;</span>
+                <span className="font-semibold text-[var(--color-ink)]">
+                  {record.newValue || "(空)"}
+                </span>
+                <span className="text-[var(--color-muted)]">&quot;</span>
+                <span className="ml-2 text-xs text-[var(--color-muted)]">
+                  · {formatTime(record.createdAt)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // Loading / error states
+  // =========================================================================
+
+  if (loading) {
+    return (
+      <section className="mx-auto max-w-7xl px-6 py-20 text-center lg:px-10">
+        <p className="text-lg font-bold text-[var(--color-muted)]">正在加载站点数据...</p>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section className="mx-auto max-w-7xl px-6 py-20 text-center lg:px-10">
+        <p className="text-lg font-bold text-red-500">加载失败</p>
+        <p className="mt-2 text-sm text-[var(--color-muted)]">{error}</p>
+        <button
+          className="mt-4 rounded-full bg-[var(--color-brand)] px-5 py-2.5 text-sm font-bold text-[var(--color-on-brand)] transition hover:bg-[var(--color-brand-deep)]"
+          onClick={refreshStations}
+          type="button"
+        >
+          重新加载
+        </button>
+      </section>
+    );
+  }
+
+  // =========================================================================
+  // Render
+  // =========================================================================
 
   return (
     <>
+      {/* ---- Hero + Filters ---- */}
       <section className="mx-auto max-w-[1600px] px-6 py-8 lg:px-10">
         <div className="grid gap-10 xl:grid-cols-[minmax(0,1.48fr)_320px] xl:items-start">
           <div>
@@ -126,63 +707,88 @@ export function StationsBoard() {
                 <div className="grid min-w-[220px] grid-cols-3 gap-4 text-sm">
                   <div>
                     <p className="text-[var(--color-muted)]">站点</p>
-                    <p className="mt-1 text-2xl font-black">{stationComparisonRows.length}</p>
+                    <p className="mt-1 text-2xl font-black">{stations.length}</p>
                   </div>
                   <div>
                     <p className="text-[var(--color-muted)]">最低</p>
-                    <p className="mt-1 text-2xl font-black">0.058x</p>
+                    <p className="mt-1 text-2xl font-black">{lowestMultiplier}</p>
                   </div>
                   <div>
                     <p className="text-[var(--color-muted)]">试用</p>
-                    <p className="mt-1 text-2xl font-black">4+</p>
+                    <p className="mt-1 text-2xl font-black">{trialCount}+</p>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-              {featuredRows.map((row, index) => (
-                <a
-                  key={`${row.name}-hero`}
-                  href={stationLinkMap[row.name]}
-                  rel="noreferrer"
-                  target="_blank"
-                  className="stagger-in group min-h-[238px] rounded-[8px] border border-[var(--color-line)] bg-[var(--surface-gradient)] p-5 shadow-[var(--shadow-card)] transition hover:-translate-y-[2px] hover:border-[var(--color-brand)]"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--color-muted)]">
-                        {rankingBadge(index)}
-                      </p>
-                      <h2 className="mt-2 text-2xl font-black">{row.name}</h2>
+            {/* Featured hero cards */}
+            {featuredStations.length > 0 && (
+              <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                {featuredStations.map((station, index) => {
+                  const cardContent = (
+                    <>
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--color-muted)]">
+                            {rankingBadge(index)}
+                          </p>
+                          <h2 className="mt-2 text-2xl font-black">{station.name}</h2>
+                        </div>
+                        <span className="rounded-full bg-[var(--color-brand-soft)] px-3 py-1 text-xs font-bold text-[var(--color-brand-deep)]">
+                          {station.badge}
+                        </span>
+                      </div>
+
+                      <p className="mt-4 text-sm leading-7 text-[var(--color-muted)]">{station.note}</p>
+
+                      <div className="mt-5 grid grid-cols-2 gap-3 border-t border-[var(--color-line)] pt-4 text-sm">
+                        <div>
+                          <p className="text-[var(--color-muted)]">价格</p>
+                          <p className="mt-1 font-black">{station.price}</p>
+                        </div>
+                        <div>
+                          <p className="text-[var(--color-muted)]">倍率</p>
+                          <p className="mt-1 font-black">{station.multiplier}</p>
+                        </div>
+                      </div>
+
+                      {station.url && (
+                        <div className="mt-5 inline-flex items-center text-sm font-bold text-[var(--color-brand-deep)]">
+                          打开站点入口
+                          <span className="ml-2 transition-all duration-300 group-hover:translate-x-1.5">→</span>
+                        </div>
+                      )}
+                    </>
+                  );
+
+                  if (station.url) {
+                    return (
+                      <a
+                        key={`${station.id}-hero`}
+                        href={station.url}
+                        rel="noreferrer"
+                        target="_blank"
+                        className="stagger-in card-lift group min-h-[238px] rounded-[20px] border border-[var(--color-line)] bg-[var(--surface-gradient)] p-6 shadow-[var(--shadow-card)] transition-all duration-300 hover:-translate-y-[4px] hover:border-[var(--color-brand)] hover:shadow-[0_28px_72px_rgba(15,23,42,0.10)]"
+                      >
+                        {cardContent}
+                      </a>
+                    );
+                  }
+
+                  return (
+                    <div
+                      key={`${station.id}-hero`}
+                      className="stagger-in card-lift group min-h-[238px] rounded-[20px] border border-[var(--color-line)] bg-[var(--surface-gradient)] p-6 shadow-[var(--shadow-card)] transition-all duration-300 hover:-translate-y-[4px] hover:border-[var(--color-brand)] hover:shadow-[0_28px_72px_rgba(15,23,42,0.10)]"
+                    >
+                      {cardContent}
                     </div>
-                    <span className="rounded-full bg-[var(--color-brand-soft)] px-3 py-1 text-xs font-bold text-[var(--color-brand-deep)]">
-                      {row.badge}
-                    </span>
-                  </div>
+                  );
+                })}
+              </div>
+            )}
 
-                  <p className="mt-4 text-sm leading-7 text-[var(--color-muted)]">{row.note}</p>
-
-                  <div className="mt-5 grid grid-cols-2 gap-3 border-t border-[var(--color-line)] pt-4 text-sm">
-                    <div>
-                      <p className="text-[var(--color-muted)]">价格</p>
-                      <p className="mt-1 font-black">{row.price}</p>
-                    </div>
-                    <div>
-                      <p className="text-[var(--color-muted)]">倍率</p>
-                      <p className="mt-1 font-black">{row.multiplier}</p>
-                    </div>
-                  </div>
-
-                  <div className="mt-5 inline-flex items-center text-sm font-bold text-[var(--color-brand-deep)]">
-                    打开站点入口
-                    <span className="ml-2 transition group-hover:translate-x-1">→</span>
-                  </div>
-                </a>
-              ))}
-            </div>
-
-            <div className="surface-in mt-8 rounded-[8px] border border-[var(--color-line)] bg-[var(--color-panel)] p-5 shadow-[var(--shadow-card)] backdrop-blur">
+            {/* Search / filter panel */}
+            <div className="surface-in mt-8 rounded-[20px] border border-[var(--color-line)] bg-[var(--color-panel)] p-6 shadow-[var(--shadow-card)] backdrop-blur">
               <div className="flex flex-wrap items-end justify-between gap-4">
                 <div>
                   <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
@@ -191,17 +797,50 @@ export function StationsBoard() {
                   <h2 className="mt-2 text-2xl font-black">搜索 / 筛选</h2>
                 </div>
                 <p className="text-sm text-[var(--color-muted)]">
-                  当前结果 <span className="font-bold text-[var(--color-ink)]">{filteredRows.length}</span> 条
+                  找到 <span className="font-bold text-[var(--color-ink)]">{filteredRows.length}</span> 个站点
                 </p>
               </div>
 
-              <div className="mt-5">
-                <input
-                  className="w-full rounded-full border border-[var(--color-line)] bg-[var(--color-soft)] px-5 py-3.5 text-sm outline-none transition focus:border-[var(--color-brand)] focus:bg-white"
-                  onChange={(event) => setQuery(event.target.value)}
-                  placeholder="搜站点名、倍率、试用、免费、Claude、Grok、入口域名都可以"
-                  value={query}
-                />
+              <div className="mt-5 flex flex-wrap items-center gap-3">
+                <div className="relative flex-1 min-w-[280px]">
+                  <input
+                    ref={searchInputRef}
+                    className="w-full rounded-full border border-[var(--color-line)] bg-[var(--color-soft)] pl-5 pr-[88px] py-3.5 text-sm outline-none transition focus:border-[var(--color-brand)] focus:bg-white"
+                    onChange={(event) => setQuery(event.target.value)}
+                    placeholder="搜站点名、倍率、试用、免费、Claude、Grok、入口域名都可以"
+                    value={query}
+                  />
+                  <div className="absolute right-3.5 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                    {query && (
+                      <button
+                        className="flex h-5 w-5 items-center justify-center rounded-full text-[var(--color-muted)] hover:bg-[var(--color-line)] hover:text-[var(--color-ink)] transition"
+                        onClick={() => { setQuery(""); setDebouncedQuery(""); }}
+                        type="button"
+                        aria-label="清除搜索"
+                      >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                      </button>
+                    )}
+                    <span className="text-[11px] text-[var(--color-muted)] border border-[var(--color-line)] rounded-md px-1.5 py-0.5 select-none leading-tight">
+                      Ctrl+K
+                    </span>
+                  </div>
+                </div>
+                <select
+                  className="rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] px-4 py-3.5 text-sm outline-none transition focus:border-[var(--color-brand)] cursor-pointer appearance-none text-[var(--color-ink)]"
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as SortOption)}
+                  style={{
+                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
+                    backgroundRepeat: "no-repeat",
+                    backgroundPosition: "right 14px center",
+                    paddingRight: "36px",
+                  }}
+                >
+                  {sortOptions.map((opt) => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
               </div>
 
               <div className="mt-4 flex flex-wrap gap-2">
@@ -233,6 +872,7 @@ export function StationsBoard() {
             </div>
           </div>
 
+          {/* ---- Sidebar ---- */}
           <aside className="xl:pt-2">
             <div className="border-b border-[var(--color-line)] pb-5">
               <div className="flex items-start justify-between gap-4">
@@ -313,11 +953,32 @@ export function StationsBoard() {
         </div>
       </section>
 
+      {/* ---- Table ---- */}
       <section className="mx-auto max-w-7xl px-6 pb-14 lg:px-10">
-        <div className="surface-in overflow-hidden rounded-[8px] border border-[var(--color-line)] bg-[var(--color-panel)] shadow-[var(--shadow-card)]">
+        <div className="surface-in overflow-hidden rounded-[20px] border border-[var(--color-line)] bg-[var(--color-panel)] shadow-[var(--shadow-card)]">
+          {/* Table header */}
           <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[var(--color-line)] px-6 py-5">
             <div>
               <h2 className="text-3xl font-black">中转站总表</h2>
+              <div className="mt-2 flex items-center gap-3">
+                <span className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--color-muted)]">
+                  数据新鲜度
+                </span>
+                <span className="text-xs text-[var(--color-muted)]">
+                  {freshnessStats.updatedThisWeek}/{freshnessStats.total} 站点本周有更新
+                </span>
+                <span
+                  className="inline-block h-1.5 rounded-full bg-[var(--color-soft)]"
+                  style={{ width: 96 }}
+                >
+                  <span
+                    className="inline-block h-full rounded-full bg-[var(--color-brand-soft)] transition-all"
+                    style={{
+                      width: `${freshnessStats.total ? (freshnessStats.updatedThisWeek / freshnessStats.total) * 100 : 0}%`,
+                    }}
+                  />
+                </span>
+              </div>
             </div>
             <div className="flex flex-wrap gap-3">
               <button
@@ -338,6 +999,7 @@ export function StationsBoard() {
 
           <div className="overflow-x-auto">
             <div className="min-w-[1180px]">
+              {/* Column headers */}
               <div className="grid grid-cols-[0.8fr_1.05fr_1fr_0.92fr_0.9fr_0.8fr_1.3fr] bg-[var(--color-soft)] px-6 py-4 text-sm font-bold text-[var(--color-muted)]">
                 <span>排序</span>
                 <span>站点</span>
@@ -348,61 +1010,179 @@ export function StationsBoard() {
                 <span>状态与社区备注</span>
               </div>
 
-              {visibleRows.map((row, index) => (
-                <article
-                  key={`${row.name}-${index}`}
-                  className={`grid grid-cols-[0.8fr_1.05fr_1fr_0.92fr_0.9fr_0.8fr_1.3fr] items-start px-6 py-5 ${
-                    index % 2 === 0 ? "bg-[var(--color-panel)]" : "bg-[var(--color-row-alt)]"
-                  }`}
-                >
-                  <div className="font-bold text-[var(--color-muted)]">{rankingBadge(index)}</div>
+              {/* Rows */}
+              {visibleRows.length === 0 ? (
+                <div className="px-6 py-16 text-center">
+                  <p className="text-lg font-bold text-[var(--color-muted)]">没有匹配的站点</p>
+                  <p className="mt-2 text-sm text-[var(--color-muted)]">
+                    试试调整搜索关键词或切换筛选标签
+                  </p>
+                  <button
+                    className="mt-4 rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] px-5 py-2.5 text-sm font-bold text-[var(--color-brand-deep)] transition hover:border-[var(--color-brand)]"
+                    onClick={() => { setQuery(""); setDebouncedQuery(""); setActiveFilter("all"); }}
+                    type="button"
+                  >
+                    清除所有筛选
+                  </button>
+                </div>
+              ) : (
+                visibleRows.map((station, index) => {
+                const isEditing = editingId === station.id;
+                const isShowingHistory = historyStationId === station.id;
 
-                  <div>
-                    <div className="flex flex-wrap items-center gap-3">
-                      <h3 className="font-bold">{row.name}</h3>
-                      <span className="rounded-full bg-[var(--color-brand-soft)] px-2.5 py-1 text-xs font-bold text-[var(--color-brand-deep)]">
-                        {row.badge}
-                      </span>
-                    </div>
-                    <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">{row.group}</p>
+                return (
+                  <div key={station.id}>
+                    <article
+                      className="grid grid-cols-[0.8fr_1.05fr_1fr_0.92fr_0.9fr_0.8fr_1.3fr] items-start px-6 py-5 transition-all duration-300 hover:bg-[var(--color-hover)]"
+                    >
+                      {/* 排序 */}
+                      <div className="font-bold text-[var(--color-muted)]">
+                        {rankingBadge(index)}
+                      </div>
+
+                      {/* 站点 */}
+                      <div>
+                        <div className="flex flex-wrap items-center gap-3">
+                          <button
+                            className="cursor-pointer font-bold transition hover:text-[var(--color-brand)]"
+                            onClick={() => setDetailStation(station)}
+                            type="button"
+                          >
+                            {station.name}
+                          </button>
+                          <span className="rounded-full bg-[var(--color-brand-soft)] px-2.5 py-1 text-xs font-bold text-[var(--color-brand-deep)]">
+                            {station.badge}
+                          </span>
+                          {(() => {
+                            const fi = freshnessInfo(station.lastEditAt);
+                            if (!fi) return null;
+                            return (
+                              <span
+                                className={`inline-flex items-center gap-1 text-[11px] ${
+                                  fi.isRecent
+                                    ? "text-[var(--color-brand-deep)]"
+                                    : "text-[var(--color-muted)]"
+                                }`}
+                              >
+                                <span
+                                  className={`inline-block h-1.5 w-1.5 rounded-full ${
+                                    fi.isRecent ? "bg-green-500" : "bg-[var(--color-muted)]"
+                                  }`}
+                                />
+                                {fi.label}
+                              </span>
+                            );
+                          })()}
+                        </div>
+                        {station.url ? (
+                          <a
+                            href={station.url}
+                            rel="noreferrer"
+                            target="_blank"
+                            className="mt-2 inline-block text-sm leading-6 font-semibold text-[var(--color-brand-deep)] transition hover:text-[var(--color-brand)]"
+                          >
+                            {station.entry || station.url}
+                          </a>
+                        ) : (
+                          <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">
+                            {station.groupName || station.entry}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* 入口 / 地址 */}
+                      <div className="text-sm leading-6 text-[var(--color-muted)]">
+                        {station.url ? (
+                          <a
+                            href={station.url}
+                            rel="noreferrer"
+                            target="_blank"
+                            className="font-semibold text-[var(--color-brand-deep)] transition hover:text-[var(--color-brand)]"
+                          >
+                            打开 →
+                          </a>
+                        ) : (
+                          <span className="text-[var(--color-muted)]">待补</span>
+                        )}
+                      </div>
+
+                      {/* 收费方式 */}
+                      <div>
+                        <p className="font-bold">{station.packageType}</p>
+                        <p className="mt-1 text-sm leading-6 text-[var(--color-muted)]">
+                          {station.models}
+                        </p>
+                      </div>
+
+                      {/* 标称价格 */}
+                      <div className="font-bold">{station.price}</div>
+
+                      {/* 倍率 */}
+                      <div className="font-bold">{station.multiplier}</div>
+
+                      {/* 状态与社区备注 */}
+                      <div>
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <p className="font-bold">{station.status}</p>
+                            <p className="mt-1 text-sm leading-6 text-[var(--color-muted)]">
+                              {station.note}
+                            </p>
+                          </div>
+                          {isConnected && (
+                            <button
+                              className="shrink-0 text-[var(--color-muted)] hover:text-[var(--color-brand-deep)] transition"
+                              onClick={() => startEdit(station)}
+                              title="编辑此站点"
+                              type="button"
+                            >
+                              ✎
+                            </button>
+                          )}
+                        </div>
+                        <button
+                          className="mt-2 text-xs text-[var(--color-muted)] hover:text-[var(--color-brand-deep)] transition underline underline-offset-2"
+                          onClick={() => toggleHistory(station.id)}
+                          type="button"
+                        >
+                          {isShowingHistory ? "收起历史" : "历史"}
+                        </button>
+                      </div>
+                    </article>
+
+                    {/* Edit panel (below row) */}
+                    {isEditing && renderEditPanel()}
+
+                    {/* History panel (below row) */}
+                    {isShowingHistory && renderHistoryPanel(station)}
                   </div>
+                );
+              })
+              )}
 
-                  <div className="text-sm leading-6 text-[var(--color-muted)]">
-                    {stationLinkMap[row.name] ? (
-                      <a
-                        href={stationLinkMap[row.name]}
-                        rel="noreferrer"
-                        target="_blank"
-                        className="font-semibold text-[var(--color-brand-deep)] transition hover:text-[var(--color-brand)]"
-                      >
-                        {row.entry}
-                      </a>
-                    ) : (
-                      row.entry
-                    )}
-                  </div>
+              {/* Add-new button */}
+              {isConnected && !addingNew && (
+                <div className="px-6 py-4 border-t border-dashed border-[var(--color-line)]">
+                  <button
+                    className="rounded-full border border-dashed border-[var(--color-brand-soft)] bg-[var(--color-soft)] px-5 py-2.5 text-sm font-bold text-[var(--color-brand-deep)] transition hover:border-[var(--color-brand)] hover:bg-[var(--color-brand-soft)]"
+                    onClick={startAdd}
+                    type="button"
+                  >
+                    + 添加新站点
+                  </button>
+                </div>
+              )}
 
-                  <div>
-                    <p className="font-bold">{row.packageType}</p>
-                    <p className="mt-1 text-sm leading-6 text-[var(--color-muted)]">{row.models}</p>
-                  </div>
-
-                  <div className="font-bold">{row.price}</div>
-                  <div className="font-bold">{row.multiplier}</div>
-
-                  <div>
-                    <p className="font-bold">{row.status}</p>
-                    <p className="mt-1 text-sm leading-6 text-[var(--color-muted)]">{row.note}</p>
-                  </div>
-                </article>
-              ))}
+              {/* Create panel (below all rows) */}
+              {addingNew && renderCreatePanel()}
             </div>
           </div>
 
+          {/* Table footer */}
           <div className="flex flex-wrap items-center justify-between gap-4 border-t border-[var(--color-line)] px-6 py-5">
             <p className="text-sm leading-7 text-[var(--color-muted)]">
               {filteredRows.length === 0
-                ? "当前筛选没有结果。"
+                ? "没有匹配的站点，试试调整筛选条件。"
                 : `当前显示 ${visibleRows.length} / ${filteredRows.length} 条。`}
             </p>
             {!showAllRows && filteredRows.length > visibleRows.length ? (
@@ -418,9 +1198,17 @@ export function StationsBoard() {
         </div>
       </section>
 
+      {/* ---- Submission ---- */}
       <section className="mx-auto max-w-7xl px-6 pb-16 lg:px-10">
         <SubmissionPanel />
       </section>
+
+      {/* ---- Station Detail Modal ---- */}
+      <StationDetailModal
+        station={detailStation}
+        open={detailStation !== null}
+        onClose={() => setDetailStation(null)}
+      />
     </>
   );
 }

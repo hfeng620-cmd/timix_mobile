@@ -4,9 +4,12 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { FloatingQuickPanel } from "@/components/floating-quick-panel";
 import { MobileDock } from "@/components/mobile-dock";
 import { MouseGlowLayer } from "@/components/mouse-glow-layer";
+import { PageLoadingBar } from "@/components/page-loading-bar";
 import { SelectionCommentLayer } from "@/components/selection-comment-layer";
 import { SiteFooter } from "@/components/site-footer";
+import { ToastContainer } from "@/components/toast-container";
 import { ForumAuthProvider } from "@/lib/forum-auth";
+import { ToastProvider } from "@/lib/toast-context";
 
 import "./globals.css";
 
@@ -33,20 +36,30 @@ export default function RootLayout({
   return (
     <html
       lang="zh-CN"
-      data-theme="midnight"
+      data-theme="blue"
       data-scroll-behavior="smooth"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full">
+        <a
+          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-full focus:bg-[var(--color-brand)] focus:px-5 focus:py-3 focus:text-sm focus:font-bold focus:text-[var(--color-on-brand)]"
+          href="#main-content"
+        >
+          跳到主内容
+        </a>
+        <PageLoadingBar />
         <ForumAuthProvider>
-          <MouseGlowLayer />
-          <div className="relative z-10 flex min-h-full flex-col">
-            {children}
-            <SiteFooter />
-            <FloatingQuickPanel />
-            <MobileDock />
-            <SelectionCommentLayer />
-          </div>
+          <ToastProvider>
+            <MouseGlowLayer />
+            <main id="main-content" className="page-enter relative z-10 flex min-h-full flex-col">
+              {children}
+              <SiteFooter />
+              <FloatingQuickPanel />
+              <MobileDock />
+              <SelectionCommentLayer />
+            </main>
+            <ToastContainer />
+          </ToastProvider>
         </ForumAuthProvider>
       </body>
     </html>

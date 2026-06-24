@@ -31,7 +31,7 @@ export function QqGroupModalButton() {
   return (
     <div className="relative" ref={wrapperRef}>
       <button
-        className="inline-flex items-center gap-2 rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] px-3.5 py-2 text-xs font-bold text-[var(--color-brand-deep)] shadow-[0_10px_24px_rgba(15,23,42,0.06)] transition hover:border-[var(--color-brand)] hover:bg-[var(--color-brand-soft)]"
+        className="inline-flex items-center gap-2 rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] px-4 py-3 text-sm font-bold text-[var(--color-brand-deep)] shadow-[0_10px_24px_rgba(15,23,42,0.06)] transition hover:border-[var(--color-brand)] hover:bg-[var(--color-brand-soft)]"
         onClick={() => setOpen((current) => !current)}
         type="button"
       >
@@ -67,6 +67,7 @@ export function QqGroupModalButton() {
                 width={248}
                 height={248}
                 className="h-auto w-[248px] rounded-[18px]"
+                unoptimized
                 priority
               />
             </div>

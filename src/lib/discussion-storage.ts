@@ -261,6 +261,25 @@ export async function rejectDiscussionPost(postId: string): Promise<void> {
   if (error) throw error;
 }
 
+export async function uploadForumImage(file: File): Promise<string> {
+  assertConfigured();
+  const supabase = getSupabaseClient();
+  const { data: userData } = await supabase.auth.getUser();
+  if (!userData.user) throw new Error("请先登录。");
+
+  const ext = file.name.split(".").pop() ?? "png";
+  const fileName = `${userData.user.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+
+  const { error } = await supabase.storage
+    .from("forum-images")
+    .upload(fileName, file, { upsert: false, contentType: file.type });
+
+  if (error) throw error;
+
+  const { data: urlData } = supabase.storage.from("forum-images").getPublicUrl(fileName);
+  return urlData.publicUrl;
+}
+
 export async function updatePostBody(
   postId: string,
   newBody: string,
@@ -285,4 +304,64 @@ export async function updateAndApprovePost(
     .eq("id", postId);
 
   if (error) throw error;
+}
+
+export async function deleteDiscussionPost(postId: string): Promise<void> {
+  assertConfigured();
+  const { error } = await getSupabaseClient()
+    .from("forum_posts")
+    .update({ is_hidden: true })
+    .eq("id", postId);
+
+  if (error) throw error;
+}
+
+export type HotTopic = {
+  id: string;
+  title: string;
+  station: string;
+  tags: string[];
+  author_name: string;
+  reply_count: number;
+  like_count: number;
+  hot_score: number;
+};
+
+export async function getHotTopics(): Promise<HotTopic[]> {
+  assertConfigured();
+  const { data, error } = await getSupabaseClient()
+    .from("forum_hot_topics")
+    .select("*")
+    .limit(10);
+
+  if (error) throw error;
+  return (data ?? []) as HotTopic[];
+}
+
+export type ForumStats = {
+  visible_posts: number;
+  pending_posts: number;
+  visible_replies: number;
+  total_likes: number;
+  active_authors: number;
+};
+
+export async function getForumStats(): Promise<ForumStats | null> {
+  assertConfigured();
+  const { data, error } = await getSupabaseClient()
+    .from("forum_stats")
+    .select("*")
+    .single();
+
+  if (error) return null;
+  return data as ForumStats;
+}
+
+export async function checkSpam(body: string): Promise<boolean> {
+  assertConfigured();
+  const { data, error } = await getSupabaseClient()
+    .rpc("check_spam_content", { content: body });
+
+  if (error) return false;
+  return Boolean(data);
 }

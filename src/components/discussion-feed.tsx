@@ -1,14 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { ForumAuthModal } from "@/components/forum-auth-modal";
 import {
   createDiscussionPost,
   likeDiscussionPost,
   loadComments,
   loadDiscussionPosts,
   replyDiscussionPost,
+  uploadForumImage,
   type DiscussionPost,
   type DiscussionReply,
 } from "@/lib/discussion-storage";
@@ -99,7 +99,7 @@ export function DiscussionFeed({
   hideComposer = false,
   limit,
 }: DiscussionFeedProps) {
-  const { isConnected, displayName } = useForumAuth();
+  const { isConnected, displayName, showAuthModal } = useForumAuth();
 
   const [posts, setPosts] = useState<DiscussionPost[]>([]);
   const [commentsMap, setCommentsMap] = useState<Record<string, DiscussionReply[]>>({});
@@ -111,7 +111,8 @@ export function DiscussionFeed({
   const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
   const [replyTargets, setReplyTargets] = useState<Record<string, string>>({});
   const [status, setStatus] = useState("发帖讨论。");
-  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   const loadPosts = useCallback(async (setLoadingState: boolean) => {
     if (setLoadingState) setLoading(true);
@@ -154,7 +155,7 @@ export function DiscussionFeed({
 
   async function handleSubmitPost() {
     if (!isConnected) {
-      setAuthModalOpen(true);
+      showAuthModal();
       return;
     }
 
@@ -188,7 +189,7 @@ export function DiscussionFeed({
 
   async function handleLike(postId: string) {
     if (!isConnected) {
-      setAuthModalOpen(true);
+      showAuthModal();
       return;
     }
 
@@ -229,14 +230,18 @@ export function DiscussionFeed({
   }
 
   function openReplyBox(postId: string, target = "楼主") {
-    setExpandedPostId(postId);
-    setReplyTargets((current) => ({ ...current, [postId]: target }));
-    void loadPostComments(postId);
+    if (expandedPostId === postId) {
+      setExpandedPostId(null);
+    } else {
+      setExpandedPostId(postId);
+      setReplyTargets((current) => ({ ...current, [postId]: target }));
+      void loadPostComments(postId);
+    }
   }
 
   async function handleReply(postId: string) {
     if (!isConnected) {
-      setAuthModalOpen(true);
+      showAuthModal();
       return;
     }
 
@@ -265,7 +270,7 @@ export function DiscussionFeed({
 
   if (loading) {
     return (
-      <section className="overflow-hidden rounded-[8px] border border-[var(--color-line)] bg-[var(--color-panel)] shadow-[var(--shadow-card)]">
+      <section className="overflow-hidden rounded-[20px] border border-[var(--color-line)] bg-[var(--color-panel)] shadow-[var(--shadow-card)]">
         <div className="px-5 py-10 text-center">
           <p className="text-base text-[var(--color-muted)]">正在加载讨论...</p>
         </div>
@@ -275,7 +280,7 @@ export function DiscussionFeed({
 
   if (error) {
     return (
-      <section className="overflow-hidden rounded-[8px] border border-[var(--color-line)] bg-[var(--color-panel)] shadow-[var(--shadow-card)]">
+      <section className="overflow-hidden rounded-[20px] border border-[var(--color-line)] bg-[var(--color-panel)] shadow-[var(--shadow-card)]">
         <div className="px-5 py-10 text-center">
           <p className="text-base text-[var(--color-muted)]">{error}</p>
           <button
@@ -292,19 +297,19 @@ export function DiscussionFeed({
 
   return (
     <section
-      className="overflow-hidden rounded-[8px] border border-[var(--color-line)] bg-[var(--color-panel)] shadow-[var(--shadow-card)]"
+      className="card-lift overflow-hidden rounded-[20px] border border-[var(--color-line)] bg-[var(--color-panel)] shadow-[var(--shadow-card)] transition-all duration-300"
       data-selection-comments="off"
     >
       <div className="border-b border-[var(--color-line)] px-5 py-4">
         <div className="flex items-center justify-between gap-4">
-          <h1 className="text-2xl font-black tracking-tight">{title}</h1>
+          <h2 className="text-2xl font-black tracking-tight">{title}</h2>
           <span className="text-sm text-[var(--color-muted)]">{visiblePosts.length} 条</span>
         </div>
       </div>
 
       {!hideComposer ? (
         <div className="border-b border-[var(--color-line)] px-6 py-5">
-          <div className="rounded-[18px] bg-[var(--color-soft)] p-5">
+          <div className="rounded-[20px] bg-[var(--color-soft)] p-5">
             <textarea
               className="min-h-28 w-full resize-none bg-transparent text-base leading-7 outline-none"
               onChange={(event) => setBody(event.target.value)}
@@ -319,6 +324,34 @@ export function DiscussionFeed({
                   placeholder="带一个站点名或标签，例如 虎虎 / Aether"
                   value={station}
                 />
+                <input
+                  accept="image/*"
+                  className="hidden"
+                  onChange={async (event) => {
+                    const file = event.target.files?.[0];
+                    if (!file) return;
+                    if (file.size > 5 * 1024 * 1024) { setStatus("图片不能超过 5MB。"); return; }
+                    setUploadingImage(true);
+                    setStatus("图片上传中...");
+                    try {
+                      const url = await uploadForumImage(file);
+                      setBody((prev) => (prev + `\n![图片](${url})`).trim());
+                      setStatus("图片已插入。");
+                    } catch { setStatus("图片上传失败。"); }
+                    finally { setUploadingImage(false); }
+                    if (fileInputRef.current) fileInputRef.current.value = "";
+                  }}
+                  ref={fileInputRef}
+                  type="file"
+                />
+                <button
+                  className="rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] px-3 py-1.5 text-xs font-semibold text-[var(--color-muted)] transition hover:bg-[var(--color-soft)] hover:text-[var(--color-ink)] disabled:opacity-50"
+                  disabled={uploadingImage}
+                  onClick={() => fileInputRef.current?.click()}
+                  type="button"
+                >
+                  {uploadingImage ? "上传中..." : "📷 插图"}
+                </button>
                 <span className="text-xs text-[var(--color-muted)]">{status}</span>
               </div>
               <button
@@ -337,7 +370,7 @@ export function DiscussionFeed({
         {visiblePosts.length === 0 ? (
           <div className="px-5 py-10 text-center sm:px-6">
             <p className="text-base font-bold text-[var(--color-ink)]">还没有讨论。</p>
-            <p className="mt-2 text-sm text-[var(--color-muted)]">在上面发第一条帖子，审核后会显示在这里。</p>
+            <p className="mt-2 text-sm text-[var(--color-muted)]">在上面发第一条帖子，发布后即显示在讨论区。</p>
           </div>
         ) : null}
 
@@ -346,7 +379,7 @@ export function DiscussionFeed({
           const comments = commentsMap[post.issueNumber];
 
           return (
-            <article key={post.issueNumber} className="px-5 py-5 transition hover:bg-[var(--color-hover)] sm:px-6">
+            <article id={post.issueNumber} key={post.issueNumber} className="card-lift px-5 py-5 transition hover:bg-[var(--color-hover)] sm:px-6">
               <div className="flex items-start justify-between gap-3 sm:gap-4">
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
@@ -436,7 +469,6 @@ export function DiscussionFeed({
         })}
       </div>
 
-      <ForumAuthModal key={authModalOpen ? "open" : "closed"} open={authModalOpen} onClose={() => setAuthModalOpen(false)} />
     </section>
   );
 }

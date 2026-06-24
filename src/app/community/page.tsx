@@ -1,16 +1,25 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
 import { AuthButton } from "@/components/auth-button";
 import { CommunityPostPanel } from "@/components/community-post-panel";
 import { DiscussionFeed } from "@/components/discussion-feed";
 import { QqGroupModalButton } from "@/components/qq-group-modal-button";
+import HotTopicsPanel from "@/components/hot-topics-panel";
+import UserRankPanel from "@/components/user-rank-panel";
 import { siteLinks } from "@/lib/site-links";
 
 export default function CommunityPage() {
   const [feedRefreshKey, setFeedRefreshKey] = useState(0);
+
+  const handleTopicClick = useCallback((postId: string) => {
+    const el = document.getElementById(postId);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, []);
 
   return (
     <main className="min-h-screen bg-[var(--color-bg)] text-[var(--color-ink)]">
@@ -66,14 +75,44 @@ export default function CommunityPage() {
           </a>
         </div>
 
-        <div className="space-y-5">
-          <CommunityPostPanel onPostCreated={() => setFeedRefreshKey((value) => value + 1)} />
-          <DiscussionFeed
-            key={feedRefreshKey}
-            hideComposer
-            title="讨论"
-            limit={8}
-          />
+        {/* Two-column layout: single column on mobile, sidebar appears at xl */}
+        <div className="xl:flex xl:gap-6">
+          {/* Left column: main content */}
+          <div className="min-w-0 flex-1 space-y-5">
+            <CommunityPostPanel onPostCreated={() => setFeedRefreshKey((value) => value + 1)} />
+            <DiscussionFeed
+              key={feedRefreshKey}
+              hideComposer
+              title="讨论"
+              limit={8}
+            />
+          </div>
+
+          {/* Right sidebar: visible only on xl+ screens */}
+          <aside className="hidden xl:block w-[320px] shrink-0">
+            <div className="sticky top-24 space-y-5">
+              <HotTopicsPanel onTopicClick={handleTopicClick} />
+
+              {/* QQ群入口 */}
+              <div className="rounded-[20px] border border-[var(--color-line)] bg-[var(--color-panel)] p-5 shadow-[var(--shadow-card)]">
+                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
+                  QQ群入口
+                </p>
+                <p className="mt-3 text-lg font-black tracking-tight">群号 602190132</p>
+                <p className="mt-1 text-sm text-[var(--color-muted)]">
+                  扫码或搜索群号加入，一起交流讨论
+                </p>
+              </div>
+
+              {/* 贡献排行 */}
+              <UserRankPanel />
+            </div>
+          </aside>
+        </div>
+
+        {/* Mobile: UserRankPanel visible below main content on screens smaller than xl */}
+        <div className="mt-5 xl:hidden">
+          <UserRankPanel />
         </div>
       </section>
 

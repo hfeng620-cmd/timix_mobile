@@ -1,9 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 
-import { ForumAuthModal } from "@/components/forum-auth-modal";
-import { createDiscussionPost } from "@/lib/discussion-storage";
+import { createDiscussionPost, uploadForumImage } from "@/lib/discussion-storage";
 import { useForumAuth } from "@/lib/forum-auth";
 
 type CommunityPostPanelProps = {
@@ -15,14 +14,15 @@ export function CommunityPostPanel({ onPostCreated }: CommunityPostPanelProps) {
   const [station, setStation] = useState("");
   const [body, setBody] = useState("");
   const [status, setStatus] = useState("发布后即显示在讨论区。");
-  const [authModalOpen, setAuthModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  const { isConnected, displayName } = useForumAuth();
+  const { isConnected, displayName, showAuthModal } = useForumAuth();
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   async function handleSubmit() {
     if (!isConnected) {
-      setAuthModalOpen(true);
+      showAuthModal();
       return;
     }
 
@@ -62,7 +62,7 @@ export function CommunityPostPanel({ onPostCreated }: CommunityPostPanelProps) {
 
   function handlePlaceholderClick() {
     if (!isConnected) {
-      setAuthModalOpen(true);
+      showAuthModal();
       return;
     }
     setOpen(true);
@@ -70,7 +70,7 @@ export function CommunityPostPanel({ onPostCreated }: CommunityPostPanelProps) {
 
   return (
     <div
-      className="rounded-[8px] border border-[var(--color-line)] bg-[var(--color-panel)] p-3 shadow-[0_16px_50px_rgba(13,25,48,0.06)] backdrop-blur sm:p-4"
+      className="card-lift rounded-[20px] border border-[var(--color-line)] bg-[var(--color-panel)] p-5 shadow-[var(--shadow-card)] backdrop-blur sm:p-6 transition-all duration-300"
       data-selection-comments="off"
     >
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--color-line)] pb-3">
@@ -91,7 +91,7 @@ export function CommunityPostPanel({ onPostCreated }: CommunityPostPanelProps) {
       {!open ? (
         <div className="mt-3 grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
           <button
-            className="min-h-12 rounded-[8px] border border-[var(--color-line)] bg-[var(--color-input)] px-4 py-3 text-left text-sm text-[var(--color-muted)] transition hover:border-[var(--color-brand)] hover:text-[var(--color-ink)]"
+            className="min-h-12 rounded-[12px] border border-[var(--color-line)] bg-[var(--color-input)] px-4 py-3 text-left text-sm text-[var(--color-muted)] transition hover:border-[var(--color-brand)] hover:text-[var(--color-ink)]"
             onClick={handlePlaceholderClick}
             type="button"
           >
@@ -113,18 +113,49 @@ export function CommunityPostPanel({ onPostCreated }: CommunityPostPanelProps) {
       ) : (
         <div className="mt-4">
           <input
-            className="w-full rounded-[8px] border border-[var(--color-line)] bg-[var(--color-input)] px-4 py-3 text-sm outline-none transition focus:border-[var(--color-brand)]"
+            className="w-full rounded-[12px] border border-[var(--color-line)] bg-[var(--color-input)] px-4 py-3 text-sm outline-none transition focus:border-[var(--color-brand)]"
             onChange={(event) => setStation(event.target.value)}
             placeholder="关联站点或标签"
             value={station}
           />
 
           <textarea
-            className="mt-3 min-h-36 w-full resize-none rounded-[8px] border border-[var(--color-line)] bg-[var(--color-input)] px-4 py-3 text-sm leading-7 outline-none transition focus:border-[var(--color-brand)]"
+            className="mt-3 min-h-36 w-full resize-none rounded-[12px] border border-[var(--color-line)] bg-[var(--color-input)] px-4 py-3 text-sm leading-7 outline-none transition focus:border-[var(--color-brand)]"
             onChange={(event) => setBody(event.target.value)}
-            placeholder="写价格变化、试用活动、模型口径或避坑记录。"
+            placeholder="写价格变化、试用活动、模型口径或避坑记录。支持粘贴图片链接。"
             value={body}
           />
+
+          <div className="mt-2 flex items-center gap-3">
+            <input
+              accept="image/*"
+              className="hidden"
+              onChange={async (event) => {
+                const file = event.target.files?.[0];
+                if (!file) return;
+                if (file.size > 5 * 1024 * 1024) { setStatus("图片不能超过 5MB。"); return; }
+                setUploadingImage(true);
+                setStatus("图片上传中...");
+                try {
+                  const url = await uploadForumImage(file);
+                  setBody((prev) => (prev + `\n![图片](${url})`).trim());
+                  setStatus("图片已插入。");
+                } catch { setStatus("图片上传失败，请稍后重试。"); }
+                finally { setUploadingImage(false); }
+                if (fileInputRef.current) fileInputRef.current.value = "";
+              }}
+              ref={fileInputRef}
+              type="file"
+            />
+            <button
+              className="rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] px-3 py-1.5 text-xs font-semibold text-[var(--color-muted)] transition hover:bg-[var(--color-soft)] hover:text-[var(--color-ink)] disabled:opacity-50"
+              disabled={uploadingImage}
+              onClick={() => fileInputRef.current?.click()}
+              type="button"
+            >
+              {uploadingImage ? "上传中..." : "📷 插图"}
+            </button>
+          </div>
 
           <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <button
@@ -149,11 +180,6 @@ export function CommunityPostPanel({ onPostCreated }: CommunityPostPanelProps) {
         </div>
       )}
 
-      <ForumAuthModal
-        key={authModalOpen ? "open" : "closed"}
-        open={authModalOpen}
-        onClose={() => setAuthModalOpen(false)}
-      />
     </div>
   );
 }

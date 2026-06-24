@@ -10,6 +10,7 @@ import React, {
 } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 
+import { ForumAuthModal } from "@/components/forum-auth-modal";
 import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase";
 
 type AuthResult = {
@@ -27,6 +28,9 @@ interface ForumAuthState {
   isConfigured: boolean;
   isLoading: boolean;
   needsPassword: boolean;
+  authModalOpen: boolean;
+  showAuthModal: () => void;
+  hideAuthModal: () => void;
   sendEmailCode: (email: string) => Promise<AuthResult>;
   signInWithPassword: (email: string, password: string) => Promise<AuthResult>;
   setPassword: (password: string, displayName?: string) => Promise<AuthResult>;
@@ -44,6 +48,9 @@ const defaultState: ForumAuthState = {
   isConfigured: false,
   isLoading: true,
   needsPassword: false,
+  authModalOpen: false,
+  showAuthModal: () => {},
+  hideAuthModal: () => {},
   sendEmailCode: async () => ({ ok: false, error: "认证服务未配置。" }),
   signInWithPassword: async () => ({ ok: false, error: "认证服务未配置。" }),
   setPassword: async () => ({ ok: false, error: "认证服务未配置。" }),
@@ -84,6 +91,10 @@ export function ForumAuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(configured);
   const [displayName, setDisplayNameState] = useState<string | null>(null);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+
+  const showAuthModal = useCallback(() => setAuthModalOpen(true), []);
+  const hideAuthModal = useCallback(() => setAuthModalOpen(false), []);
 
   async function loadDisplayName(userId: string) {
     try {
@@ -254,17 +265,25 @@ export function ForumAuthProvider({ children }: { children: React.ReactNode }) {
       isConfigured: configured,
       isLoading,
       needsPassword: userNeedsPassword(user),
+      authModalOpen,
+      showAuthModal,
+      hideAuthModal,
       sendEmailCode,
       signInWithPassword,
       setPassword,
       setDisplayName,
       signOut,
     };
-  }, [configured, displayName, isLoading, sendEmailCode, session, setDisplayName, setPassword, signInWithPassword, signOut]);
+  }, [configured, displayName, isLoading, sendEmailCode, session, setDisplayName, setPassword, signInWithPassword, signOut, authModalOpen, showAuthModal, hideAuthModal]);
 
   return (
     <ForumAuthContext.Provider value={value}>
       {children}
+      <ForumAuthModal
+        key={authModalOpen ? "open" : "closed"}
+        open={authModalOpen}
+        onClose={hideAuthModal}
+      />
     </ForumAuthContext.Provider>
   );
 }

@@ -10,7 +10,7 @@ export const tickerItems = [
     href: "/community",
   },
   {
-    label: "杂货铺 Plus 当前整理倍率为 0.13x，Pro 为 0.16x",
+    label: "杂货铺 GPT 倍率 0.058x，CC Max 倍率 0.89x",
     color: "#f59e0b",
     href: "https://api.dstopology.com/keys",
   },
@@ -39,146 +39,6 @@ export const guideSteps = [
   },
 ];
 
-export const highlightMetrics = [
-  { label: "已录入站点", value: "14", note: "已补入秋天中转站 qiutian.live，并继续扩展可比站点" },
-  { label: "可直接试用入口", value: "2", note: "虎虎注册送额度和 dazes.cc 新人赠额都已挂到页面" },
-  { label: "特殊价格口径", value: "5+", note: "含多倍率、日卡/周卡/月卡、plus/pro 分组等情况" },
-  { label: "共建优先级", value: "高", note: "这批数据最需要群友继续补测和纠错" },
-];
-
-export const updateBoard = [
-  "虎虎已拆成 Plus 0.13x / Pro 0.16x 双口径，注册链接送额度不变",
-  "Aether 最新整理倍率更新为 0.263x",
-  "杂货铺已拆成 Plus 0.13x / Pro 0.16x 双口径",
-];
-
-export const stationSnapshots = [
-  {
-    name: "虎虎",
-    group: "huhuai.xyz / 试用入口",
-    tag: "双口径",
-    price: "Plus 0.13 / Pro 0.16",
-    multiplier: "0.13x 起",
-    uptime: "待群测",
-    latency: "待补",
-  },
-  {
-    name: "Aether",
-    group: "to-aether.com / 社区常用",
-    tag: "较稳定",
-    price: "0.263 倍率",
-    multiplier: "0.263x",
-    uptime: "待补",
-    latency: "待补",
-  },
-  {
-    name: "杂货铺",
-    group: "api.dstopology.com / Plus / Pro",
-    tag: "双口径",
-    price: "Plus 0.13 / Pro 0.16",
-    multiplier: "0.13x 起",
-    uptime: "待补",
-    latency: "待补",
-  },
-];
-
-export const communityPosts = [
-  {
-    category: "倍率更新",
-    meta: "刚刚 · 群公告",
-    title: "虎虎倍率已拆分为 Plus 0.13x / Pro 0.16x，不再是单一 0.12x",
-    summary:
-      "即日起虎虎按双口径展示：Plus 档 0.13x，Pro 档 0.16x。注册链接送额度不变，新来的先试用再看长期。已有反馈请到讨论区补充。",
-  },
-  {
-    category: "集合更新",
-    meta: "刚整理 · 需要大家补测",
-    title: "这批中转站已经先挂上来了，接下来最缺的是稳定性和模型分组反馈",
-    summary:
-      "现在已经不是空样品了，而是把你给的真实站点集合先做进页面。下一步最有价值的是群友补充高峰期稳定性、实际模型可用性和价格是否持续有效。",
-  },
-  {
-    category: "试用提醒",
-    meta: "优先入口",
-    title: "虎虎当前走注册链接送额度，历史填表活动先留档",
-    summary:
-      "当前主入口已改为注册链接送额度；以前群里填表送 3 美刀的记录先保留。",
-  },
-  {
-    category: "避坑",
-    meta: "社区口径",
-    title: "Primdream 先别急着下结论，当前更缺的是新口径和一手样本",
-    summary:
-      "像这类还缺稳定样本的站，更适合先收录入口和当前口径，再等群友补价格截图、模型覆盖和高峰期表现，而不是直接写成确定推荐或明确劝退。",
-  },
-  {
-    category: "待核验",
-    meta: "继续共建",
-    title: "Datopology、WayX、秋天中转站等已补 GPT-5.5 / GPT-5.4 口径",
-    summary:
-      "这些站已确认可调用 GPT-5.5 / GPT-5.4，但价格倍率、计费规则和高峰稳定性还要继续补样本。",
-  },
-];
-
-export type XDiscussionReply = {
-  author: string;
-  handle: string;
-  postedAt: string;
-  body: string;
-};
-
-export type XDiscussionPost = {
-  id: string;
-  author: string;
-  handle: string;
-  postedAt: string;
-  body: string;
-  tags: string[];
-  station?: string;
-  stats: {
-    replies: number;
-    likes: number;
-    bookmarks: number;
-  };
-  replies?: XDiscussionReply[];
-};
-
-export const xDiscussionSeed: XDiscussionPost[] = [
-];
-
-export const demoVideos = [
-  {
-    title: "首页导览建议",
-    subtitle: "30 秒讲清楚怎么先试、怎么看群友备注",
-    note: "适合放一个短视频，演示首页主榜单、QQ 群入口和试用入口分别在哪。",
-  },
-  {
-    title: "榜单阅读建议",
-    subtitle: "重点解释倍率、模型分组和特殊口径",
-    note: "适合录一个榜单阅读说明，尤其讲清楚杂货铺、viptoken 这种同站多口径怎么理解。",
-  },
-  {
-    title: "协作提交流程",
-    subtitle: "新站点、纠错和群聊结论怎么进入正式榜单",
-    note: "适合录一个 GitHub 协作说明，讲清楚 QQ 群、Discussions、Issues 和管理员审核的分工。",
-  },
-];
-
-export const collaborationSteps = [
-  {
-    title: "先发线索",
-    description: "新站点、价格变化、试用入口和活动线索，先发 QQ 群或 GitHub Discussions，方便大家先确认口径。",
-  },
-  {
-    title: "再补口径",
-    description: "补上倍率、模型组、注册链接、截图、出现时间和适用条件，尽量别只留一句口头描述。",
-  },
-  {
-    title: "最后入表",
-    description: "管理员确认后再进正式榜单；适合长期留档的内容走 Issues、PR 或 Discussions 继续沉淀。",
-  },
-];
-
 export const collaborationChannels = [
   {
     title: "QQ 群 602190132",
@@ -194,51 +54,6 @@ export const collaborationChannels = [
     title: "GitHub Issues",
     href: "https://github.com/hfeng620-cmd/timin_api_test_and_forum/issues",
     note: "适合提交明确纠错、缺失链接、过期价格和待核验站点，便于管理员逐条处理。",
-  },
-];
-
-export const pendingVerifications = [
-  {
-    name: "WayX",
-    need: "可调用 GPT-5.5 / GPT-5.4，缺价格倍率和高峰期稳定性反馈",
-  },
-  {
-    name: "Datopology",
-    need: "可调用 GPT-5.5 / GPT-5.4，缺价格倍率和高峰期稳定性反馈",
-  },
-  {
-    name: "dasuAPI",
-    need: "可调用 GPT-5.5 / GPT-5.4，缺具体倍率和价格截图",
-  },
-  {
-    name: "ai8.my",
-    need: "目前整理到 0.06x，可调用 GPT-5.5 / GPT-5.4，缺高峰稳定性反馈",
-  },
-  {
-    name: "星见雅公益",
-    need: "当前已补可调用 Grok，仍缺额度规则和长期可用性说明",
-  },
-];
-
-export const contributionTasks = [
-  "补一个你用过的站",
-  "纠正一条过期价格",
-  "提交一个试用入口",
-  "补充一条避坑备注",
-];
-
-export const featuredColumns = [
-  {
-    title: "试用入口汇总",
-    description: "把试用单、注册送额度、互填邀请这种入口统一整理成一个板块。",
-  },
-  {
-    title: "多倍率说明",
-    description: "专门解释 GPT、Claude、plus、pro、Max、日卡/周卡/月卡的不同口径。",
-  },
-  {
-    title: "待补实测清单",
-    description: "公开列出哪些站还缺群友测试，让大家知道下一步帮什么最有价值。",
   },
 ];
 
@@ -313,9 +128,9 @@ export const homeFeaturedStations: HomeFeaturedStation[] = [
   {
     name: "杂货铺",
     badge: "双口径",
-    summary: "Plus 按 0.13x，Pro 按 0.16x，需要分开看。",
-    price: "Plus 0.13 / Pro 0.16",
-    multiplier: "0.13x 起",
+    summary: "GPT 0.058x，CC Max 0.89x，需要分开看。",
+    price: "GPT 0.058 / CC Max 0.89",
+    multiplier: "0.058x 起",
     reason: "很适合提醒大家：同一站点也可能是不同档位不同价格，不能只看一个最低值。",
   },
   {
@@ -375,7 +190,7 @@ export const faqEntries = [
   {
     question: "为什么星见雅公益要单独标注 Grok？",
     answer:
-      "因为它不只是一个免费入口，还带了额外模型可试的价值。对新手来说，这类信息往往比单纯“免费”更重要；但公益入口依然要单独看额度规则和长期稳定性，不能直接等同于主力站。",
+      "因为它不只是一个免费入口，还带了额外模型可试的价值。对新手来说，这类信息往往比单纯「免费」更重要；但公益入口依然要单独看额度规则和长期稳定性，不能直接等同于主力站。",
   },
 ];
 
@@ -451,7 +266,7 @@ export const modelGuideNotes = [
   },
   {
     title: "主力站和尝鲜站分开看",
-    description: "Aether、虎虎这类更像主力候选；星见雅公益这类更像尝鲜入口。不要把“免费可试”直接等同于“长期主力”。",
+    description: "Aether、虎虎这类更像主力候选；星见雅公益这类更像尝鲜入口。不要把「免费可试」直接等同于「长期主力」。",
   },
 ];
 
@@ -499,16 +314,16 @@ export const stationComparisonRows = [
     entry: "Keys 页面",
     packageType: "模型分组计价",
     status: "需要分开理解",
-    models: "Plus / Pro",
-    price: "Plus 0.13 / Pro 0.16",
-    multiplier: "0.13x 起",
+    models: "GPT / CC Max",
+    price: "GPT 0.058 / CC Max 0.89",
+    multiplier: "0.058x 起",
     uptime: "缺公开样本",
     latency: "缺统一样本",
     source: "群友备注",
     verdict: "一定要按模型分开看",
-    note: "Plus / Pro 分开计价，不要只看最低值。",
-    advantage: "很适合展示“同站不同模型收费完全不同”的真实情况。",
-    risk: "如果只看最低值，很容易误读 Claude 组的实际价格。",
+    note: "GPT 与 CC Max 分开计价，不要只看最低值。",
+    advantage: "很适合展示同站不同模型收费完全不同的真实情况。",
+    risk: "如果只看最低值，很容易误读 CC Max 的实际价格。",
   },
   {
     name: "秋天中转站",
@@ -634,7 +449,7 @@ export const stationComparisonRows = [
     verdict: "新人友好",
     note: "注册送额，可调用 GPT 5.5 / 5.4，邀请码备注 dGSL。",
     advantage: "门槛低，模型接入口径明确，适合拿来先试。",
-    risk: "“稳定”目前更多是社区口径，缺少统一实测。",
+    risk: "「稳定」目前更多是社区口径，缺少统一实测。",
   },
   {
     name: "viptoken站",

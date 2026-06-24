@@ -2,7 +2,6 @@
 
 import { useCallback, useState } from "react";
 
-import { ForumAuthModal } from "@/components/forum-auth-modal";
 import {
   approveDiscussionPost,
   loadPendingDiscussionPosts,
@@ -13,18 +12,17 @@ import {
 import { useForumAuth } from "@/lib/forum-auth";
 
 export function GithubIssueReviewPanel() {
-  const { isConnected } = useForumAuth();
+  const { isConnected, showAuthModal } = useForumAuth();
   const [posts, setPosts] = useState<DiscussionPost[]>([]);
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState("登录管理员邮箱后可审核站内待发布讨论。");
-  const [authModalOpen, setAuthModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editedBody, setEditedBody] = useState("");
 
   const loadPending = useCallback(async () => {
     if (!isConnected) {
       setPosts([]);
-      setAuthModalOpen(true);
+      showAuthModal();
       return;
     }
 
@@ -39,11 +37,11 @@ export function GithubIssueReviewPanel() {
     } finally {
       setLoading(false);
     }
-  }, [isConnected]);
+  }, [isConnected, showAuthModal]);
 
   async function review(postId: string, action: "approve" | "reject") {
     if (!isConnected) {
-      setAuthModalOpen(true);
+      showAuthModal();
       return;
     }
 
@@ -64,7 +62,7 @@ export function GithubIssueReviewPanel() {
 
   async function updateAndApprove(postId: string) {
     if (!isConnected) {
-      setAuthModalOpen(true);
+      showAuthModal();
       return;
     }
 
@@ -101,7 +99,7 @@ export function GithubIssueReviewPanel() {
         </div>
         <button
           className="rounded-full border border-[var(--color-line)] bg-white px-4 py-2 text-sm font-bold text-[var(--color-ink)] transition hover:bg-[var(--color-soft)]"
-          onClick={() => (isConnected ? void loadPending() : setAuthModalOpen(true))}
+          onClick={() => (isConnected ? void loadPending() : showAuthModal())}
           type="button"
         >
           {isConnected ? "刷新" : "登录邮箱"}
@@ -222,11 +220,6 @@ export function GithubIssueReviewPanel() {
         ))}
       </div>
 
-      <ForumAuthModal
-        key={authModalOpen ? "open" : "closed"}
-        open={authModalOpen}
-        onClose={() => setAuthModalOpen(false)}
-      />
     </section>
   );
 }
