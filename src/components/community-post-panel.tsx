@@ -61,6 +61,11 @@ export function CommunityPostPanel({ onPostCreated }: CommunityPostPanelProps) {
       return;
     }
 
+    if (body.trim().length < 5) {
+      setStatus("正文至少需要5个字符，再写详细一点吧。");
+      return;
+    }
+
     const tags = station
       .split(/[，,\s]+/)
       .map((item) => item.trim())

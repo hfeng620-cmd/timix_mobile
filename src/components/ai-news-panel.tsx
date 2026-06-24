@@ -145,78 +145,78 @@ export function AiNewsPanel() {
     };
   }, []);
 
-  const handleSubmitClick = () => {
-    const el = document.getElementById("ai-news-submit");
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth" });
-    }
-  };
+  const openSubmit = useCallback(() => setSubmitOpen(true), []);
+  const closeSubmit = useCallback(() => setSubmitOpen(false), []);
 
   return (
-    <div className="rounded-[20px] border border-[var(--color-line)] bg-[var(--color-panel)] p-5 shadow-[var(--shadow-card)]">
-      <div className="flex items-center justify-between border-b border-[var(--color-line)] pb-3">
-        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
-          AI 新闻
-        </p>
-        <span className="text-xs text-[var(--color-muted)]">最近值得看的 AI 动态</span>
-      </div>
-
-      <div className="mt-3 space-y-3">
-        {loading &&
-          Array.from({ length: 3 }).map((_, i) => <SkeletonBar key={i} />)}
-
-        {!loading && error && !isFallback && (
-          <p className="py-4 text-center text-sm text-[var(--color-muted)]">
-            新闻加载失败，已显示缓存数据
+    <>
+      <div className="rounded-[20px] border border-[var(--color-line)] bg-[var(--color-panel)] p-5 shadow-[var(--shadow-card)]">
+        <div className="flex items-center justify-between border-b border-[var(--color-line)] pb-3">
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
+            AI 新闻
           </p>
-        )}
+          <span className="text-xs text-[var(--color-muted)]">最近值得看的 AI 动态</span>
+        </div>
 
-        {!loading &&
-          !error &&
-          news.length === 0 && (
+        <div className="mt-3 space-y-3">
+          {loading &&
+            Array.from({ length: 3 }).map((_, i) => <SkeletonBar key={i} />)}
+
+          {!loading && error && !isFallback && (
             <p className="py-4 text-center text-sm text-[var(--color-muted)]">
-              暂无新闻
+              新闻加载失败，已显示缓存数据
             </p>
           )}
 
-        {!loading && news.length > 0 &&
-          news.map((item, i) => (
-            <article
-              key={`${item.title}-${i}`}
-              className="group rounded-[14px] border border-[var(--color-line)] bg-[var(--color-soft)] p-4 transition-all duration-300 hover:border-[var(--color-brand)] hover:bg-[var(--color-brand-soft)]"
-            >
-              <div className="flex items-start justify-between gap-2">
-                <h3 className="text-sm font-bold leading-6 text-[var(--color-ink)] group-hover:text-[var(--color-brand-deep)]">
-                  {item.title}
-                </h3>
-                {item.source_type === "user" && (
-                  <span className="shrink-0 rounded-full border border-[var(--color-brand)] px-2 py-0.5 text-[10px] font-medium text-[var(--color-brand)] opacity-70">
-                    社区投稿
-                  </span>
-                )}
-              </div>
-              <p className="mt-1.5 text-xs leading-6 text-[var(--color-muted)] line-clamp-2">
-                {item.summary}
+          {!loading &&
+            !error &&
+            news.length === 0 && (
+              <p className="py-4 text-center text-sm text-[var(--color-muted)]">
+                暂无新闻
               </p>
-              <div className="mt-2 flex items-center gap-2 text-xs text-[var(--color-muted)]">
-                <span className="font-semibold">{item.source}</span>
-                <span>·</span>
-                <span>{item.time}</span>
-              </div>
-            </article>
-          ))}
+            )}
+
+          {!loading && news.length > 0 &&
+            news.map((item, i) => (
+              <article
+                key={`${item.title}-${i}`}
+                className="group rounded-[14px] border border-[var(--color-line)] bg-[var(--color-soft)] p-4 transition-all duration-300 hover:border-[var(--color-brand)] hover:bg-[var(--color-brand-soft)]"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <h3 className="text-sm font-bold leading-6 text-[var(--color-ink)] group-hover:text-[var(--color-brand-deep)]">
+                    {item.title}
+                  </h3>
+                  {item.source_type === "user" && (
+                    <span className="shrink-0 rounded-full border border-[var(--color-brand)] px-2 py-0.5 text-[10px] font-medium text-[var(--color-brand)] opacity-70">
+                      社区投稿
+                    </span>
+                  )}
+                </div>
+                <p className="mt-1.5 text-xs leading-6 text-[var(--color-muted)] line-clamp-2">
+                  {item.summary}
+                </p>
+                <div className="mt-2 flex items-center gap-2 text-xs text-[var(--color-muted)]">
+                  <span className="font-semibold">{item.source}</span>
+                  <span>·</span>
+                  <span>{item.time}</span>
+                </div>
+              </article>
+            ))}
+        </div>
+
+        <div className="mt-4 border-t border-[var(--color-line)] pt-3">
+          <button
+            type="button"
+            onClick={openSubmit}
+            className="flex w-full items-center justify-center gap-1 rounded-xl bg-[var(--color-soft)] py-2.5 text-xs font-semibold text-[var(--color-muted)] transition-all duration-300 hover:bg-[var(--color-brand-soft)] hover:text-[var(--color-brand)]"
+          >
+            投稿AI新闻
+            <span aria-hidden="true">&rarr;</span>
+          </button>
+        </div>
       </div>
 
-      <div className="mt-4 border-t border-[var(--color-line)] pt-3">
-        <button
-          type="button"
-          onClick={handleSubmitClick}
-          className="flex w-full items-center justify-center gap-1 rounded-xl bg-[var(--color-soft)] py-2.5 text-xs font-semibold text-[var(--color-muted)] transition-all duration-300 hover:bg-[var(--color-brand-soft)] hover:text-[var(--color-brand)]"
-        >
-          投稿新闻
-          <span aria-hidden="true">&rarr;</span>
-        </button>
-      </div>
-    </div>
+      <AiNewsSubmit open={submitOpen} onClose={closeSubmit} />
+    </>
   );
 }

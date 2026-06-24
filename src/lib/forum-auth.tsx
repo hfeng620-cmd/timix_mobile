@@ -30,6 +30,7 @@ interface ForumAuthState {
   isLoading: boolean;
   needsPassword: boolean;
   isAdmin: boolean;
+  isOwner: boolean;
   adminUserIds: Set<string>;
   authModalOpen: boolean;
   showAuthModal: () => void;
@@ -52,6 +53,7 @@ const defaultState: ForumAuthState = {
   isLoading: true,
   needsPassword: false,
   isAdmin: false,
+  isOwner: false,
   adminUserIds: new Set(),
   authModalOpen: false,
   showAuthModal: () => {},
@@ -97,10 +99,12 @@ export function ForumAuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(configured);
   const [displayName, setDisplayNameState] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isOwner, setIsOwner] = useState(false);
   const [adminUserIds, setAdminUserIds] = useState<Set<string>>(new Set());
   const [authModalOpen, setAuthModalOpen] = useState(false);
 
   const adminLoadedRef = useRef(false);
+  const ownerLoadedRef = useRef(false);
 
   const showAuthModal = useCallback(() => setAuthModalOpen(true), []);
   const hideAuthModal = useCallback(() => setAuthModalOpen(false), []);
@@ -149,6 +153,36 @@ export function ForumAuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  async function loadOwnerInfo(userId: string) {
+    if (ownerLoadedRef.current) return;
+    ownerLoadedRef.current = true;
+
+    try {
+      const { data } = await getSupabaseClient()
+        .rpc("is_site_owner", { check_user_id: userId });
+      const owner = Boolean(data);
+      setIsOwner(owner);
+
+      // Site owner is always auto-admin
+      if (owner) {
+        setIsAdmin(true);
+        // Reload admin list so owner gets the full admin-user-id set
+        try {
+          const { data: rows } = await getSupabaseClient()
+            .from("forum_admins")
+            .select("user_id");
+          if (rows) {
+            setAdminUserIds(new Set((rows as { user_id: string }[]).map((r) => r.user_id)));
+          }
+        } catch {
+          // RLS may still block if admin list policy isn't ready
+        }
+      }
+    } catch {
+      // is_site_owner RPC failed — user is not a site owner
+    }
+  }
+
   useEffect(() => {
     if (!configured) return;
 
@@ -162,6 +196,7 @@ export function ForumAuthProvider({ children }: { children: React.ReactNode }) {
         if (data.session?.user?.id) {
           loadDisplayName(data.session.user.id);
           loadAdminInfo(data.session.user.id);
+          loadOwnerInfo(data.session.user.id);
         }
         setIsLoading(false);
       })
@@ -177,11 +212,14 @@ export function ForumAuthProvider({ children }: { children: React.ReactNode }) {
         if (nextSession?.user?.id) {
           loadDisplayName(nextSession.user.id);
           loadAdminInfo(nextSession.user.id);
+          loadOwnerInfo(nextSession.user.id);
         } else {
           setDisplayNameState(null);
           setIsAdmin(false);
+          setIsOwner(false);
           setAdminUserIds(new Set());
           adminLoadedRef.current = false;
+          ownerLoadedRef.current = false;
         }
         setIsLoading(false);
       },
@@ -315,6 +353,7 @@ export function ForumAuthProvider({ children }: { children: React.ReactNode }) {
       isLoading,
       needsPassword: userNeedsPassword(user),
       isAdmin,
+      isOwner,
       adminUserIds,
       authModalOpen,
       showAuthModal,
@@ -325,7 +364,7 @@ export function ForumAuthProvider({ children }: { children: React.ReactNode }) {
       setDisplayName,
       signOut,
     };
-  }, [configured, displayName, isLoading, isAdmin, adminUserIds, sendEmailCode, session, setDisplayName, setPassword, signInWithPassword, signOut, authModalOpen, showAuthModal, hideAuthModal]);
+  }, [configured, displayName, isLoading, isAdmin, isOwner, adminUserIds, sendEmailCode, session, setDisplayName, setPassword, signInWithPassword, signOut, authModalOpen, showAuthModal, hideAuthModal]);
 
   return (
     <ForumAuthContext.Provider value={value}>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
   createDiscussionPost,
@@ -61,6 +61,107 @@ function formatRelativeTime(postedAt: string): string {
   return postedAt;
 }
 
+const IMAGE_EXT_RE = /\.(jpg|jpeg|png|gif|webp)(\?.*)?$/i;
+const INLINE_TOKEN_RE =
+  /(!\[[^\]]*\]\([^)]+\)|`[^`\n]+`|\*\*[^*\n]+\*\*|\*(?!\*)[^*\n]+\*(?!\*)|https?:\/\/[^\s<>"')\]}，。；：！？、]+)/;
+
+function renderPostBody(text: string): React.ReactNode {
+  if (!text) return null;
+
+  const lines = text.split("\n");
+
+  function processLine(line: string): React.ReactNode[] {
+    const parts = line.split(INLINE_TOKEN_RE);
+    return parts.map((part, idx) => {
+      if (part === "") return null;
+
+      // Markdown image ![alt](url)
+      if (part.startsWith("![")) {
+        const m = part.match(/^!\[([^\]]*)\]\(([^)]+)\)$/);
+        if (m) {
+          return (
+            <img
+              key={idx}
+              alt={m[1] || "图片"}
+              className="my-2 max-w-full rounded-lg"
+              loading="lazy"
+              src={m[2]}
+            />
+          );
+        }
+        return part;
+      }
+
+      // Inline code
+      if (part.startsWith("`") && part.endsWith("`") && part.length >= 3) {
+        return (
+          <code
+            key={idx}
+            className="rounded bg-[var(--color-soft)] px-1.5 py-0.5 text-[0.9em] font-mono text-[var(--color-brand-deep)]"
+          >
+            {part.slice(1, -1)}
+          </code>
+        );
+      }
+
+      // Bold
+      if (part.startsWith("**") && part.endsWith("**") && part.length >= 5) {
+        return <strong key={idx}>{part.slice(2, -2)}</strong>;
+      }
+
+      // Italic
+      if (
+        part.startsWith("*") &&
+        part.endsWith("*") &&
+        part.length >= 3 &&
+        !part.startsWith("**")
+      ) {
+        return <em key={idx}>{part.slice(1, -1)}</em>;
+      }
+
+      // Plain URL
+      if (/^https?:\/\//i.test(part)) {
+        const cleaned = part.replace(/[。，；：！？、]+$/, "");
+        if (IMAGE_EXT_RE.test(cleaned)) {
+          return (
+            <img
+              key={idx}
+              alt="图片"
+              className="my-2 max-w-full rounded-lg"
+              loading="lazy"
+              src={cleaned}
+            />
+          );
+        }
+        return (
+          <a
+            key={idx}
+            className="text-[var(--color-brand)] underline decoration-[var(--color-brand)]/30 underline-offset-2 transition hover:decoration-[var(--color-brand)]"
+            href={cleaned}
+            rel="noreferrer"
+            target="_blank"
+          >
+            {cleaned}
+          </a>
+        );
+      }
+
+      // Plain text
+      return part;
+    });
+  }
+
+  return (
+    <>
+      {lines.map((line, i) => (
+        <React.Fragment key={i}>
+          {processLine(line)}
+          {i < lines.length - 1 && <br />}
+        </React.Fragment>
+      ))}
+    </>
+  );
+}
 function ActionIcon({ kind }: { kind: "comment" | "like" }) {
   if (kind === "comment") {
     return (
@@ -254,7 +355,8 @@ export function DiscussionFeed({
     const tags = station
       .split(/[，,\s]+/)
       .map((item) => item.trim())
-      .filter(Boolean);
+      .filter(Boolean)
+      .filter((t) => !isCategoryTag(t));
 
     setSubmitting(true);
     setStatus("发布中...");
@@ -529,6 +631,46 @@ export function DiscussionFeed({
         </div>
       ) : null}
 
+      {categoryCounts.length > 0 ? (
+        <div className="border-b border-[var(--color-line)] px-5 py-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              className={`min-h-[44px] rounded-full px-3.5 py-2.5 text-xs font-semibold transition border ${
+                selectedCategory === null
+                  ? "bg-[var(--color-brand)] text-[var(--color-on-brand)] border-transparent"
+                  : "bg-[var(--color-soft)] text-[var(--color-muted)] border-[var(--color-line)] hover:bg-[var(--color-hover)] hover:text-[var(--color-ink)]"
+              }`}
+              onClick={() => setSelectedCategory(null)}
+              type="button"
+            >
+              全部
+            </button>
+            {categoryCounts.map((cat) => {
+              const active = selectedCategory === cat.key;
+              return (
+                <button
+                  key={cat.key}
+                  className={`min-h-[44px] rounded-full px-3.5 py-2.5 text-xs font-semibold transition border ${
+                    active
+                      ? "text-[var(--color-on-brand)] shadow-sm"
+                      : "bg-[var(--color-soft)] text-[var(--color-muted)] border-[var(--color-line)] hover:text-[var(--color-ink)]"
+                  }`}
+                  onClick={() => setSelectedCategory(active ? null : cat.key)}
+                  style={
+                    active
+                      ? { backgroundColor: cat.color, borderColor: cat.color }
+                      : undefined
+                  }
+                  type="button"
+                >
+                  {cat.label} ({cat.count})
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
+
       {topTags.length > 0 ? (
         <div className="border-b border-[var(--color-line)] px-5 py-3">
           <div className="flex flex-wrap items-center gap-2">
@@ -541,7 +683,7 @@ export function DiscussionFeed({
               onClick={() => setSelectedTag(null)}
               type="button"
             >
-              全部
+              全部标签
             </button>
             {topTags.map(([tag, count]) => (
               <button
@@ -591,9 +733,18 @@ export function DiscussionFeed({
         {visiblePosts.map((post) => {
           const expanded = expandedPostId === post.issueNumber;
           const comments = commentsMap[post.issueNumber];
+          const borderColor = getCategoryBorderColor(post.tags);
+          const displayTags = post.tags.filter((t) => !isCategoryTag(t));
 
           return (
-            <article id={post.issueNumber} key={post.issueNumber} className="card-lift border-l-2 border-l-transparent px-5 py-5 transition hover:border-l-[var(--color-brand)] hover:bg-[var(--color-hover)] sm:px-6">
+            <article
+              id={post.issueNumber}
+              key={post.issueNumber}
+              className="card-lift border-l-2 px-5 py-5 transition hover:bg-[var(--color-hover)] sm:px-6"
+              style={{
+                borderLeftColor: borderColor ?? "transparent",
+              }}
+            >
               <div className="flex items-start gap-3 sm:gap-4">
                 {post.authorAvatarUrl ? (
                   <img
@@ -661,6 +812,18 @@ export function DiscussionFeed({
                         {post.station}
                       </span>
                     ) : null}
+                    {borderColor ? (
+                      <span
+                        className="rounded-full px-2.5 py-0.5 text-[10px] font-bold"
+                        style={{
+                          backgroundColor: `${borderColor}18`,
+                          color: borderColor,
+                          border: `1px solid ${borderColor}40`,
+                        }}
+                      >
+                        {parseCategoryFromTags(post.tags)?.label}
+                      </span>
+                    ) : null}
                   </div>
                   <hr className="mt-2 border-t border-[var(--color-line)]" />
                   {editingPostId === post.issueNumber ? (
@@ -689,13 +852,13 @@ export function DiscussionFeed({
                         </button>
                       </div>
                     </div>
-                  ) : post.body.length > 500 ? (
+                  ) : post.body.length > 300 ? (
                     <>
-                      <p className="mt-3 max-w-4xl text-[15px] leading-7 sm:text-base sm:leading-8 text-[var(--color-ink)]">
+                      <div className="mt-3 max-w-4xl text-[15px] leading-7 sm:text-base sm:leading-8 text-[var(--color-ink)]">
                         {expandedBodies.has(post.issueNumber)
-                          ? post.body
-                          : `${post.body.slice(0, 500)}...`}
-                      </p>
+                          ? renderPostBody(post.body)
+                          : <>{post.body.slice(0, 300)}...</>}
+                      </div>
                       <button
                         className="mt-1 min-h-[44px] rounded-lg px-3 py-2 text-xs font-semibold text-[var(--color-brand-deep)] transition hover:bg-[var(--color-soft)] hover:text-[var(--color-brand)]"
                         onClick={() => {
@@ -715,10 +878,12 @@ export function DiscussionFeed({
                       </button>
                     </>
                   ) : (
-                    <p className="mt-3 max-w-4xl text-[15px] leading-7 sm:text-base sm:leading-8 text-[var(--color-ink)]">{post.body}</p>
+                    <div className="mt-3 max-w-4xl text-[15px] leading-7 sm:text-base sm:leading-8 text-[var(--color-ink)]">
+                      {renderPostBody(post.body)}
+                    </div>
                   )}
                   <div className="mt-3 flex flex-wrap gap-2">
-                    {post.tags.map((tag) => (
+                    {displayTags.map((tag) => (
                       <button
                         key={`${post.issueNumber}-${tag}`}
                         className={`min-h-[44px] rounded-full px-3 py-1.5 text-xs font-semibold transition ${
@@ -742,6 +907,21 @@ export function DiscussionFeed({
                       type="button"
                     >
                       {expanded ? "收起 ▲" : "展开 ▼"}
+                    </button>
+                    <button
+                      className="min-h-[44px] min-w-[44px] rounded-lg px-3 py-2 text-xs font-bold text-[var(--color-muted)] transition hover:bg-[var(--color-soft)] hover:text-[var(--color-brand-deep)]"
+                      onClick={() => {
+                        const url = `${window.location.origin}${window.location.pathname}#${post.issueNumber}`;
+                        void navigator.clipboard.writeText(url);
+                      }}
+                      type="button"
+                      title="复制帖子链接"
+                    >
+                      <svg aria-hidden="true" className="mr-1 inline-block h-3.5 w-3.5 align-[-2px]" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24">
+                        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                      </svg>
+                      复制链接
                     </button>
                   </div>
                 </div>
@@ -780,7 +960,7 @@ export function DiscussionFeed({
                                 <span className="text-[var(--color-muted)]">·</span>
                                 <span className="text-[var(--color-muted)]">{formatRelativeTime(reply.postedAt)}</span>
                               </div>
-                              <p className="mt-1 text-sm leading-7 text-[var(--color-ink)]">{reply.body}</p>
+                              <div className="mt-1 text-sm leading-7 text-[var(--color-ink)]">{renderPostBody(reply.body)}</div>
                               <button
                                 className="mt-1 min-h-[44px] min-w-[44px] rounded-lg px-2 py-1.5 text-xs font-semibold text-[var(--color-muted)] transition hover:bg-[var(--color-soft)] hover:text-[var(--color-brand-deep)]"
                                 onClick={() => openReplyBox(post.issueNumber, reply.author)}
@@ -822,4 +1002,3 @@ export function DiscussionFeed({
     </section>
   );
 }
-

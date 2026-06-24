@@ -424,7 +424,7 @@ export default function AdminPage() {
           title: newsForm.title.trim(),
           summary: newsForm.summary.trim(),
           source: newsForm.source.trim() || null,
-          author: newsForm.author.trim() || email ?? "管理员",
+          author: newsForm.author.trim() || (email ?? "管理员"),
           body: newsForm.body.trim() || null,
           author_id: authorId,
           is_approved: true,

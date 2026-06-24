@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 
 import type { Station } from "@/lib/station-storage";
+import { StationReviewPanel } from "@/components/station-review-panel";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -204,6 +205,11 @@ export function StationDetailModal({ station, open, onClose }: StationDetailModa
             查看社区讨论
             <span>→</span>
           </a>
+        </div>
+
+        {/* ── Station reviews ── */}
+        <div className="mt-5">
+          <StationReviewPanel stationId={station.id} />
         </div>
       </div>
     </div>

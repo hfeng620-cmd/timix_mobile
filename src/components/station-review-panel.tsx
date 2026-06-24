@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase";
+import { checkRateLimit } from "@/lib/discussion-storage";
 import { useForumAuth } from "@/lib/forum-auth";
 
 // ---------------------------------------------------------------------------
@@ -66,7 +67,7 @@ function StarIcon({ filled }: { filled: boolean }) {
 // ---------------------------------------------------------------------------
 
 export function StationReviewPanel({ stationId }: StationReviewPanelProps) {
-  const { isConnected, displayName, showAuthModal } = useForumAuth();
+  const { isConnected, showAuthModal } = useForumAuth();
 
   // ---- data ---------------------------------------------------------------
   const [reviews, setReviews] = useState<StationReview[]>([]);
@@ -79,6 +80,9 @@ export function StationReviewPanel({ stationId }: StationReviewPanelProps) {
   const [body, setBody] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [status, setStatus] = useState("");
+
+  const REVIEW_MIN = 10;
+  const REVIEW_MAX = 2000;
 
   // =========================================================================
   // Load approved reviews

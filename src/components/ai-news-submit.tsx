@@ -21,6 +21,11 @@ export function AiNewsSubmit({ open, onClose }: AiNewsSubmitProps) {
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [titleError, setTitleError] = useState<string | null>(null);
+  const [summaryError, setSummaryError] = useState<string | null>(null);
+
+  const TITLE_MIN = 5;
+  const SUMMARY_MIN = 20;
 
   const dialogRef = useRef<HTMLDialogElement>(null);
 
@@ -37,6 +42,8 @@ export function AiNewsSubmit({ open, onClose }: AiNewsSubmitProps) {
       setUrl("");
       setSuccess(false);
       setError(null);
+      setTitleError(null);
+      setSummaryError(null);
     } else if (!open && el.open) {
       el.close();
     }
@@ -69,13 +76,27 @@ export function AiNewsSubmit({ open, onClose }: AiNewsSubmitProps) {
     async (e: React.FormEvent) => {
       e.preventDefault();
       setError(null);
+      setTitleError(null);
+      setSummaryError(null);
 
-      if (!title.trim()) {
-        setError("请填写新闻标题。");
+      const trimmedTitle = title.trim();
+      const trimmedSummary = summary.trim();
+
+      if (!trimmedTitle) {
+        setTitleError("请填写新闻标题。");
         return;
       }
-      if (!summary.trim()) {
-        setError("请填写内容摘要。");
+      if (trimmedTitle.length < TITLE_MIN) {
+        setTitleError(`标题至少需要 ${TITLE_MIN} 个字符（当前 ${trimmedTitle.length} 个）。`);
+        return;
+      }
+
+      if (!trimmedSummary) {
+        setSummaryError("请填写内容摘要。");
+        return;
+      }
+      if (trimmedSummary.length < SUMMARY_MIN) {
+        setSummaryError(`摘要至少需要 ${SUMMARY_MIN} 个字符（当前 ${trimmedSummary.length} 个）。`);
         return;
       }
 
@@ -245,8 +266,14 @@ export function AiNewsSubmit({ open, onClose }: AiNewsSubmitProps) {
                     placeholder="例如：OpenAI 发布 GPT-5"
                     type="text"
                     value={title}
-                    onChange={(e) => setTitle(e.target.value)}
+                    onChange={(e) => { setTitle(e.target.value); setTitleError(null); }}
                   />
+                  {titleError && (
+                    <p className="mt-1.5 text-xs font-medium text-[#be123c]">{titleError}</p>
+                  )}
+                  {!titleError && title.trim().length > 0 && title.trim().length < TITLE_MIN && (
+                    <p className="mt-1.5 text-xs text-[var(--color-muted)]">还差 {TITLE_MIN - title.trim().length} 个字符（至少 {TITLE_MIN} 个）</p>
+                  )}
                 </div>
 
                 <div>
@@ -259,8 +286,14 @@ export function AiNewsSubmit({ open, onClose }: AiNewsSubmitProps) {
                     placeholder="简要描述这条新闻的主要内容..."
                     rows={3}
                     value={summary}
-                    onChange={(e) => setSummary(e.target.value)}
+                    onChange={(e) => { setSummary(e.target.value); setSummaryError(null); }}
                   />
+                  {summaryError && (
+                    <p className="mt-1.5 text-xs font-medium text-[#be123c]">{summaryError}</p>
+                  )}
+                  {!summaryError && summary.trim().length > 0 && summary.trim().length < SUMMARY_MIN && (
+                    <p className="mt-1.5 text-xs text-[var(--color-muted)]">还差 {SUMMARY_MIN - summary.trim().length} 个字符（至少 {SUMMARY_MIN} 个）</p>
+                  )}
                 </div>
 
                 <div>

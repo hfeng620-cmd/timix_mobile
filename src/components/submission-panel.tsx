@@ -119,10 +119,18 @@ export function SubmissionPanel() {
         <span className="text-sm font-semibold text-[var(--color-muted)]">备注说明</span>
         <textarea
           className="min-h-28 w-full rounded-[12px] border border-[var(--color-line)] bg-[var(--color-input)] px-4 py-3 outline-none transition focus:border-[var(--color-brand)]"
+          maxLength={NOTE_MAX}
           onChange={(event) => setNote(event.target.value)}
           placeholder="写清楚你补充的是什么、看到的价格页面、模型分组、试用信息或需要纠正的内容。"
           value={note}
         />
+        <p className={`mt-1 text-xs ${note.trim().length > NOTE_MAX ? "text-[#be123c]" : note.trim().length > 0 && note.trim().length < NOTE_MIN ? "text-[var(--color-muted)]" : "text-[var(--color-muted)]"}`}>
+          {note.trim().length === 0
+            ? `至少 ${NOTE_MIN} 字符，最多 ${NOTE_MAX} 字符`
+            : note.trim().length < NOTE_MIN
+              ? `还差 ${NOTE_MIN - note.trim().length} 个字符（至少 ${NOTE_MIN} 个）`
+              : `剩余 ${NOTE_MAX - note.trim().length} 个字符`}
+        </p>
       </label>
 
       <label className="mt-4 block space-y-2">
