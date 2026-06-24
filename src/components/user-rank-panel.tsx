@@ -6,6 +6,7 @@ import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase";
 type UserRankRow = {
   rank: number;
   display_name: string;
+  avatar_url: string | null;
   reputation: number;
   post_count: number;
 };
@@ -129,6 +130,18 @@ export default function UserRankPanel() {
               style={{ minHeight: 40 }}
             >
               <RankBadge rank={user.rank} />
+
+              {user.avatar_url ? (
+                <img
+                  alt={user.display_name}
+                  className="h-7 w-7 shrink-0 rounded-full object-cover"
+                  src={user.avatar_url}
+                />
+              ) : (
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--color-soft)] text-xs font-bold text-[var(--color-muted)]">
+                  {user.display_name.charAt(0)}
+                </div>
+              )}
 
               <span className="flex-1 truncate text-sm font-bold text-[var(--color-ink)]">
                 {user.display_name}

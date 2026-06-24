@@ -280,9 +280,18 @@ export function ForumAuthModal({ open, onClose }: ForumAuthModalProps) {
                   设置密码完成注册
                 </p>
               ) : (
-                <p className="mt-1.5 text-xs text-[var(--color-muted)]">
-                  已登录：{signedInEmail ?? "当前邮箱"}
-                </p>
+                <div className="mt-1.5 space-y-1">
+                  <p className="text-xs text-[var(--color-muted)]">
+                    已登录：{signedInEmail ?? "当前邮箱"}
+                  </p>
+                  <p className="text-xs font-semibold">
+                    {isAdmin ? (
+                      <span className="text-[#b45309]">管理员账号</span>
+                    ) : (
+                      <span className="text-[var(--color-muted)]">普通用户</span>
+                    )}
+                  </p>
+                </div>
               )}
             </div>
 
