@@ -24,7 +24,7 @@ export function ForumAuthModal({ open, onClose }: ForumAuthModalProps) {
     signOut,
   } = useForumAuth();
 
-  const [mode, setMode] = useState<AuthMode>("password");
+  const [mode, setMode] = useState<AuthMode>("code");
   const [email, setEmail] = useState("");
   const [password, setPasswordValue] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -63,7 +63,7 @@ export function ForumAuthModal({ open, onClose }: ForumAuthModalProps) {
       return;
     }
 
-    setNotice("验证码邮件已发送，请在邮箱中打开验证链接。验证后回到这里设置密码。");
+    setNotice("验证邮件已发送，请打开邮箱里的登录链接。验证成功后回到这里设置密码。");
   }
 
   async function handlePasswordLogin() {
@@ -222,7 +222,7 @@ export function ForumAuthModal({ open, onClose }: ForumAuthModalProps) {
                 </p>
               ) : (
                 <p className="mt-1.5 text-xs text-[var(--color-muted)]">
-                  ① 输入邮箱 → ② 验证邮箱 → ③ 设密码
+                  首次使用先走邮箱验证，验证成功后回到这里设置密码。
                 </p>
               )}
             </div>
@@ -285,7 +285,7 @@ export function ForumAuthModal({ open, onClose }: ForumAuthModalProps) {
                     value={password}
                   />
                   <p className="text-xs text-[var(--color-muted)]">
-                    首次使用？点击{" "}
+                    首次使用？当前需要先走{" "}
                     <button
                       className="text-[var(--color-brand)] underline"
                       onClick={() => {
@@ -295,9 +295,9 @@ export function ForumAuthModal({ open, onClose }: ForumAuthModalProps) {
                       }}
                       type="button"
                     >
-                      邮箱验证码注册
+                      邮箱验证注册
                     </button>{" "}
-                    先注册账号
+                    ，完成邮箱验证后再回来设置密码
                   </p>
                 </>
               ) : (

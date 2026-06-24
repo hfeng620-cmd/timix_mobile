@@ -308,7 +308,7 @@ export function DiscussionFeed({
             <textarea
               className="min-h-28 w-full resize-none bg-transparent text-base leading-7 outline-none"
               onChange={(event) => setBody(event.target.value)}
-              placeholder="例如：虎虎这两天试用额度还在吗？Aether 高峰期稳不稳？杂货铺 Claude Max 的口径最近有没有变化？"
+              placeholder="例如：虎虎这两天试用额度还在吗？Aether 高峰期稳不稳？杂货铺 Plus / Pro 的口径最近有没有变化？"
               value={body}
             />
             <div className="mt-4 flex flex-wrap items-center justify-between gap-4 border-t border-[var(--color-line)] pt-4">

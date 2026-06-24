@@ -22,7 +22,7 @@ export function FloatingQuickPanel() {
   }, []);
 
   return (
-    <div className="fixed bottom-4 left-4 z-30" data-selection-comments="off" ref={wrapperRef}>
+    <div className="fixed bottom-4 left-4 z-[60]" data-selection-comments="off" ref={wrapperRef}>
       {open ? (
         <div className="surface-in mb-3 w-[272px] overflow-hidden rounded-[20px] border border-[var(--color-line)] bg-[var(--surface-gradient)] p-4 shadow-[0_20px_60px_rgba(15,23,42,0.12)] backdrop-blur">
           <div className="border-b border-[var(--color-line)] pb-3">
