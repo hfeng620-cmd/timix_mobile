@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useForumAuth } from "@/lib/forum-auth";
 
 export function AuthButton() {
-  const { isConnected, isAdmin, displayName, email, needsPassword, signOut, showAuthModal } = useForumAuth();
+  const { isConnected, isAdmin, isOwner, displayName, email, needsPassword, signOut, showAuthModal } = useForumAuth();
 
   if (isConnected) {
     const label = displayName || email?.split("@")[0] || "我";
@@ -28,7 +28,11 @@ export function AuthButton() {
         >
           {label.slice(0, 4)}
         </Link>
-        {isAdmin ? (
+        {isOwner ? (
+          <span className="rounded-full bg-[#fef9e7] px-2 py-0.5 text-[10px] font-bold text-[#b8860b] ring-1 ring-[#daa520]/40" title="站主">
+            站主
+          </span>
+        ) : isAdmin ? (
           <span className="rounded-full bg-[#fef3c7] px-2 py-0.5 text-[10px] font-bold text-[#b45309] ring-1 ring-[#f59e0b]/30" title="管理员">
             管理员
           </span>

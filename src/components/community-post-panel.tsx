@@ -2,7 +2,7 @@
 
 import { useRef, useState, useEffect, useMemo } from "react";
 
-import { createDiscussionPost, uploadForumImage, loadAllTags } from "@/lib/discussion-storage";
+import { createDiscussionPost, uploadForumImage, loadAllTags, loadDiscussionPosts } from "@/lib/discussion-storage";
 import { useForumAuth } from "@/lib/forum-auth";
 import { CATEGORIES, DEFAULT_CATEGORY, isCategoryTag, type CategoryInfo } from "@/lib/categories";
 
@@ -20,13 +20,33 @@ export function CommunityPostPanel({ onPostCreated }: CommunityPostPanelProps) {
 
   const { isConnected, displayName, showAuthModal } = useForumAuth();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [allTags, setAllTags] = useState<string[]>([]);
+
+  // @mention autocomplete state
+  const [recentAuthors, setRecentAuthors] = useState<string[]>([]);
+  const [mentionIndex, setMentionIndex] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
     loadAllTags().then((tags) => {
       if (!cancelled) setAllTags(tags);
+    }).catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+
+  // Load recent author names for @mention autocomplete
+  useEffect(() => {
+    let cancelled = false;
+    loadDiscussionPosts().then((posts) => {
+      if (cancelled) {
+        const names = new Set<string>();
+        for (const p of posts) {
+          if (p.author && p.author !== "群友补充") names.add(p.author);
+        }
+        setRecentAuthors(Array.from(names).sort((a, b) => a.localeCompare(b, "zh-CN")));
+      }
     }).catch(() => {});
     return () => { cancelled = true; };
   }, []);
@@ -41,6 +61,74 @@ export function CommunityPostPanel({ onPostCreated }: CommunityPostPanelProps) {
       .filter((t) => t.toLowerCase().includes(lower) && t !== lastSegment)
       .slice(0, 6);
   }, [station, allTags]);
+
+  // Detect @mention pattern in textarea
+  const mentionState = useMemo(() => {
+    if (!body) return { active: false, query: "", startIdx: -1 };
+    const textarea = textareaRef.current;
+    if (!textarea) return { active: false, query: "", startIdx: -1 };
+    const cursor = textarea.selectionStart;
+    if (cursor === null) return { active: false, query: "", startIdx: -1 };
+
+    // Look backwards from cursor for @ that's not preceded by word char
+    const textBefore = body.slice(0, cursor);
+    const atMatch = textBefore.match(/(?:^|[^\w一-鿿])@([\w一-鿿]*)$/);
+    if (!atMatch) return { active: false, query: "", startIdx: -1 };
+
+    return {
+      active: true,
+      query: atMatch[1],
+      startIdx: cursor - atMatch[0].length + (atMatch[0].indexOf("@") > 0 ? 2 : 1),
+    };
+  }, [body]);
+
+  // Filtered mention suggestions
+  const mentionSuggestions = useMemo(() => {
+    if (!mentionState.active) return [];
+    const q = mentionState.query.toLowerCase();
+    return recentAuthors
+      .filter((name) => name.toLowerCase().includes(q) && name !== mentionState.query)
+      .slice(0, 6);
+  }, [mentionState, recentAuthors]);
+
+  function handleSelectMention(name: string) {
+    if (!mentionState.active) return;
+
+    const before = body.slice(0, mentionState.startIdx);
+    const after = body.slice(textareaRef.current?.selectionStart ?? body.length);
+    const newBody = `${before}@${name} ${after}`;
+    setBody(newBody);
+
+    // Move cursor after the inserted mention
+    const cursorPos = mentionState.startIdx + name.length + 2; // @name + space
+    setTimeout(() => {
+      if (textareaRef.current) {
+        textareaRef.current.selectionStart = cursorPos;
+        textareaRef.current.selectionEnd = cursorPos;
+        textareaRef.current.focus();
+      }
+    }, 0);
+  }
+
+  // Keyboard navigation for mention popup
+  function handleTextareaKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (!mentionState.active || mentionSuggestions.length === 0) return;
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setMentionIndex((prev) => (prev + 1) % mentionSuggestions.length);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setMentionIndex((prev) => (prev - 1 + mentionSuggestions.length) % mentionSuggestions.length);
+    } else if (e.key === "Enter" || e.key === "Tab") {
+      e.preventDefault();
+      handleSelectMention(mentionSuggestions[mentionIndex]);
+    } else if (e.key === "Escape") {
+      // Close popup by blurring; the mention state will naturally clear
+      e.preventDefault();
+      textareaRef.current?.blur();
+    }
+  }
 
   function handleSelectSuggestion(tag: string) {
     const segments = station.split(/[，,\s]+/);
@@ -89,8 +177,8 @@ export function CommunityPostPanel({ onPostCreated }: CommunityPostPanelProps) {
       setOpen(false);
       setStatus("已发布。");
       onPostCreated?.();
-    } catch {
-      setStatus("发布失败，请检查网络后重试。");
+    } catch (err) {
+      setStatus(err instanceof Error ? err.message : "发布失败，请检查网络后重试。");
     } finally {
       setSubmitting(false);
     }
@@ -197,12 +285,40 @@ export function CommunityPostPanel({ onPostCreated }: CommunityPostPanelProps) {
             })}
           </div>
 
-          <textarea
-            className="mt-3 min-h-36 w-full resize-none rounded-[12px] border border-[var(--color-line)] bg-[var(--color-input)] px-4 py-3 text-sm leading-7 outline-none transition focus:border-[var(--color-brand)]"
-            onChange={(event) => setBody(event.target.value)}
-            placeholder="写价格变化、试用活动、模型口径或避坑记录。支持粘贴图片链接。"
-            value={body}
-          />
+          <div className="relative mt-3">
+            <textarea
+              ref={textareaRef}
+              className="min-h-36 w-full resize-none rounded-[12px] border border-[var(--color-line)] bg-[var(--color-input)] px-4 py-3 text-sm leading-7 outline-none transition focus:border-[var(--color-brand)]"
+              onChange={(event) => {
+                setBody(event.target.value);
+                setMentionIndex(0);
+              }}
+              onKeyDown={handleTextareaKeyDown}
+              placeholder="写价格变化、试用活动、模型口径或避坑记录。输入 @ 可以提及其他用户。"
+              value={body}
+            />
+
+            {/* @mention autocomplete popup */}
+            {mentionState.active && mentionSuggestions.length > 0 ? (
+              <div className="absolute left-0 right-0 top-full z-20 mt-1 overflow-hidden rounded-[12px] border border-[var(--color-line)] bg-[var(--color-panel)] shadow-[var(--shadow-card)]">
+                {mentionSuggestions.map((name, idx) => (
+                  <button
+                    key={name}
+                    className={`block w-full px-4 py-2.5 text-left text-sm font-semibold transition ${
+                      idx === mentionIndex
+                        ? "bg-[var(--color-brand-soft)] text-[var(--color-brand)]"
+                        : "text-[var(--color-muted)] hover:bg-[var(--color-soft)] hover:text-[var(--color-ink)]"
+                    }`}
+                    onClick={() => handleSelectMention(name)}
+                    onMouseEnter={() => setMentionIndex(idx)}
+                    type="button"
+                  >
+                    @{name}
+                  </button>
+                ))}
+              </div>
+            ) : null}
+          </div>
 
           <div className="mt-2 flex items-center gap-3">
             <input

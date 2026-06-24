@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
   createDiscussionPost,
@@ -16,7 +16,6 @@ import {
   type DiscussionReply,
 } from "@/lib/discussion-storage";
 import { useForumAuth } from "@/lib/forum-auth";
-import { CATEGORIES, isCategoryTag, parseCategoryFromTags, getCategoryBorderColor } from "@/lib/categories";
 
 type DiscussionFeedProps = {
   compact?: boolean;
@@ -36,6 +35,27 @@ function formatCount(value: number) {
   }
 
   return `${value}`;
+}
+
+/** Parse @username patterns and render them as highlighted spans with brand color.
+ *  When highlightAuthor is provided, matching @mentions get a soft background highlight. */
+function renderBodyWithMentions(text: string, highlightAuthor?: string) {
+  const parts = text.split(/(@[\w一-鿿]+)/g);
+  return parts.map((part, i) => {
+    if (/^@[\w一-鿿]+$/.test(part)) {
+      const name = part.slice(1);
+      const isTarget = highlightAuthor && name === highlightAuthor;
+      return (
+        <span
+          key={i}
+          className={`font-semibold ${isTarget ? "rounded bg-[var(--color-brand-soft)] px-0.5 text-[var(--color-brand-deep)]" : "text-[var(--color-brand)]"}`}
+        >
+          {part}
+        </span>
+      );
+    }
+    return part;
+  });
 }
 
 function formatRelativeTime(postedAt: string): string {
@@ -61,108 +81,7 @@ function formatRelativeTime(postedAt: string): string {
   return postedAt;
 }
 
-const IMAGE_EXT_RE = /\.(jpg|jpeg|png|gif|webp)(\?.*)?$/i;
-const INLINE_TOKEN_RE =
-  /(!\[[^\]]*\]\([^)]+\)|`[^`\n]+`|\*\*[^*\n]+\*\*|\*(?!\*)[^*\n]+\*(?!\*)|https?:\/\/[^\s<>"')\]}，。；：！？、]+)/;
-
-function renderPostBody(text: string): React.ReactNode {
-  if (!text) return null;
-
-  const lines = text.split("\n");
-
-  function processLine(line: string): React.ReactNode[] {
-    const parts = line.split(INLINE_TOKEN_RE);
-    return parts.map((part, idx) => {
-      if (part === "") return null;
-
-      // Markdown image ![alt](url)
-      if (part.startsWith("![")) {
-        const m = part.match(/^!\[([^\]]*)\]\(([^)]+)\)$/);
-        if (m) {
-          return (
-            <img
-              key={idx}
-              alt={m[1] || "图片"}
-              className="my-2 max-w-full rounded-lg"
-              loading="lazy"
-              src={m[2]}
-            />
-          );
-        }
-        return part;
-      }
-
-      // Inline code
-      if (part.startsWith("`") && part.endsWith("`") && part.length >= 3) {
-        return (
-          <code
-            key={idx}
-            className="rounded bg-[var(--color-soft)] px-1.5 py-0.5 text-[0.9em] font-mono text-[var(--color-brand-deep)]"
-          >
-            {part.slice(1, -1)}
-          </code>
-        );
-      }
-
-      // Bold
-      if (part.startsWith("**") && part.endsWith("**") && part.length >= 5) {
-        return <strong key={idx}>{part.slice(2, -2)}</strong>;
-      }
-
-      // Italic
-      if (
-        part.startsWith("*") &&
-        part.endsWith("*") &&
-        part.length >= 3 &&
-        !part.startsWith("**")
-      ) {
-        return <em key={idx}>{part.slice(1, -1)}</em>;
-      }
-
-      // Plain URL
-      if (/^https?:\/\//i.test(part)) {
-        const cleaned = part.replace(/[。，；：！？、]+$/, "");
-        if (IMAGE_EXT_RE.test(cleaned)) {
-          return (
-            <img
-              key={idx}
-              alt="图片"
-              className="my-2 max-w-full rounded-lg"
-              loading="lazy"
-              src={cleaned}
-            />
-          );
-        }
-        return (
-          <a
-            key={idx}
-            className="text-[var(--color-brand)] underline decoration-[var(--color-brand)]/30 underline-offset-2 transition hover:decoration-[var(--color-brand)]"
-            href={cleaned}
-            rel="noreferrer"
-            target="_blank"
-          >
-            {cleaned}
-          </a>
-        );
-      }
-
-      // Plain text
-      return part;
-    });
-  }
-
-  return (
-    <>
-      {lines.map((line, i) => (
-        <React.Fragment key={i}>
-          {processLine(line)}
-          {i < lines.length - 1 && <br />}
-        </React.Fragment>
-      ))}
-    </>
-  );
-}
-function ActionIcon({ kind }: { kind: "comment" | "like" }) {
+function ActionIcon({ kind }: { kind: "comment" | "like" | "bookmark" | "bookmarkFilled" }) {
   if (kind === "comment") {
     return (
       <svg aria-hidden="true" className="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24">
@@ -173,6 +92,28 @@ function ActionIcon({ kind }: { kind: "comment" | "like" }) {
           strokeLinejoin="round"
           strokeWidth="1.8"
         />
+      </svg>
+    );
+  }
+
+  if (kind === "bookmark") {
+    return (
+      <svg aria-hidden="true" className="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24">
+        <path
+          d="M5 3h14a2 2 0 0 1 2 2v16l-7-4-7 4V5a2 2 0 0 1 2-2z"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="1.8"
+        />
+      </svg>
+    );
+  }
+
+  if (kind === "bookmarkFilled") {
+    return (
+      <svg aria-hidden="true" className="h-[18px] w-[18px]" fill="currentColor" viewBox="0 0 24 24">
+        <path d="M5 3h14a2 2 0 0 1 2 2v16l-7-4-7 4V5a2 2 0 0 1 2-2z" />
       </svg>
     );
   }
@@ -239,17 +180,84 @@ export function DiscussionFeed({
   const [expandedBodies, setExpandedBodies] = useState<Set<string>>(new Set());
   const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
   const [replyTargets, setReplyTargets] = useState<Record<string, string>>({});
+  /** Store the body of the reply being quoted so we can show a quote preview */
+  const [replyQuotes, setReplyQuotes] = useState<Record<string, { author: string; body: string }>>({});
   const [status, setStatus] = useState("发帖讨论。");
   const [submitting, setSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [editingPostId, setEditingPostId] = useState<string | null>(null);
   const [editBody, setEditBody] = useState("");
   const [editSaving, setEditSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortOption, setSortOption] = useState<"latest" | "mostReplies" | "mostLikes">("latest");
+  const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(new Set());
+  const [bookmarksOnly, setBookmarksOnly] = useState(false);
+  const [pinSaving, setPinSaving] = useState(false);
+
+  // --- bookmark localStorage helpers ---
+  function getBookmarkKey(uid: string) {
+    return `timin-bookmarks-${uid}`;
+  }
+
+  function loadBookmarksFromStorage(uid: string): Set<string> {
+    try {
+      const raw = localStorage.getItem(getBookmarkKey(uid));
+      if (raw) {
+        const arr = JSON.parse(raw) as string[];
+        return new Set(arr);
+      }
+    } catch {
+      // ignore corrupt data
+    }
+    return new Set();
+  }
+
+  function saveBookmarksToStorage(uid: string, ids: Set<string>) {
+    localStorage.setItem(getBookmarkKey(uid), JSON.stringify([...ids]));
+  }
+
+  // Load bookmarks on mount and when user changes
+  useEffect(() => {
+    if (user?.id) {
+      setBookmarkedIds(loadBookmarksFromStorage(user.id));
+    } else {
+      setBookmarkedIds(new Set());
+    }
+  }, [user?.id]);
+
+  function handleToggleBookmark(postId: string) {
+    if (!user?.id) {
+      showAuthModal();
+      return;
+    }
+    setBookmarkedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(postId)) {
+        next.delete(postId);
+      } else {
+        next.add(postId);
+      }
+      saveBookmarksToStorage(user.id, next);
+      return next;
+    });
+  }
+
+  async function handlePinPost(postId: string, isPinned: boolean) {
+    if (pinSaving) return;
+    setPinSaving(true);
+    try {
+      await pinDiscussionPost(postId, isPinned);
+      setPosts((current) =>
+        current.map((p) => (p.issueNumber === postId ? { ...p, is_pinned: isPinned } : p)),
+      );
+    } catch {
+      setStatus("置顶操作失败，请检查网络后重试。");
+    } finally {
+      setPinSaving(false);
+    }
+  }
 
   const loadPosts = useCallback(async (setLoadingState: boolean) => {
     if (setLoadingState) setLoading(true);
@@ -289,7 +297,6 @@ export function DiscussionFeed({
     const counts = new Map<string, number>();
     for (const post of posts) {
       for (const tag of post.tags) {
-        if (isCategoryTag(tag)) continue;
         counts.set(tag, (counts.get(tag) ?? 0) + 1);
       }
     }
@@ -298,46 +305,37 @@ export function DiscussionFeed({
       .slice(0, 8);
   }, [posts]);
 
-  const categoryCounts = useMemo(() => {
-    const counts = new Map<string, number>();
-    for (const post of posts) {
-      const cat = parseCategoryFromTags(post.tags);
-      if (cat) {
-        counts.set(cat.key, (counts.get(cat.key) ?? 0) + 1);
-      }
-    }
-    return CATEGORIES.map((cat) => ({
-      ...cat,
-      count: counts.get(cat.key) ?? 0,
-    }));
-  }, [posts]);
-
   const visiblePosts = useMemo(() => {
     let base = compact ? posts.slice(0, 4) : [...posts];
-    if (selectedCategory) {
-      base = base.filter((p) => p.tags.includes(`cat:${selectedCategory}`));
-    }
     if (selectedTag) {
       base = base.filter((p) => p.tags.includes(selectedTag));
+    }
+    if (bookmarksOnly) {
+      base = base.filter((p) => bookmarkedIds.has(p.issueNumber));
     }
     if (searchQuery.trim()) {
       const q = searchQuery.trim().toLowerCase();
       base = base.filter((p) => {
         return (
           p.body.toLowerCase().includes(q) ||
-          (p.station ?? "").toLowerCase().includes(q) ||
+          p.station?.toLowerCase().includes(q) ||
           p.tags.some((t) => t.toLowerCase().includes(q))
         );
       });
     }
+    // Sort pinned posts to top (stable within each group)
+    const pinned = base.filter((p) => p.is_pinned);
+    const unpinned = base.filter((p) => !p.is_pinned);
     if (sortOption === "mostReplies") {
-      base.sort((a, b) => b.replyCount - a.replyCount);
+      pinned.sort((a, b) => b.replyCount - a.replyCount);
+      unpinned.sort((a, b) => b.replyCount - a.replyCount);
     } else if (sortOption === "mostLikes") {
-      base.sort((a, b) => b.likes - a.likes);
+      pinned.sort((a, b) => b.likes - a.likes);
+      unpinned.sort((a, b) => b.likes - a.likes);
     }
-    // "latest" uses default load order
-    return typeof limit === "number" ? base.slice(0, limit) : base;
-  }, [compact, limit, posts, selectedCategory, selectedTag, searchQuery, sortOption]);
+    const sorted = [...pinned, ...unpinned];
+    return typeof limit === "number" ? sorted.slice(0, limit) : sorted;
+  }, [compact, limit, posts, selectedTag, searchQuery, sortOption, bookmarksOnly, bookmarkedIds]);
 
   async function handleSubmitPost() {
     if (!isConnected) {
@@ -355,8 +353,7 @@ export function DiscussionFeed({
     const tags = station
       .split(/[，,\s]+/)
       .map((item) => item.trim())
-      .filter(Boolean)
-      .filter((t) => !isCategoryTag(t));
+      .filter(Boolean);
 
     setSubmitting(true);
     setStatus("发布中...");
@@ -372,8 +369,8 @@ export function DiscussionFeed({
       setBody("");
       setStation("");
       setStatus("已发布。");
-    } catch {
-      setStatus("发布失败，请检查网络后重试。");
+    } catch (err) {
+      setStatus(err instanceof Error ? err.message : "发布失败，请检查网络后重试。");
     } finally {
       setSubmitting(false);
     }
@@ -421,12 +418,47 @@ export function DiscussionFeed({
     if (!expanded) void loadPostComments(postId);
   }
 
-  function openReplyBox(postId: string, target = "楼主") {
+  /** Open the reply box for a post. When replying to a specific author, auto-prepend @author
+   *  and store the target reply body as a quote reference. */
+  function openReplyBox(postId: string, targetAuthor = "楼主") {
     if (expandedPostId === postId) {
       setExpandedPostId(null);
     } else {
       setExpandedPostId(postId);
-      setReplyTargets((current) => ({ ...current, [postId]: target }));
+      setReplyTargets((current) => ({ ...current, [postId]: targetAuthor }));
+
+      // Auto-prepend @authorName when replying to a specific user (not the original post)
+      if (targetAuthor !== "楼主") {
+        setReplyDrafts((current) => {
+          const existing = current[postId] ?? "";
+          const mention = `@${targetAuthor} `;
+          // Only prepend if not already present
+          if (!existing.startsWith(mention)) {
+            return { ...current, [postId]: mention + existing };
+          }
+          return current;
+        });
+
+        // Find the reply being replied to and store it as a quote
+        const currentComments = commentsMap[postId];
+        if (currentComments) {
+          const targetReply = currentComments.find((r) => r.author === targetAuthor);
+          if (targetReply) {
+            setReplyQuotes((current) => ({
+              ...current,
+              [postId]: { author: targetReply.author, body: targetReply.body },
+            }));
+          }
+        }
+      } else {
+        // Clear quote when replying to OP
+        setReplyQuotes((current) => {
+          const next = { ...current };
+          delete next[postId];
+          return next;
+        });
+      }
+
       void loadPostComments(postId);
     }
   }
@@ -453,6 +485,11 @@ export function DiscussionFeed({
       );
       setReplyDrafts((current) => ({ ...current, [postId]: "" }));
       setReplyTargets((current) => ({ ...current, [postId]: "楼主" }));
+      setReplyQuotes((current) => {
+        const next = { ...current };
+        delete next[postId];
+        return next;
+      });
       setExpandedPostId(postId);
       setStatus("已回复。");
     } catch {
@@ -631,82 +668,71 @@ export function DiscussionFeed({
         </div>
       ) : null}
 
-      {categoryCounts.length > 0 ? (
-        <div className="border-b border-[var(--color-line)] px-5 py-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              className={`min-h-[44px] rounded-full px-3.5 py-2.5 text-xs font-semibold transition border ${
-                selectedCategory === null
-                  ? "bg-[var(--color-brand)] text-[var(--color-on-brand)] border-transparent"
-                  : "bg-[var(--color-soft)] text-[var(--color-muted)] border-[var(--color-line)] hover:bg-[var(--color-hover)] hover:text-[var(--color-ink)]"
-              }`}
-              onClick={() => setSelectedCategory(null)}
-              type="button"
-            >
-              全部
-            </button>
-            {categoryCounts.map((cat) => {
-              const active = selectedCategory === cat.key;
-              return (
-                <button
-                  key={cat.key}
-                  className={`min-h-[44px] rounded-full px-3.5 py-2.5 text-xs font-semibold transition border ${
-                    active
-                      ? "text-[var(--color-on-brand)] shadow-sm"
-                      : "bg-[var(--color-soft)] text-[var(--color-muted)] border-[var(--color-line)] hover:text-[var(--color-ink)]"
-                  }`}
-                  onClick={() => setSelectedCategory(active ? null : cat.key)}
-                  style={
-                    active
-                      ? { backgroundColor: cat.color, borderColor: cat.color }
-                      : undefined
-                  }
-                  type="button"
-                >
-                  {cat.label} ({cat.count})
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      ) : null}
-
-      {topTags.length > 0 ? (
-        <div className="border-b border-[var(--color-line)] px-5 py-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              className={`min-h-[44px] rounded-full px-3.5 py-2.5 text-xs font-semibold transition ${
-                selectedTag === null
-                  ? "bg-[var(--color-brand)] text-[var(--color-on-brand)]"
-                  : "bg-[var(--color-soft)] text-[var(--color-muted)] hover:bg-[var(--color-hover)] hover:text-[var(--color-ink)]"
-              }`}
-              onClick={() => setSelectedTag(null)}
-              type="button"
-            >
-              全部标签
-            </button>
-            {topTags.map(([tag, count]) => (
+      {/* Tag filters + bookmark toggle */}
+      <div className="border-b border-[var(--color-line)] px-5 py-3">
+        <div className="flex flex-wrap items-center gap-2">
+          {topTags.length > 0 ? (
+            <>
               <button
-                key={tag}
-                className={`min-h-[44px] rounded-full px-3.5 py-2.5 text-xs font-semibold transition ${
-                  selectedTag === tag
+                className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${
+                  selectedTag === null
                     ? "bg-[var(--color-brand)] text-[var(--color-on-brand)]"
                     : "bg-[var(--color-soft)] text-[var(--color-muted)] hover:bg-[var(--color-hover)] hover:text-[var(--color-ink)]"
                 }`}
-                onClick={() => setSelectedTag(selectedTag === tag ? null : tag)}
+                onClick={() => setSelectedTag(null)}
                 type="button"
               >
-                {tag} ({count})
+                全部
               </button>
-            ))}
-          </div>
+              {topTags.map(([tag, count]) => (
+                <button
+                  key={tag}
+                  className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${
+                    selectedTag === tag
+                      ? "bg-[var(--color-brand)] text-[var(--color-on-brand)]"
+                      : "bg-[var(--color-soft)] text-[var(--color-muted)] hover:bg-[var(--color-hover)] hover:text-[var(--color-ink)]"
+                  }`}
+                  onClick={() => setSelectedTag(selectedTag === tag ? null : tag)}
+                  type="button"
+                >
+                  {tag} ({count})
+                </button>
+              ))}
+            </>
+          ) : null}
+          {/* Bookmark filter toggle */}
+          {user?.id ? (
+            <button
+              className={`ml-auto inline-flex items-center rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${
+                bookmarksOnly
+                  ? "bg-[var(--color-brand)] text-[var(--color-on-brand)]"
+                  : "bg-[var(--color-soft)] text-[var(--color-muted)] hover:bg-[var(--color-hover)] hover:text-[var(--color-ink)]"
+              }`}
+              onClick={() => setBookmarksOnly(!bookmarksOnly)}
+              type="button"
+            >
+              <ActionIcon kind={bookmarksOnly ? "bookmarkFilled" : "bookmark"} />
+              <span className="ml-1.5">只看收藏</span>
+            </button>
+          ) : null}
         </div>
-      ) : null}
+      </div>
 
       <div className="divide-y divide-[var(--color-line)]">
         {visiblePosts.length === 0 ? (
           <div className="px-5 py-10 text-center sm:px-6">
-            {searchQuery.trim() ? (
+            {bookmarksOnly ? (
+              <>
+                <p className="text-base font-bold text-[var(--color-ink)]">还没有收藏过帖子。</p>
+                <button
+                  className="mt-3 rounded-full bg-[var(--color-brand)] px-4 py-2 text-sm font-bold text-[var(--color-on-brand)] transition hover:bg-[var(--color-brand-deep)]"
+                  onClick={() => setBookmarksOnly(false)}
+                  type="button"
+                >
+                  查看全部
+                </button>
+              </>
+            ) : searchQuery.trim() ? (
               <>
                 <p className="text-base font-bold text-[var(--color-ink)]">没有匹配的讨论，试试其他关键词</p>
               </>
@@ -733,18 +759,14 @@ export function DiscussionFeed({
         {visiblePosts.map((post) => {
           const expanded = expandedPostId === post.issueNumber;
           const comments = commentsMap[post.issueNumber];
-          const borderColor = getCategoryBorderColor(post.tags);
-          const displayTags = post.tags.filter((t) => !isCategoryTag(t));
+          const isBookmarked = bookmarkedIds.has(post.issueNumber);
+          const replyTarget = replyTargets[post.issueNumber];
+          const replyQuote = replyQuotes[post.issueNumber];
 
           return (
-            <article
-              id={post.issueNumber}
-              key={post.issueNumber}
-              className="card-lift border-l-2 px-5 py-5 transition hover:bg-[var(--color-hover)] sm:px-6"
-              style={{
-                borderLeftColor: borderColor ?? "transparent",
-              }}
-            >
+            <article id={post.issueNumber} key={post.issueNumber} className={`card-lift border-l-2 border-l-transparent px-5 py-5 transition hover:border-l-[var(--color-brand)] hover:bg-[var(--color-hover)] sm:px-6 ${
+                post.is_pinned ? "bg-[var(--color-brand-soft)]/50" : ""
+              }`}>
               <div className="flex items-start gap-3 sm:gap-4">
                 {post.authorAvatarUrl ? (
                   <img
@@ -765,10 +787,26 @@ export function DiscussionFeed({
                         管理员
                       </span>
                     ) : null}
+                    {post.is_pinned ? (
+                      <span className="rounded-full bg-[var(--color-brand-soft)] px-2 py-0.5 text-[10px] font-bold text-[var(--color-brand-deep)] ring-1 ring-[var(--color-brand)]/30">
+                        📌 置顶
+                      </span>
+                    ) : null}
+                    {isAdmin ? (
+                      <button
+                        className="inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[11px] font-semibold text-[#8b7355] transition hover:bg-[#f5f0e8] hover:text-[#6b5a45] disabled:opacity-50"
+                        disabled={pinSaving}
+                        onClick={() => handlePinPost(post.issueNumber, !post.is_pinned)}
+                        title={post.is_pinned ? "取消置顶" : "置顶"}
+                        type="button"
+                      >
+                        {post.is_pinned ? "📌 取消置顶" : "📌 置顶"}
+                      </button>
+                    ) : null}
                     {isConnected && user?.id === post.authorId && editingPostId !== post.issueNumber ? (
                       <>
                         <button
-                          className="inline-flex items-center gap-1 rounded px-2 py-1.5 text-xs font-semibold text-[#8b7355] transition hover:bg-[#f5f0e8] hover:text-[#6b5a45] min-h-[44px] min-w-[44px]"
+                          className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] font-semibold text-[#8b7355] transition hover:bg-[#f5f0e8] hover:text-[#6b5a45]"
                           onClick={() => handleStartEdit(post)}
                           title="编辑"
                           type="button"
@@ -779,7 +817,7 @@ export function DiscussionFeed({
                           编辑
                         </button>
                         <button
-                          className="inline-flex items-center gap-1 rounded px-2 py-1.5 text-xs font-semibold text-[#8b7355] transition hover:bg-[#f5f0e8] hover:text-[#6b5a45] min-h-[44px] min-w-[44px]"
+                          className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] font-semibold text-[#8b7355] transition hover:bg-[#f5f0e8] hover:text-[#6b5a45]"
                           onClick={() => handleDeletePost(post.issueNumber)}
                           title="删除"
                           type="button"
@@ -812,18 +850,6 @@ export function DiscussionFeed({
                         {post.station}
                       </span>
                     ) : null}
-                    {borderColor ? (
-                      <span
-                        className="rounded-full px-2.5 py-0.5 text-[10px] font-bold"
-                        style={{
-                          backgroundColor: `${borderColor}18`,
-                          color: borderColor,
-                          border: `1px solid ${borderColor}40`,
-                        }}
-                      >
-                        {parseCategoryFromTags(post.tags)?.label}
-                      </span>
-                    ) : null}
                   </div>
                   <hr className="mt-2 border-t border-[var(--color-line)]" />
                   {editingPostId === post.issueNumber ? (
@@ -852,13 +878,13 @@ export function DiscussionFeed({
                         </button>
                       </div>
                     </div>
-                  ) : post.body.length > 300 ? (
+                  ) : post.body.length > 500 ? (
                     <>
-                      <div className="mt-3 max-w-4xl text-[15px] leading-7 sm:text-base sm:leading-8 text-[var(--color-ink)]">
+                      <p className="mt-3 max-w-4xl text-[15px] leading-7 sm:text-base sm:leading-8 text-[var(--color-ink)]">
                         {expandedBodies.has(post.issueNumber)
-                          ? renderPostBody(post.body)
-                          : <>{post.body.slice(0, 300)}...</>}
-                      </div>
+                          ? renderBodyWithMentions(post.body)
+                          : renderBodyWithMentions(`${post.body.slice(0, 500)}...`)}
+                      </p>
                       <button
                         className="mt-1 min-h-[44px] rounded-lg px-3 py-2 text-xs font-semibold text-[var(--color-brand-deep)] transition hover:bg-[var(--color-soft)] hover:text-[var(--color-brand)]"
                         onClick={() => {
@@ -878,15 +904,15 @@ export function DiscussionFeed({
                       </button>
                     </>
                   ) : (
-                    <div className="mt-3 max-w-4xl text-[15px] leading-7 sm:text-base sm:leading-8 text-[var(--color-ink)]">
-                      {renderPostBody(post.body)}
-                    </div>
+                    <p className="mt-3 max-w-4xl text-[15px] leading-7 sm:text-base sm:leading-8 text-[var(--color-ink)]">
+                      {renderBodyWithMentions(post.body)}
+                    </p>
                   )}
                   <div className="mt-3 flex flex-wrap gap-2">
-                    {displayTags.map((tag) => (
+                    {post.tags.map((tag) => (
                       <button
                         key={`${post.issueNumber}-${tag}`}
-                        className={`min-h-[44px] rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+                        className={`rounded-full px-2.5 py-0.5 text-xs font-semibold transition ${
                           selectedTag === tag
                             ? "bg-[var(--color-brand)] text-[var(--color-on-brand)]"
                             : "bg-[var(--color-soft)] text-[var(--color-muted)] hover:bg-[var(--color-hover)] hover:text-[var(--color-ink)]"
@@ -901,27 +927,21 @@ export function DiscussionFeed({
                   <div className="mt-4 flex items-center justify-between sm:justify-start sm:gap-7">
                     <ActionButton count={post.replyCount} icon="comment" onClick={() => openReplyBox(post.issueNumber)} />
                     <ActionButton count={post.likes} icon="like" onClick={() => handleLike(post.issueNumber)} />
+                    {/* Bookmark button */}
+                    <button
+                      className="inline-flex items-center gap-2 text-[15px] text-[var(--color-muted)] transition hover:text-[var(--color-ink)] min-h-[44px] min-w-[44px]"
+                      onClick={() => handleToggleBookmark(post.issueNumber)}
+                      type="button"
+                      title={isBookmarked ? "取消收藏" : "收藏"}
+                    >
+                      <ActionIcon kind={isBookmarked ? "bookmarkFilled" : "bookmark"} />
+                    </button>
                     <button
                       className="min-h-[44px] min-w-[44px] rounded-lg px-3 py-2 text-xs font-bold text-[var(--color-muted)] transition hover:bg-[var(--color-soft)] hover:text-[var(--color-brand-deep)]"
                       onClick={() => togglePost(post.issueNumber, expanded)}
                       type="button"
                     >
                       {expanded ? "收起 ▲" : "展开 ▼"}
-                    </button>
-                    <button
-                      className="min-h-[44px] min-w-[44px] rounded-lg px-3 py-2 text-xs font-bold text-[var(--color-muted)] transition hover:bg-[var(--color-soft)] hover:text-[var(--color-brand-deep)]"
-                      onClick={() => {
-                        const url = `${window.location.origin}${window.location.pathname}#${post.issueNumber}`;
-                        void navigator.clipboard.writeText(url);
-                      }}
-                      type="button"
-                      title="复制帖子链接"
-                    >
-                      <svg aria-hidden="true" className="mr-1 inline-block h-3.5 w-3.5 align-[-2px]" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24">
-                        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-                        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-                      </svg>
-                      复制链接
                     </button>
                   </div>
                 </div>
@@ -960,9 +980,11 @@ export function DiscussionFeed({
                                 <span className="text-[var(--color-muted)]">·</span>
                                 <span className="text-[var(--color-muted)]">{formatRelativeTime(reply.postedAt)}</span>
                               </div>
-                              <div className="mt-1 text-sm leading-7 text-[var(--color-ink)]">{renderPostBody(reply.body)}</div>
+                              <p className="mt-1 text-sm leading-7 text-[var(--color-ink)]">
+                                {renderBodyWithMentions(reply.body)}
+                              </p>
                               <button
-                                className="mt-1 min-h-[44px] min-w-[44px] rounded-lg px-2 py-1.5 text-xs font-semibold text-[var(--color-muted)] transition hover:bg-[var(--color-soft)] hover:text-[var(--color-brand-deep)]"
+                                className="mt-1 text-xs font-semibold text-[var(--color-muted)] transition hover:text-[var(--color-brand-deep)]"
                                 onClick={() => openReplyBox(post.issueNumber, reply.author)}
                                 type="button"
                               >
@@ -975,13 +997,25 @@ export function DiscussionFeed({
                     )}
                   </div>
 
+                  {/* Quote/reply reference preview */}
+                  {replyQuote ? (
+                    <div className="mt-3 rounded-lg border border-[var(--color-line)] bg-[var(--color-soft)] px-3 py-2">
+                      <p className="text-[11px] font-semibold text-[var(--color-muted)]">
+                        回复 <span className="text-[var(--color-brand)]">@{replyQuote.author}</span>：
+                      </p>
+                      <p className="mt-0.5 text-xs leading-5 text-[var(--color-muted)] line-clamp-2">
+                        {replyQuote.body}
+                      </p>
+                    </div>
+                  ) : null}
+
                   <div className="mt-4 flex flex-col gap-3 border-t border-[var(--color-line)] pt-4 sm:flex-row">
                     <input
                       className="min-w-0 flex-1 rounded-full border border-[var(--color-line)] bg-[var(--color-input)] px-4 py-3.5 text-sm outline-none transition focus:border-[var(--color-brand)]"
                       onChange={(event) =>
                         setReplyDrafts((current) => ({ ...current, [post.issueNumber]: event.target.value }))
                       }
-                      placeholder={`回复 ${replyTargets[post.issueNumber] ?? "楼主"}`}
+                      placeholder={`回复 ${replyTarget ?? "楼主"}`}
                       value={replyDrafts[post.issueNumber] ?? ""}
                     />
                     <button

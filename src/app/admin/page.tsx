@@ -25,7 +25,7 @@ import {
   type ForumStats,
 } from "@/lib/discussion-storage";
 
-type AdminTab = "posts" | "stations" | "import" | "news";
+type AdminTab = "posts" | "stations" | "import" | "news" | "admins";
 
 async function isForumAdmin(): Promise<boolean> {
   try {
@@ -50,7 +50,7 @@ type AuditEntry = {
 };
 
 export default function AdminPage() {
-  const { isConnected, email, showAuthModal } = useForumAuth();
+  const { isConnected, isAdmin, isOwner, email, showAuthModal } = useForumAuth();
   const [adminChecked, setAdminChecked] = useState(false);
   const [adminOk, setAdminOk] = useState(false);
   const [adminLoading, setAdminLoading] = useState(!isConnected);
@@ -95,12 +95,27 @@ export default function AdminPage() {
   const [newsFormSending, setNewsFormSending] = useState(false);
   const [newsFormStatus, setNewsFormStatus] = useState("");
 
-  // ---- Admin check ----
+  // ---- Owner: admin management state ----
+  const [adminList, setAdminList] = useState<
+    { user_id: string; email: string; display_name: string; created_at: string }[]
+  >([]);
+  const [adminListLoading, setAdminListLoading] = useState(false);
+  const [newAdminEmail, setNewAdminEmail] = useState("");
+  const [addAdminLoading, setAddAdminLoading] = useState(false);
+  const [addAdminStatus, setAddAdminStatus] = useState("");
+
+  // ---- Admin check (context-driven; fall back to RPC for belt-and-suspenders) ----
   useEffect(() => {
     if (!isConnected) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setAdminChecked(true);
       setAdminOk(false);
+      setAdminLoading(false);
+      return;
+    }
+    // If context already says admin/owner we can short-circuit
+    if (isAdmin || isOwner) {
+      setAdminOk(true);
+      setAdminChecked(true);
       setAdminLoading(false);
       return;
     }
@@ -121,7 +136,7 @@ export default function AdminPage() {
     return () => {
       cancelled = true;
     };
-  }, [isConnected]);
+  }, [isConnected, isAdmin, isOwner]);
 
   // ---- Load forum stats ----
   useEffect(() => {
@@ -455,6 +470,69 @@ export default function AdminPage() {
     }
   }
 
+  // ---- Owner: admin management handlers ----
+  async function loadAdminList() {
+    setAdminListLoading(true);
+    try {
+      const { data } = await getSupabaseClient()
+        .rpc("get_admin_list");
+      setAdminList((data as any[]) ?? []);
+    } catch {
+      setAdminList([]);
+    } finally {
+      setAdminListLoading(false);
+    }
+  }
+
+  async function handleAddAdmin() {
+    const emailTrimmed = newAdminEmail.trim().toLowerCase();
+    if (!emailTrimmed) {
+      setAddAdminStatus("请输入邮箱地址。");
+      return;
+    }
+    setAddAdminLoading(true);
+    setAddAdminStatus("");
+    try {
+      const { data: ok } = await getSupabaseClient()
+        .rpc("add_admin_by_email", { target_email: emailTrimmed });
+      if (ok) {
+        setNewAdminEmail("");
+        setAddAdminStatus("已添加管理员。");
+        addAudit("添加管理员", emailTrimmed);
+        void loadAdminList();
+      } else {
+        setAddAdminStatus("添加失败：未找到该邮箱对应的用户，或用户尚未注册。");
+      }
+    } catch {
+      setAddAdminStatus("添加失败，请重试。");
+    } finally {
+      setAddAdminLoading(false);
+    }
+  }
+
+  async function handleRemoveAdmin(userId: string, adminEmail: string) {
+    try {
+      const { data: ok } = await getSupabaseClient()
+        .rpc("remove_admin", { target_user_id: userId });
+      if (ok) {
+        setAddAdminStatus("已移除管理员。");
+        addAudit("移除管理员", adminEmail);
+        void loadAdminList();
+      } else {
+        setAddAdminStatus("移除失败：不能移除站主。");
+      }
+    } catch {
+      setAddAdminStatus("移除失败，请重试。");
+    }
+  }
+
+  // Load admin list when the admins tab becomes active
+  useEffect(() => {
+    if (!isOwner || activeTab !== "admins") return;
+    void loadAdminList();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOwner, activeTab]);
+
   const pendingSubmissions = submissions.filter((item) => item.status === "pending");
   const reviewedSubmissions = submissions.filter((item) => item.status !== "pending");
   const totalStations = 14; // from stationLinkMap
@@ -512,7 +590,9 @@ export default function AdminPage() {
               A
             </div>
             <div>
-              <p className="text-xl font-black tracking-tight">管理员面板</p>
+              <p className="text-xl font-black tracking-tight">
+                {isOwner ? "站主面板" : "管理员面板"}
+              </p>
               <p className="text-xs text-[var(--color-muted)]">{email ?? "管理员"}</p>
             </div>
           </div>
@@ -572,14 +652,15 @@ export default function AdminPage() {
         </section>
 
         {/* ---- Tab navigation ---- */}
-        <nav className="mb-6 flex gap-2 rounded-2xl border border-[var(--color-line)] bg-[var(--color-panel)] p-1.5 w-fit">
+        <nav className="mb-6 flex gap-2 rounded-2xl border border-[var(--color-line)] bg-[var(--color-panel)] p-1.5 w-fit flex-wrap">
           {(
             [
               ["posts", `帖子审核${stats && stats.pending_posts > 0 ? ` (${stats.pending_posts})` : ""}`],
               ["news", `新闻审核${pendingNews.length > 0 ? ` (${pendingNews.length})` : ""}`],
               ["stations", "站点管理"],
               ["import", "数据导入导出"],
-            ] as const
+              ...(isOwner ? [["admins", "管理员管理"] as const] : []),
+            ] as readonly (readonly [string, string])[]
           ).map(([key, label]) => (
             <button
               key={key}
@@ -588,7 +669,7 @@ export default function AdminPage() {
                   ? "bg-[var(--color-brand)] text-[var(--color-on-brand)] shadow-[0_4px_16px_var(--color-panel-glow)]"
                   : "text-[var(--color-muted)] hover:bg-[var(--color-soft)] hover:text-[var(--color-ink)]"
               }`}
-              onClick={() => setActiveTab(key)}
+              onClick={() => setActiveTab(key as AdminTab)}
               type="button"
             >
               {label}
@@ -790,31 +871,28 @@ export default function AdminPage() {
                   </div>
                   <button
                     className="rounded-full bg-[var(--color-soft)] px-4 py-2 text-sm font-bold text-[var(--color-brand-deep)] transition hover:bg-[var(--color-brand-soft)]"
-                    onClick={() => {
+                    onClick={async () => {
                       setPendingNewsLoading(true);
                       setApprovedNewsLoading(true);
-                      // Re-trigger fetches by forcing state
-                      getSupabaseClient()
-                        .from("ai_news")
-                        .select("id, title, summary, source, author, body, created_at")
-                        .eq("is_approved", false)
-                        .order("created_at", { ascending: false })
-                        .then(({ data }) => {
-                          setPendingNews((data as any[]) ?? []);
-                          setPendingNewsLoading(false);
-                        })
-                        .catch(() => setPendingNewsLoading(false));
-                      getSupabaseClient()
-                        .from("ai_news")
-                        .select("id, title, summary, source, author, body, created_at, is_hidden")
-                        .eq("is_approved", true)
-                        .order("created_at", { ascending: false })
-                        .limit(50)
-                        .then(({ data }) => {
-                          setApprovedNews((data as any[]) ?? []);
-                          setApprovedNewsLoading(false);
-                        })
-                        .catch(() => setApprovedNewsLoading(false));
+                      try {
+                        const { data: pdata } = await getSupabaseClient()
+                          .from("ai_news")
+                          .select("id, title, summary, source, author, body, created_at")
+                          .eq("is_approved", false)
+                          .order("created_at", { ascending: false });
+                        setPendingNews((pdata as any[]) ?? []);
+                      } catch { /* ignore */ }
+                      setPendingNewsLoading(false);
+                      try {
+                        const { data: adata } = await getSupabaseClient()
+                          .from("ai_news")
+                          .select("id, title, summary, source, author, body, created_at, is_hidden")
+                          .eq("is_approved", true)
+                          .order("created_at", { ascending: false })
+                          .limit(50);
+                        setApprovedNews((adata as any[]) ?? []);
+                      } catch { /* ignore */ }
+                      setApprovedNewsLoading(false);
                     }}
                     type="button"
                   >
@@ -1284,6 +1362,101 @@ export default function AdminPage() {
               value={importText}
             />
             <p className="mt-4 text-sm text-[var(--color-muted)]">{status}</p>
+          </div>
+        )}
+
+        {/* ---- Tab: 管理员管理 (site owner only) ---- */}
+        {activeTab === "admins" && (
+          <div className="grid gap-6 xl:grid-cols-[1fr_0.95fr]">
+            {/* Left: add admin form */}
+            <div className="rounded-[34px] border border-[var(--color-line)] bg-white p-6 shadow-[0_18px_60px_rgba(13,25,48,0.07)]">
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
+                添加管理员
+              </p>
+              <h2 className="mt-2 text-2xl font-black">输入邮箱添加为管理员</h2>
+              <p className="mt-2 text-sm text-[var(--color-muted)]">
+                该用户需要先在站点注册账号。添加后，管理员可以审核帖子、管理站点数据和新闻。
+              </p>
+              <div className="mt-5 flex flex-wrap items-center gap-3">
+                <input
+                  className="min-w-[260px] rounded-2xl border border-[var(--color-line)] bg-white px-5 py-3 outline-none transition focus:border-[var(--color-brand)]"
+                  onChange={(e) => setNewAdminEmail(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") void handleAddAdmin(); }}
+                  placeholder="输入用户邮箱地址"
+                  value={newAdminEmail}
+                />
+                <button
+                  className="rounded-full bg-[var(--color-brand)] px-6 py-3 text-sm font-bold text-[var(--color-on-brand)] transition hover:bg-[var(--color-brand-deep)] disabled:opacity-50"
+                  disabled={addAdminLoading}
+                  onClick={() => void handleAddAdmin()}
+                  type="button"
+                >
+                  {addAdminLoading ? "添加中..." : "添加管理员"}
+                </button>
+              </div>
+              {addAdminStatus && (
+                <p className="mt-4 text-sm text-[var(--color-muted)]">{addAdminStatus}</p>
+              )}
+            </div>
+
+            {/* Right: current admin list */}
+            <div className="rounded-[34px] border border-[var(--color-line)] bg-white p-6 shadow-[0_18px_60px_rgba(13,25,48,0.07)]">
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                  <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
+                    当前管理员列表
+                  </p>
+                  <h2 className="mt-2 text-2xl font-black">管理现有管理员权限</h2>
+                </div>
+                <button
+                  className="rounded-full bg-[var(--color-soft)] px-4 py-2 text-sm font-bold text-[var(--color-brand-deep)] transition hover:bg-[var(--color-brand-soft)]"
+                  onClick={() => void loadAdminList()}
+                  type="button"
+                >
+                  刷新
+                </button>
+              </div>
+              <div className="mt-5 space-y-3">
+                {adminListLoading ? (
+                  <div className="rounded-[24px] bg-[var(--color-soft)] px-4 py-5 text-sm leading-7 text-[var(--color-muted)]">
+                    加载中...
+                  </div>
+                ) : adminList.length === 0 ? (
+                  <div className="rounded-[24px] bg-[var(--color-soft)] px-4 py-5 text-sm leading-7 text-[var(--color-muted)]">
+                    暂无管理员。
+                  </div>
+                ) : (
+                  adminList.map((admin) => (
+                    <article
+                      key={admin.user_id}
+                      className="rounded-[24px] border border-[var(--color-line)] bg-[var(--color-soft)] p-4"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-bold">{admin.email}</p>
+                          <p className="mt-0.5 text-xs text-[var(--color-muted)]">
+                            {admin.display_name}
+                            {" · "}
+                            {new Date(admin.created_at).toLocaleString("zh-CN")}
+                          </p>
+                        </div>
+                        <button
+                          className="shrink-0 rounded-full bg-[#fff1f2] px-4 py-2 text-xs font-bold text-[#be123c] transition hover:bg-[#ffe4e6]"
+                          onClick={() => {
+                            if (window.confirm(`确定要移除管理员 ${admin.email} 吗？`)) {
+                              void handleRemoveAdmin(admin.user_id, admin.email);
+                            }
+                          }}
+                          type="button"
+                        >
+                          移除
+                        </button>
+                      </div>
+                    </article>
+                  ))
+                )}
+              </div>
+            </div>
           </div>
         )}
       </div>

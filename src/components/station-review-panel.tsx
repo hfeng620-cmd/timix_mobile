@@ -133,8 +133,20 @@ export function StationReviewPanel({ stationId }: StationReviewPanelProps) {
       return;
     }
 
-    if (!body.trim()) {
+    const trimmedBody = body.trim();
+
+    if (!trimmedBody) {
       setStatus("请输入评价内容。");
+      return;
+    }
+
+    if (trimmedBody.length < REVIEW_MIN) {
+      setStatus(`评价内容至少需要 ${REVIEW_MIN} 个字符（当前 ${trimmedBody.length} 个）。`);
+      return;
+    }
+
+    if (trimmedBody.length > REVIEW_MAX) {
+      setStatus(`评价内容不能超过 ${REVIEW_MAX} 个字符（当前 ${trimmedBody.length} 个）。`);
       return;
     }
 
@@ -147,6 +159,8 @@ export function StationReviewPanel({ stationId }: StationReviewPanelProps) {
         showAuthModal();
         return;
       }
+
+      await checkRateLimit(userData.user.id, "station_reviews");
 
       const { error } = await supabase
         .from("station_reviews")
@@ -164,8 +178,8 @@ export function StationReviewPanel({ stationId }: StationReviewPanelProps) {
       setRating(0);
       setFormOpen(false);
       setStatus("评价已提交，等待审核");
-    } catch {
-      setStatus("提交失败，请稍后重试。");
+    } catch (err) {
+      setStatus(err instanceof Error ? err.message : "提交失败，请稍后重试。");
     } finally {
       setSubmitting(false);
     }
@@ -256,11 +270,19 @@ export function StationReviewPanel({ stationId }: StationReviewPanelProps) {
           {/* Body textarea */}
           <textarea
             className="w-full resize-none rounded-[14px] border border-[var(--color-line)] bg-[var(--color-panel)] px-4 py-3 text-sm leading-7 outline-none transition focus:border-[var(--color-brand)]"
+            maxLength={REVIEW_MAX}
             rows={4}
             placeholder="写下你对这个中转站的体验、优缺点或避坑建议..."
             value={body}
             onChange={(e) => setBody(e.target.value)}
           />
+          <p className="mt-1 text-xs text-[var(--color-muted)]">
+            {body.trim().length === 0
+              ? `至少 ${REVIEW_MIN} 字符，最多 ${REVIEW_MAX} 字符`
+              : body.trim().length < REVIEW_MIN
+                ? `还差 ${REVIEW_MIN - body.trim().length} 个字符（至少 ${REVIEW_MIN} 个）`
+                : `剩余 ${REVIEW_MAX - body.trim().length} 个字符`}
+          </p>
 
           {/* Actions */}
           <div className="flex flex-wrap items-center gap-3">
