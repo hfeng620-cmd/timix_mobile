@@ -530,7 +530,7 @@ export default function AdminPage() {
   useEffect(() => {
     if (!isOwner || activeTab !== "admins") return;
     void loadAdminList();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [isOwner, activeTab]);
 
   const pendingSubmissions = submissions.filter((item) => item.status === "pending");

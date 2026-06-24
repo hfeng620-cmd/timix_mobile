@@ -62,25 +62,24 @@ export function CommunityPostPanel({ onPostCreated }: CommunityPostPanelProps) {
       .slice(0, 6);
   }, [station, allTags]);
 
-  // Detect @mention pattern in textarea
+  /* eslint-disable react-hooks/refs */
+  // Detect @mention pattern in textarea (reads textarea ref for cursor position)
   const mentionState = useMemo(() => {
     if (!body) return { active: false, query: "", startIdx: -1 };
     const textarea = textareaRef.current;
     if (!textarea) return { active: false, query: "", startIdx: -1 };
     const cursor = textarea.selectionStart;
     if (cursor === null) return { active: false, query: "", startIdx: -1 };
-
-    // Look backwards from cursor for @ that's not preceded by word char
     const textBefore = body.slice(0, cursor);
     const atMatch = textBefore.match(/(?:^|[^\w一-鿿])@([\w一-鿿]*)$/);
     if (!atMatch) return { active: false, query: "", startIdx: -1 };
-
     return {
       active: true,
       query: atMatch[1],
       startIdx: cursor - atMatch[0].length + (atMatch[0].indexOf("@") > 0 ? 2 : 1),
     };
   }, [body]);
+  /* eslint-enable react-hooks/refs */
 
   // Filtered mention suggestions
   const mentionSuggestions = useMemo(() => {
