@@ -29,14 +29,12 @@ type AdminTab = "posts" | "stations" | "import" | "news" | "admins";
 
 async function isForumAdmin(): Promise<boolean> {
   try {
-    const { data } = await getSupabaseClient().auth.getUser();
-    if (!data.user?.email) return false;
-    const { data: row } = await getSupabaseClient()
-      .from("forum_admins")
-      .select("email")
-      .eq("email", data.user.email)
-      .single();
-    return Boolean(row);
+    const supabase = getSupabaseClient();
+    const { data: userData } = await supabase.auth.getUser();
+    if (!userData.user?.id) return false;
+    // Use security-definer RPC that checks both forum_admins and site_owners
+    const { data } = await supabase.rpc("is_forum_admin", { check_user_id: userData.user.id });
+    return Boolean(data);
   } catch {
     return false;
   }
@@ -561,11 +559,20 @@ export default function AdminPage() {
   if (!adminOk && adminChecked) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-[var(--color-bg)] text-[var(--color-ink)]">
-        <div className="rounded-[34px] border border-[var(--color-line)] bg-white p-10 text-center shadow-[0_18px_60px_rgba(13,25,48,0.07)]">
+        <div className="rounded-[34px] border border-[var(--color-line)] bg-white p-10 text-center shadow-[0_18px_60px_rgba(13,25,48,0.07)] max-w-lg">
           <p className="text-2xl font-black">需要管理员权限</p>
           <p className="mt-3 text-sm text-[var(--color-muted)]">
-            当前邮箱 {email ?? "未设置"} 暂无管理员权限。请联系站点所有者授权。
+            当前邮箱 {email ?? "未设置"} 暂无管理员权限。
           </p>
+          <div className="mt-6 rounded-[20px] bg-[var(--color-soft)] p-5 text-left text-sm leading-7 text-[var(--color-muted)]">
+            <p className="font-bold text-[var(--color-ink)]">初始化站主（首次使用）</p>
+            <p className="mt-2">
+              在 Supabase 仪表盘 → SQL Editor 中运行下面这条 SQL，刷新页面即可获得管理员权限：
+            </p>
+            <code className="mt-3 block rounded-[12px] bg-[var(--color-panel)] p-3 text-xs leading-relaxed text-[var(--color-brand-deep)] break-all select-all">
+              insert into public.site_owners (user_id) select id from auth.users where lower(email) = lower('{email ?? "your@email.com"}') on conflict (user_id) do nothing;
+            </code>
+          </div>
         </div>
       </main>
     );

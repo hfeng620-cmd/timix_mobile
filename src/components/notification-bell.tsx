@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 const STORAGE_KEY = "timin-notifications";
 
@@ -15,6 +16,7 @@ interface NotificationItem {
   message: string;
   read: boolean;
   createdAt: number;
+  postId?: string;
 }
 
 function createSeedNotifications(): NotificationItem[] {
@@ -55,12 +57,8 @@ function loadNotifications(): NotificationItem[] {
   if (typeof window === "undefined") return [];
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      return JSON.parse(raw);
-    }
-  } catch {
-    // corrupted data, reseed below
-  }
+    if (raw) return JSON.parse(raw);
+  } catch { /* ignore */ }
   const seed = createSeedNotifications();
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(seed));
   return seed;
@@ -84,36 +82,30 @@ function formatRelativeTime(timestamp: number): string {
   return `${date.getMonth() + 1}月${date.getDate()}日`;
 }
 
-function getTypeLabel(type: NotificationType): string {
-  return type;
-}
-
 export function NotificationBell({
-  dropdownAbove = false,
+  dropdownAbove: _dropdownAbove,
 }: {
   dropdownAbove?: boolean;
 }) {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [open, setOpen] = useState(false);
-  const wrapperRef = useRef<HTMLDivElement | null>(null);
   const [mounted, setMounted] = useState(false);
+  const router = useRouter();
 
-  // Load on mount
   useEffect(() => {
     setNotifications(loadNotifications());
     setMounted(true);
   }, []);
 
-  // Close dropdown on outside click
+  // Escape key to close
   useEffect(() => {
-    function handlePointerDown(event: MouseEvent) {
-      if (!wrapperRef.current?.contains(event.target as Node)) {
-        setOpen(false);
-      }
+    if (!open) return;
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setOpen(false);
     }
-    document.addEventListener("mousedown", handlePointerDown);
-    return () => document.removeEventListener("mousedown", handlePointerDown);
-  }, []);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [open]);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
@@ -133,8 +125,16 @@ export function NotificationBell({
     });
   }
 
+  function handleNotificationClick(item: NotificationItem) {
+    markAsRead(item.id);
+    // Navigate to community to view the post
+    if (item.type === "你的帖子收到了新回复" || item.type === "你的回复被点赞了") {
+      setOpen(false);
+      router.push("/community");
+    }
+  }
+
   if (!mounted) {
-    // Render a static placeholder to avoid layout shift
     return (
       <div className="flex items-center justify-center">
         <div className="h-10 w-10 rounded-full border border-[var(--color-line)] bg-[var(--color-panel)]" />
@@ -143,29 +143,18 @@ export function NotificationBell({
   }
 
   return (
-    <div className="relative" data-selection-comments="off" ref={wrapperRef}>
+    <div className="relative" data-selection-comments="off">
+      {/* Bell button */}
       <button
         aria-label={`通知${unreadCount > 0 ? `，${unreadCount} 条未读` : ""}`}
         className="relative flex h-10 w-10 items-center justify-center rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] text-[var(--color-muted)] transition hover:border-[var(--color-brand)] hover:bg-[var(--color-brand-soft)] hover:text-[var(--color-brand-deep)]"
-        onClick={() => setOpen((prev) => !prev)}
+        onClick={() => setOpen(true)}
         type="button"
       >
-        {/* Bell SVG icon */}
-        <svg
-          aria-hidden="true"
-          className="h-5 w-5"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
+        <svg aria-hidden="true" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
           <path d="M13.73 21a2 2 0 0 1-3.46 0" />
         </svg>
-
-        {/* Badge */}
         {unreadCount > 0 && (
           <span className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[var(--color-brand)] px-1 text-[10px] font-black leading-none text-[var(--color-on-brand)] ring-2 ring-[var(--color-panel)]">
             {unreadCount > 99 ? "99+" : unreadCount}
@@ -173,73 +162,103 @@ export function NotificationBell({
         )}
       </button>
 
-      {/* Dropdown panel */}
+      {/* Full-screen overlay modal */}
       {open && (
-        <div
-          className={`absolute right-0 z-[80] w-[320px] overflow-hidden rounded-[18px] border border-[var(--color-line)] bg-[var(--color-panel)] shadow-[0_20px_60px_rgba(15,23,42,0.15)] backdrop-blur ${
-            dropdownAbove ? "bottom-full mb-2" : "top-full mt-2"
-          }`}
-        >
-          {/* Header */}
-          <div className="flex items-center justify-between border-b border-[var(--color-line)] px-4 py-3">
-            <p className="text-sm font-bold text-[var(--color-ink)]">
-              通知
-              {unreadCount > 0 && (
-                <span className="ml-2 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--color-brand)] px-1.5 text-[10px] font-black text-[var(--color-on-brand)]">
-                  {unreadCount}
-                </span>
+        <div className="fixed inset-0 z-[90] flex items-start justify-center bg-black/50 px-4 pt-[12vh] backdrop-blur-sm">
+          {/* Card */}
+          <div
+            className="surface-in w-full max-w-lg overflow-hidden rounded-[24px] border border-[var(--color-line)] bg-[var(--color-panel)] shadow-[0_24px_80px_rgba(15,23,42,0.18)]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-[var(--color-line)] px-6 py-4">
+              <div className="flex items-center gap-2">
+                <svg aria-hidden="true" className="h-5 w-5 text-[var(--color-brand-deep)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                </svg>
+                <h2 className="text-lg font-bold text-[var(--color-ink)]">通知中心</h2>
+                {unreadCount > 0 && (
+                  <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--color-brand)] px-1.5 text-[10px] font-black text-[var(--color-on-brand)]">
+                    {unreadCount}
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-3">
+                {unreadCount > 0 && (
+                  <button className="text-xs font-semibold text-[var(--color-brand-deep)] transition hover:underline" onClick={markAllRead} type="button">
+                    全部已读
+                  </button>
+                )}
+                <button
+                  aria-label="关闭通知"
+                  className="flex h-8 w-8 items-center justify-center rounded-full border border-[var(--color-line)] text-sm text-[var(--color-muted)] transition hover:bg-[var(--color-soft)] hover:text-[var(--color-ink)]"
+                  onClick={() => setOpen(false)}
+                  type="button"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            {/* List */}
+            <div className="max-h-[60vh] overflow-y-auto">
+              {notifications.length === 0 ? (
+                <div className="px-6 py-16 text-center">
+                  <p className="text-4xl">🔔</p>
+                  <p className="mt-3 text-sm font-semibold text-[var(--color-muted)]">暂无通知</p>
+                  <p className="mt-1 text-xs text-[var(--color-muted)]">当有人回复你的帖子或点赞时，你会在这里看到</p>
+                </div>
+              ) : (
+                notifications
+                  .sort((a, b) => b.createdAt - a.createdAt)
+                  .map((item) => (
+                    <button
+                      key={item.id}
+                      className={`flex w-full items-start gap-4 border-b border-[var(--color-line)] px-6 py-4 text-left transition last:border-b-0 hover:bg-[var(--color-soft)] ${
+                        !item.read ? "bg-[var(--color-brand-soft)]/20" : ""
+                      }`}
+                      onClick={() => handleNotificationClick(item)}
+                      type="button"
+                    >
+                      {/* Icon */}
+                      <div className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
+                        item.type === "你的帖子收到了新回复" ? "bg-[var(--color-brand-soft)] text-[var(--color-brand)]" :
+                        item.type === "你的回复被点赞了" ? "bg-[#fef3c7] text-[#d97706]" :
+                        "bg-[#ecfdf5] text-[#059669]"
+                      }`}>
+                        {item.type === "你的帖子收到了新回复" ? (
+                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                        ) : item.type === "你的回复被点赞了" ? (
+                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
+                        ) : (
+                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        )}
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-semibold text-[var(--color-brand-deep)]">{item.type}</p>
+                        <p className="mt-1 text-sm leading-relaxed text-[var(--color-ink)]">{item.message}</p>
+                        <div className="mt-2 flex items-center gap-2">
+                          <span className="text-[11px] text-[var(--color-muted)]">{formatRelativeTime(item.createdAt)}</span>
+                          {!item.read && <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-brand)]" />}
+                          {(item.type === "你的帖子收到了新回复" || item.type === "你的回复被点赞了") && (
+                            <span className="ml-auto text-[11px] font-semibold text-[var(--color-brand)]">查看帖子 →</span>
+                          )}
+                        </div>
+                      </div>
+                    </button>
+                  ))
               )}
-            </p>
-            {unreadCount > 0 && (
-              <button
-                className="text-xs font-semibold text-[var(--color-muted)] transition hover:text-[var(--color-brand-deep)]"
-                onClick={markAllRead}
-                type="button"
-              >
-                全部已读
-              </button>
-            )}
+            </div>
           </div>
 
-          {/* List */}
-          <div className="max-h-[360px] overflow-y-auto">
-            {notifications.length === 0 ? (
-              <div className="px-4 py-10 text-center text-sm text-[var(--color-muted)]">
-                暂无通知
-              </div>
-            ) : (
-              notifications
-                .sort((a, b) => b.createdAt - a.createdAt)
-                .map((item) => (
-                  <button
-                    key={item.id}
-                    className={`flex w-full gap-3 border-b border-[var(--color-line)] px-4 py-3 text-left transition last:border-b-0 hover:bg-[var(--color-soft)] ${
-                      !item.read ? "bg-[var(--color-brand-soft)]/30" : ""
-                    }`}
-                    onClick={() => markAsRead(item.id)}
-                    type="button"
-                  >
-                    {/* Dot for unread */}
-                    <div className="flex h-5 w-5 shrink-0 items-center justify-center pt-0.5">
-                      {!item.read && (
-                        <span className="inline-block h-2 w-2 rounded-full bg-[var(--color-brand)]" />
-                      )}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs font-semibold text-[var(--color-brand-deep)]">
-                        {getTypeLabel(item.type)}
-                      </p>
-                      <p className="mt-0.5 truncate text-sm leading-snug text-[var(--color-ink)]">
-                        {item.message}
-                      </p>
-                      <p className="mt-1 text-[11px] text-[var(--color-muted)]">
-                        {formatRelativeTime(item.createdAt)}
-                      </p>
-                    </div>
-                  </button>
-                ))
-            )}
-          </div>
+          {/* Backdrop click to close */}
+          <div
+            aria-hidden="true"
+            className="fixed inset-0 -z-10"
+            onClick={() => setOpen(false)}
+          />
         </div>
       )}
     </div>
