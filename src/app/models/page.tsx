@@ -75,7 +75,7 @@ export default function ModelsPage() {
       </section>
 
       <section className="mx-auto max-w-7xl px-6 py-12 lg:px-10">
-        <div className="rounded-[36px] border border-[var(--color-line)] bg-white p-7 shadow-[0_18px_60px_rgba(13,25,48,0.08)]">
+        <div className="rounded-[36px] border border-[var(--color-line)] bg-white p-7 shadow-[var(--shadow-card)]">
           <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-3xl">
               <p className="inline-flex rounded-full bg-[var(--color-brand-soft)] px-3 py-1 text-sm font-bold text-[var(--color-brand-deep)]">
@@ -108,7 +108,7 @@ export default function ModelsPage() {
           </div>
 
           <div className="mt-8 inline-flex rounded-full bg-[var(--color-soft)] p-1">
-            <span className="rounded-full bg-[var(--color-brand)] px-4 py-2 text-sm font-bold text-white shadow-[0_10px_24px_var(--color-panel-glow)]">
+            <span className="rounded-full bg-[var(--color-brand)] px-4 py-2 text-sm font-bold text-[var(--color-on-brand)] shadow-[0_10px_24px_var(--color-panel-glow)]">
               按任务看
             </span>
             <span className="px-4 py-2 text-sm font-semibold text-[var(--color-muted)]">
@@ -128,7 +128,7 @@ export default function ModelsPage() {
               <article
                 key={row.rank}
                 className={`grid grid-cols-[0.8fr_0.9fr_0.9fr_1.1fr_1.2fr] items-center px-5 py-5 ${
-                  index % 2 === 0 ? "bg-white" : "bg-[#f9fbfe]"
+                  index % 2 === 0 ? "bg-white" : "bg-[var(--color-row-alt)]"
                 }`}
               >
                 <div className="font-black">{row.rank}</div>

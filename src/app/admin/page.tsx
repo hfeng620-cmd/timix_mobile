@@ -302,7 +302,7 @@ export default function AdminPage() {
             请先登录管理员邮箱。
           </p>
           <button
-            className="mt-6 rounded-full bg-[var(--color-brand)] px-6 py-3 text-sm font-bold text-white"
+            className="mt-6 rounded-full bg-[var(--color-brand)] px-6 py-3 text-sm font-bold text-[var(--color-on-brand)]"
             onClick={showAuthModal}
             type="button"
           >
@@ -461,7 +461,7 @@ export default function AdminPage() {
                 </label>
                 <div className="mt-4 flex flex-wrap items-center gap-4">
                   <button
-                    className="rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-bold text-white transition hover:bg-[var(--color-brand-deep)] disabled:opacity-50"
+                    className="rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-bold text-[var(--color-on-brand)] transition hover:bg-[var(--color-brand-deep)] disabled:opacity-50"
                     disabled={announceSending}
                     onClick={() => void handlePublishAnnouncement()}
                     type="button"
@@ -582,7 +582,7 @@ export default function AdminPage() {
                 </div>
                 <div className="flex flex-wrap gap-3">
                   <button
-                    className="rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-bold text-white transition hover:bg-[var(--color-brand-deep)]"
+                    className="rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-bold text-[var(--color-on-brand)] transition hover:bg-[var(--color-brand-deep)]"
                     onClick={saveAll}
                     type="button"
                   >
@@ -736,7 +736,7 @@ export default function AdminPage() {
                         </label>
                         <div className="mt-5 flex flex-wrap gap-3">
                           <button
-                            className="rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-bold text-white transition hover:bg-[var(--color-brand-deep)]"
+                            className="rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-bold text-[var(--color-on-brand)] transition hover:bg-[var(--color-brand-deep)]"
                             onClick={() => reviewSubmission(item.id, "approved", "direct")}
                             type="button"
                           >
