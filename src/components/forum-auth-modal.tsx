@@ -18,17 +18,19 @@ export function ForumAuthModal({ open, onClose }: ForumAuthModalProps) {
     isConfigured,
     isLoading,
     needsPassword,
+    displayName,
     sendEmailCode,
     signInWithPassword,
     setPassword,
+    setDisplayName,
     signOut,
   } = useForumAuth();
 
   const [mode, setMode] = useState<AuthMode>("code");
   const [email, setEmail] = useState("");
+  const [displayNameInput, setDisplayNameInput] = useState(displayName ?? "");
   const [password, setPasswordValue] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [displayNameInput, setDisplayNameInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -204,16 +206,46 @@ export function ForumAuthModal({ open, onClose }: ForumAuthModalProps) {
                 <p className="text-sm text-[var(--color-muted)]">
                   已登录为 <span className="font-semibold text-[var(--color-ink)]">{signedInEmail}</span>
                 </p>
+                <input
+                  className="w-full rounded-[8px] border border-[var(--color-line)] bg-[var(--color-input)] px-4 py-3 text-sm outline-none transition focus:border-[var(--color-brand)]"
+                  onChange={(event) => {
+                    setDisplayNameInput(event.target.value);
+                    setError("");
+                  }}
+                  placeholder="修改昵称"
+                  type="text"
+                  value={displayNameInput}
+                  maxLength={80}
+                />
                 <div className="flex flex-col gap-3">
                   <button
-                    className="w-full rounded-full bg-[var(--color-brand)] px-5 py-2.5 text-sm font-bold text-[var(--color-on-brand)] transition hover:bg-[var(--color-brand-deep)]"
-                    onClick={onClose}
+                    className="w-full rounded-full bg-[var(--color-brand)] px-5 py-2.5 text-sm font-bold text-[var(--color-on-brand)] transition hover:bg-[var(--color-brand-deep)] disabled:opacity-60"
+                    disabled={loading || !displayNameInput.trim()}
+                    onClick={async () => {
+                      if (!displayNameInput.trim()) return;
+                      setLoading(true);
+                      try {
+                        await setDisplayName(displayNameInput.trim());
+                        setNotice("昵称已更新。");
+                      } catch {
+                        setError("更新失败，请稍后重试。");
+                      } finally {
+                        setLoading(false);
+                      }
+                    }}
                     type="button"
                   >
-                    继续浏览
+                    保存昵称
                   </button>
                   <button
                     className="w-full rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] px-5 py-2.5 text-sm font-bold text-[var(--color-muted)] transition hover:bg-[var(--color-soft)] hover:text-[var(--color-ink)]"
+                    onClick={onClose}
+                    type="button"
+                  >
+                    关闭
+                  </button>
+                  <button
+                    className="w-full rounded-full border border-red-200 bg-[#fff1f2] px-5 py-2.5 text-sm font-bold text-[#be123c] transition hover:bg-[#ffe4e6]"
                     onClick={() => void signOut()}
                     type="button"
                   >
