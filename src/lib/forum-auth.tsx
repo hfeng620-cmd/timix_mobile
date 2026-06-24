@@ -86,11 +86,17 @@ export function ForumAuthProvider({ children }: { children: React.ReactNode }) {
     const supabase = getSupabaseClient();
     let mounted = true;
 
-    supabase.auth.getSession().then(({ data }) => {
-      if (!mounted) return;
-      setSession(data.session);
-      setIsLoading(false);
-    });
+    supabase.auth.getSession()
+      .then(({ data }) => {
+        if (!mounted) return;
+        setSession(data.session);
+        setIsLoading(false);
+      })
+      .catch(() => {
+        if (!mounted) return;
+        setSession(null);
+        setIsLoading(false);
+      });
 
     const { data: listener } = supabase.auth.onAuthStateChange(
       (_event, nextSession) => {
