@@ -28,17 +28,9 @@ type DiscussionFeedProps = {
   limit?: number;
 };
 
-function formatCount(value: number) {
-  if (value >= 10000) {
-    const wan = value / 10000;
-    return `${Number.isInteger(wan) ? wan : wan.toFixed(1)}万`;
-  }
-
-  if (value >= 1000) {
-    return `${(value / 1000).toFixed(1)}k`;
-  }
-
-  return `${value}`;
+function CountDisplay({ count }: { count: number }) {
+  // Show raw number (no 万/k formatting) for exact count
+  return <>{count}</>;
 }
 
 /** Parse @username patterns and render them as highlighted spans with brand color.
@@ -140,7 +132,7 @@ function ActionButton({
   const content = (
     <>
       <ActionIcon kind={icon} liked={liked} />
-      <span className={liked ? "text-[#ef4444]" : ""}>{formatCount(count)}</span>
+      <span className={liked ? "text-[#ef4444]" : ""}>{count}</span>
     </>
   );
 
