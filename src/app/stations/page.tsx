@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { AuthButton } from "@/components/auth-button";
 import { NotificationBell } from "@/components/notification-bell";
+import { OnlineIndicator } from "@/components/online-indicator";
 import { StationsBoard } from "@/components/stations-board";
 
 export default function StationsPage() {
@@ -37,6 +38,7 @@ export default function StationsPage() {
                 论坛入口
               </Link>
             </nav>
+            <OnlineIndicator />
             <NotificationBell />
             <AuthButton />
           </div>

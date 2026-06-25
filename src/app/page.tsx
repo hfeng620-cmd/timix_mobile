@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { AiNewsPanel } from "@/components/ai-news-panel";
 import { AuthButton } from "@/components/auth-button";
+import { OnlineIndicator } from "@/components/online-indicator";
 import { NotificationBell } from "@/components/notification-bell";
 import { QqGroupModalButton } from "@/components/qq-group-modal-button";
 import { StationRowLink } from "@/components/station-row-link";
@@ -80,6 +81,7 @@ export default function Home() {
                 更多指南
               </Link>
             </nav>
+            <OnlineIndicator />
             <NotificationBell />
             <AuthButton />
           </div>

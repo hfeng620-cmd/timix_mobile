@@ -5,6 +5,7 @@ import { useCallback, useState } from "react";
 
 import { AuthButton } from "@/components/auth-button";
 import { NotificationBell } from "@/components/notification-bell";
+import { OnlineIndicator } from "@/components/online-indicator";
 import { CommunityPostPanel } from "@/components/community-post-panel";
 import { DiscussionFeed } from "@/components/discussion-feed";
 import { QqGroupModalButton } from "@/components/qq-group-modal-button";
@@ -69,6 +70,7 @@ export default function CommunityPage() {
               ) : null}
             </nav>
 
+            <OnlineIndicator />
             <NotificationBell />
             <AuthButton />
           </div>
