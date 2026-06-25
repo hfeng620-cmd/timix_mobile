@@ -16,12 +16,12 @@ create policy "Anyone can read presence" on public.user_presence
 
 -- Fix: use proper UPSERT pattern for user_presence
 drop policy if exists "Users update their presence" on public.user_presence;
-create policy "Users upsert their presence" on public.user_presence
-  for insert with check (auth.uid() = user_id);
-
-drop policy if exists "Users upsert their presence" on public.user_presence;
 create policy "Users update their presence" on public.user_presence
   for update using (auth.uid() = user_id);
+
+drop policy if exists "Users upsert their presence" on public.user_presence;
+create policy "Users upsert their presence" on public.user_presence
+  for insert with check (auth.uid() = user_id);
 
 -- Grant permissions so anon keys can also read (for unauthenticated visitors to see count)
 grant select on public.user_presence to anon, authenticated;
