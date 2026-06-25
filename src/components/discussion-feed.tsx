@@ -190,6 +190,7 @@ export function DiscussionFeed({
   const [editingPostId, setEditingPostId] = useState<string | null>(null);
   const [editBody, setEditBody] = useState("");
   const [editSaving, setEditSaving] = useState(false);
+  const [replySubmitting, setReplySubmitting] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState("");
   const [sortOption, setSortOption] = useState<"latest" | "mostReplies" | "mostLikes">("latest");
   const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(new Set());
@@ -465,6 +466,7 @@ export function DiscussionFeed({
       showAuthModal();
       return;
     }
+    if (replySubmitting.has(postId)) return;
 
     const draft = replyDrafts[postId]?.trim();
     if (!draft) {
@@ -472,6 +474,7 @@ export function DiscussionFeed({
       return;
     }
 
+    setReplySubmitting((prev) => new Set(prev).add(postId));
     setStatus("回复中...");
     try {
       await replyDiscussionPost(postId, draft);
@@ -491,6 +494,8 @@ export function DiscussionFeed({
       setStatus("已回复。");
     } catch {
       setStatus("回复失败，请检查网络后重试。");
+    } finally {
+      setReplySubmitting((prev) => { const next = new Set(prev); next.delete(postId); return next; });
     }
   }
 
@@ -1016,11 +1021,12 @@ export function DiscussionFeed({
                       value={replyDrafts[post.issueNumber] ?? ""}
                     />
                     <button
-                      className="w-full rounded-full bg-[var(--color-brand)] px-4 py-3.5 text-sm font-bold text-[var(--color-on-brand)] transition hover:bg-[var(--color-brand-deep)] sm:w-auto"
+                      className="w-full rounded-full bg-[var(--color-brand)] px-4 py-3.5 text-sm font-bold text-[var(--color-on-brand)] transition hover:bg-[var(--color-brand-deep)] disabled:opacity-50 sm:w-auto"
+                      disabled={replySubmitting.has(post.issueNumber)}
                       onClick={() => handleReply(post.issueNumber)}
                       type="button"
                     >
-                      发送
+                      {replySubmitting.has(post.issueNumber) ? "发送中..." : "发送"}
                     </button>
                   </div>
                 </div>
