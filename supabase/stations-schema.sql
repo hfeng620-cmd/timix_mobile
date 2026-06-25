@@ -72,8 +72,8 @@ using (auth.uid() is not null)
 with check (auth.uid() is not null);
 
 drop policy if exists "Authenticated users delete stations" on public.stations;
-create policy "Authenticated users delete stations" on public.stations for delete
-using (auth.uid() is not null);
+create policy "Only admins delete stations" on public.stations for delete
+using (public.is_forum_admin());
 
 -- station_edits: select for everyone, insert requires auth.uid() = editor_id
 drop policy if exists "Station edits are public" on public.station_edits;

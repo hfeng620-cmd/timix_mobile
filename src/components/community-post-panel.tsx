@@ -40,7 +40,7 @@ export function CommunityPostPanel({ onPostCreated }: CommunityPostPanelProps) {
   useEffect(() => {
     let cancelled = false;
     loadDiscussionPosts().then((posts) => {
-      if (cancelled) {
+      if (!cancelled) {
         const names = new Set<string>();
         for (const p of posts) {
           if (p.author && p.author !== "噜噜") names.add(p.author);

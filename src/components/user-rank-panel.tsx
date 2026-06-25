@@ -62,7 +62,7 @@ export default function UserRankPanel() {
         const { data, error: queryError } = await supabase
           .from("forum_user_ranks")
           .select("*")
-          .order("rank", { ascending: true })
+          .order("reputation", { ascending: false })
           .limit(10);
 
         if (queryError) throw queryError;
@@ -71,7 +71,7 @@ export default function UserRankPanel() {
           setUsers(
             ((data ?? []) as UserRankRow[]).map((row, index) => ({
               ...row,
-              rank: row.rank ?? index + 1,
+              rank: index + 1,
             })),
           );
           setError(null);

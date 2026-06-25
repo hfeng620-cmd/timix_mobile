@@ -118,7 +118,7 @@ export function AiNewsPanel() {
             source: String(row.source ?? ""),
             time: row.created_at ? formatRelativeTime(String(row.created_at)) : "",
             url: row.url ? String(row.url) : undefined,
-            source_type: row.source_type === "user" ? "user" : "seed",
+            source_type: "seed",
           }));
 
           setNews(mapped);

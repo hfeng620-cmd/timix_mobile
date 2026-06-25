@@ -32,11 +32,16 @@ create index if not exists station_reviews_approved_idx
 
 alter table public.station_reviews enable row level security;
 
--- Anyone can read approved reviews
+-- Allow authors to see their own reviews (even unapproved) and admins to see all
+-- This also enables rate-limit checks (checkRateLimit queries by author_id)
 drop policy if exists "Approved reviews are public" on public.station_reviews;
 create policy "Approved reviews are public" on public.station_reviews
   for select
-  using (is_approved = true);
+  using (
+    is_approved = true
+    or author_id = auth.uid()
+    or public.is_forum_admin()
+  );
 
 -- Authenticated users can submit reviews (their own)
 drop policy if exists "Authenticated users submit reviews" on public.station_reviews;
