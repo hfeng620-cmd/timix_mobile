@@ -4,35 +4,27 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
-import { ThemeToggleInline } from "@/components/theme-toggle";
+import { ThemeToggleInline, type ThemeToggleView } from "@/components/theme-toggle";
 import { siteLinks } from "@/lib/site-links";
 
 const HINT_DISMISSED_KEY = "relay-theme-hint-seen";
 
-const primaryRoutes = [
+const navigationRoutes = [
   {
     label: "榜单",
     href: "/stations",
-    title: "先锁定候选站点",
-    description: "先从榜单圈定候选。",
   },
   {
     label: "模型",
     href: "/models",
-    title: "再把站点和模型放一起比",
-    description: "把能力、稳定性和场景放到一起看。",
   },
   {
     label: "指南",
     href: "/guides",
-    title: "有疑问时回指南校准",
-    description: "有分歧时先回这里统一口径。",
   },
   {
     label: "社区",
     href: "/community",
-    title: "把结论带回社区",
-    description: "把体验和提醒沉淀回讨论区。",
   },
 ] as const;
 
@@ -49,58 +41,24 @@ const utilityRoutes = [
   },
 ] as const;
 
-const appearanceWays = [
-  {
-    label: "整套切换",
-    title: "先从整套预设开始",
-    description: "如果拿不准，先在外观中心里选一套现成组合，再决定要不要细调。",
-  },
-  {
-    label: "只换主题",
-    title: "想换气质就动主题",
-    description: "主题主要影响背景层次、空间感和整体氛围，适合先定网站气质。",
-  },
-  {
-    label: "只换配色",
-    title: "想保守一点就动配色",
-    description: "配色主要影响按钮、描边和强调色，改动更稳，更适合小步试。",
-  },
-] as const;
-
-const appearanceSuggestions = [
-  "第一次试用：先选整套，再看要不要继续细调。",
-  "想保留结构：只改配色，通常更安全。",
-  "想明显换感觉：优先改主题，再挑一个顺眼的配色。",
-] as const;
-
 function isRouteActive(pathname: string, href: string) {
   return href === "/" ? pathname === "/" : pathname.startsWith(href);
 }
 
-function getCurrentPageLabel(pathname: string) {
-  if (pathname === "/") return "首页";
-  if (pathname.startsWith("/stations")) return "榜单";
-  if (pathname.startsWith("/models")) return "模型";
-  if (pathname.startsWith("/guides")) return "指南";
-  if (pathname.startsWith("/community")) return "社区";
-  if (pathname.startsWith("/profile")) return "个人主页";
-  if (pathname.startsWith("/admin")) return "管理员面板";
-  return "站内页面";
-}
+type AppearancePanel = Extract<ThemeToggleView, "theme" | "palette">;
 
 export function FloatingQuickPanel() {
   const [open, setOpen] = useState(false);
   const [showHint, setShowHint] = useState(false);
+  const [appearancePanel, setAppearancePanel] = useState<AppearancePanel | null>(null);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const closeButtonRef = useRef<HTMLButtonElement | null>(null);
   const pathname = usePathname();
-  const activePrimaryIndex = primaryRoutes.findIndex((item) =>
-    isRouteActive(pathname, item.href),
-  );
-  const nextPrimaryRoute =
-    activePrimaryIndex >= 0 ? primaryRoutes[activePrimaryIndex + 1] : primaryRoutes[0];
 
   useEffect(() => {
     function handlePointerDown(event: MouseEvent) {
+      if (appearancePanel) return;
       if (!wrapperRef.current?.contains(event.target as Node)) {
         setOpen(false);
       }
@@ -108,7 +66,7 @@ export function FloatingQuickPanel() {
 
     document.addEventListener("mousedown", handlePointerDown);
     return () => document.removeEventListener("mousedown", handlePointerDown);
-  }, []);
+  }, [appearancePanel]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -118,7 +76,22 @@ export function FloatingQuickPanel() {
 
   useEffect(() => {
     setOpen(false);
+    setAppearancePanel(null);
   }, [pathname]);
+
+  useEffect(() => {
+    if (!appearancePanel) return;
+    closeButtonRef.current?.focus();
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setAppearancePanel(null);
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [appearancePanel]);
 
   function dismissHint() {
     setShowHint(false);
@@ -127,234 +100,72 @@ export function FloatingQuickPanel() {
     }
   }
 
-  function scrollAppearanceSection(sectionId: string) {
-    const section = document.getElementById(sectionId);
-    if (!section) return;
-    section.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  function openAppearancePanel(panel: AppearancePanel) {
+    setOpen(false);
+    setAppearancePanel(panel);
+    dismissHint();
   }
 
   return (
+    <>
     <div className="fixed bottom-20 left-4 z-[70] lg:bottom-4" data-selection-comments="off" ref={wrapperRef}>
       {open ? (
-        <div className="surface-in mb-3 w-[328px] overflow-hidden rounded-[28px] border border-[var(--color-line)] bg-[var(--surface-gradient)] p-4 shadow-[0_24px_80px_rgba(15,23,42,0.14)] backdrop-blur">
+        <div
+          aria-label="导航与快捷操作"
+          className="surface-in mb-3 w-[328px] overflow-hidden rounded-[28px] border border-[var(--color-line)] bg-[var(--surface-gradient)] p-4 shadow-[0_24px_80px_rgba(15,23,42,0.14)] backdrop-blur"
+          id="quick-panel-menu"
+          role="navigation"
+        >
           <div className="border-b border-[var(--color-line)] pb-3">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="text-sm font-bold text-[var(--color-ink)]">观察站导航台</p>
                 <p className="mt-1 text-xs leading-5 text-[var(--color-muted)]">
-                  推荐路径、协作入口和外观中心都收在这里。
+                  常用入口、主题和配色都收在这里。
                 </p>
               </div>
               <span className="rounded-full border border-[var(--color-line)] bg-[var(--color-soft)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--color-brand-deep)]">
                 UI
               </span>
             </div>
-            <div className="mt-3 grid grid-cols-3 gap-2">
-              <div className="rounded-[14px] border border-[var(--color-line)] bg-[color:color-mix(in_srgb,var(--color-panel)_76%,white)] px-3 py-2.5">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--color-muted)]">
-                  主路径
-                </p>
-                <p className="mt-1 text-sm font-bold text-[var(--color-ink)]">4 步完成</p>
-              </div>
-              <div className="rounded-[14px] border border-[var(--color-line)] bg-[color:color-mix(in_srgb,var(--color-panel)_76%,white)] px-3 py-2.5">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--color-muted)]">
-                  协作
-                </p>
-                <p className="mt-1 text-sm font-bold text-[var(--color-ink)]">3 个入口</p>
-              </div>
-              <div className="rounded-[14px] border border-[var(--color-line)] bg-[color:color-mix(in_srgb,var(--color-panel)_76%,white)] px-3 py-2.5">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--color-muted)]">
-                  外观
-                </p>
-                <p className="mt-1 text-sm font-bold text-[var(--color-ink)]">主题 + 配色</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-4">
-            <div className="rounded-[18px] border border-[var(--color-line)] bg-[color:color-mix(in_srgb,var(--color-brand-soft)_54%,white)] p-3">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-brand-deep)]">
-                    外观速调
-                  </p>
-                  <p className="mt-1 text-sm font-bold text-[var(--color-ink)]">
-                    先选整套气质，再细调主题和配色。
-                  </p>
-                </div>
-                <span className="rounded-full border border-[var(--color-line)] bg-white/70 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--color-brand-deep)]">
-                  New
-                </span>
-              </div>
-              <div className="mt-3 grid grid-cols-2 gap-2">
-                <button
-                  className="rounded-[14px] border border-[var(--color-line)] bg-white/78 px-3 py-2.5 text-left transition hover:border-[var(--color-brand)] hover:bg-white"
-                  onClick={() => scrollAppearanceSection("appearance-theme-section")}
-                  type="button"
-                >
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--color-muted)]">
-                    主题快捷
-                  </p>
-                  <p className="mt-1 text-sm font-bold text-[var(--color-ink)]">直接改背景气质</p>
-                </button>
-                <button
-                  className="rounded-[14px] border border-[var(--color-line)] bg-white/78 px-3 py-2.5 text-left transition hover:border-[var(--color-brand)] hover:bg-white"
-                  onClick={() => scrollAppearanceSection("appearance-palette-section")}
-                  type="button"
-                >
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--color-muted)]">
-                    配色快捷
-                  </p>
-                  <p className="mt-1 text-sm font-bold text-[var(--color-ink)]">直接改主色强调</p>
-                </button>
-              </div>
-              <div className="mt-3 grid grid-cols-2 gap-2">
-                <div className="rounded-[14px] border border-[var(--color-line)] bg-white/70 px-3 py-2.5">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--color-muted)]">
-                    主题
-                  </p>
-                  <p className="mt-1 text-sm font-bold text-[var(--color-ink)]">管背景氛围</p>
-                </div>
-                <div className="rounded-[14px] border border-[var(--color-line)] bg-white/70 px-3 py-2.5">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--color-muted)]">
-                    配色
-                  </p>
-                  <p className="mt-1 text-sm font-bold text-[var(--color-ink)]">管主色强调</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-4">
-            <div className="rounded-[18px] border border-[var(--color-line)] bg-[color:color-mix(in_srgb,var(--color-panel)_80%,white)] p-3">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
-                    怎么玩更轻松
-                  </p>
-                  <p className="mt-1 text-sm font-bold text-[var(--color-ink)]">
-                    把它当成 3 种不同力度的外观调节。
-                  </p>
-                </div>
-                <span className="rounded-full border border-[var(--color-line)] bg-[var(--color-soft)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--color-brand-deep)]">
-                  Tips
-                </span>
-              </div>
-              <div className="mt-3 grid gap-2">
-                {appearanceWays.map((item) => (
-                  <div
-                    key={item.label}
-                    className="rounded-[16px] border border-[var(--color-line)] bg-[var(--color-soft)] px-3 py-3"
-                  >
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--color-brand-deep)]">
-                      {item.label}
-                    </p>
-                    <p className="mt-1 text-sm font-bold text-[var(--color-ink)]">{item.title}</p>
-                    <p className="mt-1 text-xs leading-5 text-[var(--color-muted)]">{item.description}</p>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-3 rounded-[16px] border border-dashed border-[var(--color-line)] bg-white/65 px-3 py-3">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--color-muted)]">
-                  拿不准时
-                </p>
-                <div className="mt-2 space-y-1.5">
-                  {appearanceSuggestions.map((item) => (
-                    <p key={item} className="text-xs leading-5 text-[var(--color-muted)]">
-                      {item}
-                    </p>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-4">
-            <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
-              外观中心
-            </p>
-            <p className="mb-3 text-xs leading-5 text-[var(--color-muted)]">
-              先在这里试整套组合，再决定是继续改主题，还是只换一个更顺眼的配色。
-            </p>
-            <div className="mb-3 grid grid-cols-3 gap-2">
+            <div className="mt-3 grid grid-cols-2 gap-2">
               <button
-                className="rounded-[14px] border border-[var(--color-line)] bg-[var(--color-soft)] px-3 py-2 text-xs font-bold text-[var(--color-ink)] transition hover:border-[var(--color-brand)] hover:text-[var(--color-brand-deep)]"
-                onClick={() => scrollAppearanceSection("appearance-presets")}
-                type="button"
-              >
-                整套
-              </button>
-              <button
-                className="rounded-[14px] border border-[var(--color-line)] bg-[var(--color-soft)] px-3 py-2 text-xs font-bold text-[var(--color-ink)] transition hover:border-[var(--color-brand)] hover:text-[var(--color-brand-deep)]"
-                onClick={() => scrollAppearanceSection("appearance-theme-section")}
+                className="rounded-[14px] border border-[var(--color-line)] bg-[var(--color-soft)] px-3 py-3 text-left text-sm font-bold text-[var(--color-ink)] transition hover:border-[var(--color-brand)] hover:bg-[var(--color-brand-soft)] hover:text-[var(--color-brand-deep)]"
+                onClick={() => openAppearancePanel("theme")}
                 type="button"
               >
                 主题
               </button>
               <button
-                className="rounded-[14px] border border-[var(--color-line)] bg-[var(--color-soft)] px-3 py-2 text-xs font-bold text-[var(--color-ink)] transition hover:border-[var(--color-brand)] hover:text-[var(--color-brand-deep)]"
-                onClick={() => scrollAppearanceSection("appearance-palette-section")}
+                className="rounded-[14px] border border-[var(--color-line)] bg-[var(--color-soft)] px-3 py-3 text-left text-sm font-bold text-[var(--color-ink)] transition hover:border-[var(--color-brand)] hover:bg-[var(--color-brand-soft)] hover:text-[var(--color-brand-deep)]"
+                onClick={() => openAppearancePanel("palette")}
                 type="button"
               >
                 配色
               </button>
             </div>
-            <ThemeToggleInline />
           </div>
 
           <div className="mt-4">
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
-              推荐路径
+              主导航
             </p>
-            <div className="mt-2 rounded-[16px] border border-[var(--color-line)] bg-[color:color-mix(in_srgb,var(--color-panel)_78%,white)] px-3 py-2.5">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--color-muted)]">
-                    当前定位
-                  </p>
-                  <p className="mt-1 text-sm font-bold text-[var(--color-ink)]">
-                    {getCurrentPageLabel(pathname)}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--color-muted)]">
-                    下一步
-                  </p>
-                  <p className="mt-1 text-sm font-bold text-[var(--color-brand-deep)]">
-                    {nextPrimaryRoute?.label ?? "已到终点"}
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="mt-2 grid gap-2">
-              {primaryRoutes.map((item, index) => {
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              {navigationRoutes.map((item) => {
                 const active = isRouteActive(pathname, item.href);
 
                 return (
                   <Link
                     key={item.href}
                     aria-current={active ? "page" : undefined}
-                    className={`rounded-[16px] border px-3 py-3 transition-all duration-300 ${
+                    className={`rounded-[14px] border px-3 py-3 text-sm font-semibold transition-all duration-300 ${
                       active
                         ? "border-[var(--color-brand)] bg-[var(--color-brand-soft)] text-[var(--color-brand-deep)] shadow-[0_10px_26px_rgba(37,99,235,0.12)]"
                         : "border-[var(--color-line)] bg-[var(--color-soft)] text-[var(--color-ink)] hover:border-[var(--color-brand)] hover:bg-[var(--color-brand-soft)] hover:text-[var(--color-brand-deep)]"
                     }`}
                     href={item.href}
                   >
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--color-muted)]">
-                          {String(index + 1).padStart(2, "0")} · {item.label}
-                        </p>
-                        <p className="mt-1 text-sm font-bold">{item.title}</p>
-                        <p className="mt-1 text-xs leading-5 text-[var(--color-muted)]">
-                          {item.description}
-                        </p>
-                      </div>
-                      <span className="text-xs font-semibold uppercase tracking-[0.18em]">
-                        {active ? "当前" : "进入"}
-                      </span>
-                    </div>
+                    {item.label}
                   </Link>
                 );
               })}
@@ -397,14 +208,6 @@ export function FloatingQuickPanel() {
             <div className="mt-2 grid gap-2">
               <a
                 className="rounded-[14px] border border-[var(--color-line)] bg-[var(--color-soft)] px-3 py-3.5 text-sm font-semibold text-[var(--color-ink)] transition-all duration-300 hover:border-[var(--color-brand)] hover:bg-[var(--color-brand-soft)] hover:text-[var(--color-brand-deep)]"
-                href={siteLinks.pages}
-                rel="noopener noreferrer"
-                target="_blank"
-              >
-                打开线上站点
-              </a>
-              <a
-                className="rounded-[14px] border border-[var(--color-line)] bg-[var(--color-soft)] px-3 py-3.5 text-sm font-semibold text-[var(--color-ink)] transition-all duration-300 hover:border-[var(--color-brand)] hover:bg-[var(--color-brand-soft)] hover:text-[var(--color-brand-deep)]"
                 href={siteLinks.discussions}
                 rel="noopener noreferrer"
                 target="_blank"
@@ -426,6 +229,8 @@ export function FloatingQuickPanel() {
 
       <button
         aria-label="打开导航与外观面板"
+        aria-controls="quick-panel-menu"
+        aria-expanded={open}
         className={`relative flex h-11 min-w-11 items-center justify-center rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] px-4 text-sm font-bold text-[var(--color-brand-deep)] shadow-[0_12px_34px_rgba(15,23,42,0.14)] transition hover:border-[var(--color-brand)] hover:bg-[var(--color-brand-soft)] ${showHint ? "theme-hint-pulse" : ""}`}
         onClick={() => {
           setOpen((current) => !current);
@@ -437,5 +242,48 @@ export function FloatingQuickPanel() {
         导航 / 外观
       </button>
     </div>
+    {appearancePanel ? (
+      <div
+        aria-labelledby="appearance-dialog-title"
+        aria-modal="true"
+        className="fixed inset-0 z-[90] flex items-center justify-center bg-[rgba(15,23,42,0.34)] p-4 backdrop-blur-md"
+        data-selection-comments="off"
+        onMouseDown={(event) => {
+          if (event.target === event.currentTarget) {
+            setAppearancePanel(null);
+          }
+        }}
+        role="dialog"
+      >
+        <div
+          className="surface-in max-h-[82vh] w-full max-w-2xl overflow-hidden rounded-[28px] border border-[var(--color-line)] bg-[var(--surface-gradient)] shadow-[0_28px_90px_rgba(15,23,42,0.26)]"
+          ref={panelRef}
+        >
+          <div className="flex items-start justify-between gap-4 border-b border-[var(--color-line)] px-5 py-4">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
+                外观快捷
+              </p>
+              <h2 id="appearance-dialog-title" className="mt-1 text-xl font-black text-[var(--color-ink)]">
+                {appearancePanel === "theme" ? "主题" : "配色"}
+              </h2>
+            </div>
+            <button
+              aria-label="关闭外观弹窗"
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--color-line)] bg-[var(--color-soft)] text-lg leading-none text-[var(--color-muted)] transition hover:border-[var(--color-brand)] hover:text-[var(--color-ink)]"
+              onClick={() => setAppearancePanel(null)}
+              ref={closeButtonRef}
+              type="button"
+            >
+              ×
+            </button>
+          </div>
+          <div className="max-h-[calc(82vh-74px)] overflow-y-auto px-5 py-5">
+            <ThemeToggleInline compact view={appearancePanel} />
+          </div>
+        </div>
+      </div>
+    ) : null}
+    </>
   );
 }

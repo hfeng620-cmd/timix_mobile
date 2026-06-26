@@ -70,7 +70,7 @@ export function SiteFooter() {
 
   return (
     <footer className="relative mt-auto overflow-hidden border-t border-[var(--color-line)] bg-[var(--color-panel)] backdrop-blur">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(37,99,235,0.12),transparent_24%),radial-gradient(circle_at_88%_18%,rgba(125,211,252,0.12),transparent_20%),linear-gradient(180deg,rgba(255,255,255,0.18),rgba(255,255,255,0))]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,var(--color-panel-glow),transparent_26%),radial-gradient(circle_at_88%_18%,var(--color-brand-soft),transparent_24%),linear-gradient(180deg,color-mix(in_srgb,var(--color-panel-strong)_54%,transparent),transparent)]" />
       <div className="mx-auto grid max-w-7xl gap-8 px-6 py-8 lg:grid-cols-[1.1fr_0.9fr] lg:px-10 lg:py-10">
         <div className="relative space-y-6">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--color-brand-deep)]">
@@ -87,7 +87,7 @@ export function SiteFooter() {
             {decisionMap.map((item) => (
               <Link
                 key={item.href}
-                className="group rounded-3xl border border-[var(--color-line)] bg-[color:color-mix(in_srgb,var(--color-panel)_78%,white)] p-5 transition hover:-translate-y-0.5 hover:border-[var(--color-brand)] hover:bg-white/92 hover:shadow-[0_18px_50px_rgba(15,23,42,0.08)]"
+                className="group rounded-3xl border border-[var(--color-line)] bg-[var(--color-panel-strong)] p-5 transition hover:-translate-y-0.5 hover:border-[var(--color-brand)] hover:bg-[var(--color-soft)] hover:shadow-[0_18px_50px_var(--color-panel-glow)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-brand)] motion-reduce:transform-none motion-reduce:transition-none"
                 href={item.href}
               >
                 <div className="flex items-center justify-between gap-3">
@@ -110,7 +110,7 @@ export function SiteFooter() {
         </div>
 
         <div className="relative grid gap-6">
-          <div className="rounded-[28px] border border-[var(--color-line)] bg-[color:color-mix(in_srgb,var(--color-panel)_74%,white)] p-6 shadow-[0_18px_44px_rgba(15,23,42,0.05)]">
+          <div className="rounded-[28px] border border-[var(--color-line)] bg-[var(--color-panel-strong)] p-6 shadow-[0_18px_44px_var(--color-panel-glow)]">
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
               推荐路径
             </p>
@@ -128,13 +128,13 @@ export function SiteFooter() {
                 <p className="mt-1 leading-6">把新发现留在社区，下一轮会更准。</p>
               </div>
             </div>
-            <div className="mt-5 rounded-2xl border border-[var(--color-line)] bg-[color:color-mix(in_srgb,var(--color-panel)_80%,white)] px-4 py-3 text-sm leading-7 text-[var(--color-muted)]">
+            <div className="mt-5 rounded-2xl border border-[var(--color-line)] bg-[var(--color-panel)] px-4 py-3 text-sm leading-7 text-[var(--color-muted)]">
               <p className="font-semibold text-[var(--color-ink)]">统一主路径</p>
               <p className="mt-1">榜单 -&gt; 模型 -&gt; 指南 -&gt; 社区。</p>
             </div>
           </div>
 
-          <div className="rounded-[28px] border border-[var(--color-line)] bg-[color:color-mix(in_srgb,var(--color-panel)_74%,white)] p-6 shadow-[0_18px_44px_rgba(15,23,42,0.05)]">
+          <div className="rounded-[28px] border border-[var(--color-line)] bg-[var(--color-panel-strong)] p-6 shadow-[0_18px_44px_var(--color-panel-glow)]">
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
               协作入口
             </p>
@@ -142,7 +142,7 @@ export function SiteFooter() {
               {collaborationLinks.map((item) => (
                 <a
                   key={item.label}
-                  className="inline-flex items-center justify-between rounded-2xl border border-[var(--color-line)] px-4 py-3 font-medium text-[var(--color-ink)] transition hover:border-[var(--color-brand)] hover:bg-white/88 hover:text-[var(--color-brand-deep)]"
+                  className="inline-flex items-center justify-between rounded-2xl border border-[var(--color-line)] px-4 py-3 font-medium text-[var(--color-ink)] transition hover:border-[var(--color-brand)] hover:bg-[var(--color-soft)] hover:text-[var(--color-brand-deep)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-brand)] motion-reduce:transition-none"
                   href={item.href}
                   rel="noopener noreferrer"
                   target="_blank"
@@ -155,7 +155,7 @@ export function SiteFooter() {
               ))}
               {isAdmin ? (
                 <Link
-                  className="inline-flex items-center justify-between rounded-2xl border border-[var(--color-line)] px-4 py-3 font-medium text-[var(--color-ink)] transition hover:border-[var(--color-brand)] hover:bg-white/88 hover:text-[var(--color-brand-deep)]"
+                  className="inline-flex items-center justify-between rounded-2xl border border-[var(--color-line)] px-4 py-3 font-medium text-[var(--color-ink)] transition hover:border-[var(--color-brand)] hover:bg-[var(--color-soft)] hover:text-[var(--color-brand-deep)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-brand)] motion-reduce:transition-none"
                   href="/admin"
                 >
                   <span>管理员面板</span>
@@ -173,7 +173,7 @@ export function SiteFooter() {
                 {utilityLinks.map((item) => (
                   <Link
                     key={item.href}
-                    className="inline-flex items-center justify-between rounded-2xl border border-[var(--color-line)] px-4 py-3 font-medium text-[var(--color-ink)] transition hover:border-[var(--color-brand)] hover:bg-white/88 hover:text-[var(--color-brand-deep)]"
+                    className="inline-flex items-center justify-between rounded-2xl border border-[var(--color-line)] px-4 py-3 font-medium text-[var(--color-ink)] transition hover:border-[var(--color-brand)] hover:bg-[var(--color-soft)] hover:text-[var(--color-brand-deep)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-brand)] motion-reduce:transition-none"
                     href={item.href}
                   >
                     <span>{item.label}</span>

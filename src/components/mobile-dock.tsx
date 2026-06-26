@@ -21,7 +21,7 @@ export function MobileDock() {
     <>
       <nav
         aria-label="站内主导航"
-        className="fixed inset-x-3 bottom-3 z-40 grid grid-cols-6 rounded-[24px] border border-[var(--color-line)] bg-[color:color-mix(in_srgb,var(--color-panel)_88%,white)] p-1.5 shadow-[0_18px_60px_rgba(15,23,42,0.14)] backdrop-blur lg:hidden"
+        className="fixed inset-x-3 bottom-3 z-40 grid grid-cols-6 rounded-[24px] border border-[var(--color-line)] bg-[var(--color-panel-strong)] p-1.5 shadow-[0_18px_60px_var(--color-panel-glow)] backdrop-blur lg:hidden"
         data-selection-comments="off"
       >
         {navItems.map((item) => {
@@ -32,7 +32,8 @@ export function MobileDock() {
             <Link
               key={item.href}
               aria-current={active ? "page" : undefined}
-              className={`rounded-[16px] px-2 py-3 text-center text-[11px] font-bold transition ${
+              aria-label={`${item.label}${active ? "，当前页面" : ""}`}
+              className={`rounded-[16px] px-2 py-3 text-center text-[11px] font-bold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-brand)] motion-reduce:transition-none ${
                 active
                   ? "bg-[var(--color-brand)] text-[var(--color-on-brand)] shadow-[0_10px_24px_var(--color-panel-glow)]"
                   : item.tone === "primary"
@@ -43,7 +44,8 @@ export function MobileDock() {
               title={item.label}
             >
               <span
-                className={`mx-auto mb-1 h-1.5 w-6 rounded-full transition ${
+                aria-hidden="true"
+                className={`mx-auto mb-1 block h-1.5 w-6 rounded-full transition motion-reduce:transition-none ${
                   active
                     ? "bg-[var(--color-on-brand)]/80"
                     : item.tone === "primary"

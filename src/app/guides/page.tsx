@@ -71,7 +71,7 @@ export default function GuidesPage() {
       </section>
 
       <section className="mx-auto max-w-7xl px-6 py-10 lg:px-10">
-        <div className="mb-6 overflow-hidden rounded-[34px] border border-[var(--color-line)] bg-[var(--surface-gradient)] shadow-[var(--shadow-card)]">
+        <div data-reveal className="surface-in mb-6 overflow-hidden rounded-[34px] border border-[var(--color-line)] bg-[var(--surface-gradient)] shadow-[var(--shadow-card)] backdrop-blur">
           <div className="grid gap-5 px-6 py-7 lg:grid-cols-[1.1fr_0.9fr] lg:px-8">
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.22em] text-[var(--color-brand-deep)]">
@@ -104,7 +104,7 @@ export default function GuidesPage() {
               {quickGuideRoutes.map((item) => (
                 <a
                   key={item.title}
-                  className="rounded-[22px] border border-[var(--color-line)] bg-[var(--color-panel)] px-4 py-4 transition hover:-translate-y-0.5 hover:border-[var(--color-brand)] hover:shadow-[0_14px_32px_rgba(15,23,42,0.10)]"
+                  className="stagger-in card-lift rounded-[22px] border border-[var(--color-line)] bg-[var(--color-panel)] px-4 py-4 shadow-[var(--shadow-card)] transition hover:-translate-y-0.5 hover:border-[var(--color-brand)]"
                   href={item.href}
                 >
                   <p className="text-base font-black text-[var(--color-ink)]">{item.title}</p>
@@ -117,7 +117,7 @@ export default function GuidesPage() {
 
         <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
           <div className="space-y-6">
-            <div id="guide-flow" className="scroll-mt-24 rounded-[32px] border border-[var(--color-line)] bg-white p-6 shadow-[var(--shadow-card)]">
+            <div id="guide-flow" data-reveal className="surface-in scroll-mt-24 rounded-[32px] border border-[var(--color-line)] bg-[var(--color-panel)] p-6 shadow-[var(--shadow-card)] backdrop-blur">
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
                 先看这几个
               </p>
@@ -129,7 +129,7 @@ export default function GuidesPage() {
               </p>
             </div>
 
-            <div className="rounded-[32px] border border-[var(--color-line)] bg-white p-6 shadow-[var(--shadow-card)]">
+            <div data-reveal className="surface-in rounded-[32px] border border-[var(--color-line)] bg-[var(--color-panel)] p-6 shadow-[var(--shadow-card)] backdrop-blur">
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
                 先按这个顺序看
               </p>
@@ -137,7 +137,7 @@ export default function GuidesPage() {
                 {guideSteps.map((step) => (
                   <article
                     key={step.index}
-                    className="rounded-[26px] border border-[var(--color-line)] bg-[var(--color-soft)] p-5"
+                    className="stagger-in card-lift rounded-[26px] border border-[var(--color-line)] bg-[var(--color-soft)] p-5"
                   >
                     <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--color-brand-deep)]">
                       {step.index}
@@ -151,7 +151,7 @@ export default function GuidesPage() {
               </div>
             </div>
 
-            <div className="rounded-[32px] border border-[var(--color-line)] bg-white p-6 shadow-[var(--shadow-card)]">
+            <div data-reveal className="surface-in rounded-[32px] border border-[var(--color-line)] bg-[var(--color-panel)] p-6 shadow-[var(--shadow-card)] backdrop-blur">
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
                 新手指南
               </p>
@@ -159,7 +159,7 @@ export default function GuidesPage() {
                 {guideCards.map((card) => (
                   <article
                     key={card.title}
-                    className="rounded-[26px] border border-[var(--color-line)] bg-[var(--color-soft)] p-5"
+                    className="stagger-in card-lift rounded-[26px] border border-[var(--color-line)] bg-[var(--color-soft)] p-5"
                   >
                     <h2 className="text-xl font-bold">{card.title}</h2>
                     <p className="mt-3 text-sm leading-7 text-[var(--color-muted)]">
@@ -170,7 +170,7 @@ export default function GuidesPage() {
               </div>
             </div>
 
-            <div id="guide-resources" className="scroll-mt-24 rounded-[32px] border border-[var(--color-line)] bg-[var(--color-soft)] p-6">
+            <div id="guide-resources" data-reveal className="surface-in scroll-mt-24 rounded-[32px] border border-[var(--color-line)] bg-[var(--color-soft)] p-6 shadow-[var(--shadow-card)]">
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
                 试用入口
               </p>
@@ -182,7 +182,7 @@ export default function GuidesPage() {
                   item.href.startsWith("http") ? (
                     <a
                       key={item.title}
-                      className="rounded-2xl border border-[var(--color-line)] bg-white px-4 py-4 transition hover:border-[var(--color-brand)]"
+                      className="stagger-in card-lift rounded-2xl border border-[var(--color-line)] bg-[var(--color-panel)] px-4 py-4 transition hover:border-[var(--color-brand)]"
                       href={item.href}
                       rel="noopener noreferrer"
                       target="_blank"
@@ -197,7 +197,7 @@ export default function GuidesPage() {
                   ) : (
                     <Link
                       key={item.title}
-                      className="rounded-2xl border border-[var(--color-line)] bg-white px-4 py-4 transition hover:border-[var(--color-brand)]"
+                      className="stagger-in card-lift rounded-2xl border border-[var(--color-line)] bg-[var(--color-panel)] px-4 py-4 transition hover:border-[var(--color-brand)]"
                       href={item.href}
                     >
                       <p className="font-bold text-[var(--color-brand-deep)]">
@@ -212,7 +212,7 @@ export default function GuidesPage() {
               </div>
             </div>
 
-            <div id="guide-collaboration" className="scroll-mt-24 rounded-[32px] border border-[var(--color-line)] bg-white p-6 shadow-[var(--shadow-card)]">
+            <div id="guide-collaboration" data-reveal className="surface-in scroll-mt-24 rounded-[32px] border border-[var(--color-line)] bg-[var(--color-panel)] p-6 shadow-[var(--shadow-card)] backdrop-blur">
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
                 共建入口
               </p>
@@ -223,7 +223,7 @@ export default function GuidesPage() {
                 {collaborationChannels.map((item) => (
                   <a
                     key={item.title}
-                    className="rounded-2xl border border-[var(--color-line)] bg-[var(--color-soft)] px-4 py-4 transition hover:border-[var(--color-brand)]"
+                    className="stagger-in card-lift rounded-2xl border border-[var(--color-line)] bg-[var(--color-soft)] px-4 py-4 transition hover:border-[var(--color-brand)]"
                     href={item.href}
                     rel={item.href.startsWith("http") ? "noopener noreferrer" : undefined}
                     target={item.href.startsWith("http") ? "_blank" : undefined}
@@ -238,7 +238,7 @@ export default function GuidesPage() {
             </div>
           </div>
 
-          <div id="guide-faq" className="scroll-mt-24 rounded-[32px] border border-[var(--color-line)] bg-white p-6 shadow-[var(--shadow-card)]">
+          <div id="guide-faq" data-reveal className="surface-in scroll-mt-24 rounded-[32px] border border-[var(--color-line)] bg-[var(--color-panel)] p-6 shadow-[var(--shadow-card)] backdrop-blur">
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
               常见问题
             </p>
@@ -246,7 +246,7 @@ export default function GuidesPage() {
               {faqEntries.map((item) => (
                 <article
                   key={item.question}
-                  className="rounded-[26px] border border-[var(--color-line)] bg-[var(--color-soft)] p-5"
+                  className="stagger-in card-lift rounded-[26px] border border-[var(--color-line)] bg-[var(--color-soft)] p-5"
                 >
                   <h2 className="text-lg font-bold">{item.question}</h2>
                   <p className="mt-3 text-sm leading-7 text-[var(--color-muted)]">

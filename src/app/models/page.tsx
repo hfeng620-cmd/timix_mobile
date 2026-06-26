@@ -92,7 +92,7 @@ export default function ModelsPage() {
       </section>
 
       <section className="mx-auto max-w-7xl px-6 py-12 lg:px-10">
-        <div className="mb-10 overflow-hidden rounded-[36px] border border-[var(--color-line)] bg-[var(--surface-gradient)] p-7 shadow-[var(--shadow-card)]">
+        <div data-reveal className="surface-in mb-10 overflow-hidden rounded-[36px] border border-[var(--color-line)] bg-[var(--surface-gradient)] p-7 shadow-[var(--shadow-card)] backdrop-blur">
           <div className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr]">
             <div>
               <p className="inline-flex rounded-full bg-[var(--color-brand-soft)] px-3 py-1 text-sm font-bold text-[var(--color-brand-deep)]">
@@ -125,7 +125,7 @@ export default function ModelsPage() {
               {modelDecisionRoutes.map((item, index) => (
                 <article
                   key={item.title}
-                  className="rounded-[24px] border border-[var(--color-line)] bg-[var(--color-panel)] px-5 py-5 transition hover:-translate-y-0.5 hover:border-[var(--color-brand)] hover:shadow-[0_14px_32px_rgba(15,23,42,0.10)]"
+                  className="stagger-in card-lift rounded-[24px] border border-[var(--color-line)] bg-[var(--color-panel)] px-5 py-5 shadow-[var(--shadow-card)] transition hover:-translate-y-0.5 hover:border-[var(--color-brand)]"
                 >
                   <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--color-brand-deep)]">
                     0{index + 1}
@@ -139,7 +139,7 @@ export default function ModelsPage() {
         </div>
 
         {/* ---- 模型智商排行榜 ---- */}
-        <div className="mb-10 rounded-[36px] border border-[var(--color-line)] bg-white p-7 shadow-[var(--shadow-card)]">
+        <div data-reveal className="surface-in mb-10 rounded-[36px] border border-[var(--color-line)] bg-[var(--color-panel)] p-7 shadow-[var(--shadow-card)] backdrop-blur">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <p className="inline-flex rounded-full bg-[var(--color-brand-soft)] px-3 py-1 text-sm font-bold text-[var(--color-brand-deep)]">
@@ -177,7 +177,7 @@ export default function ModelsPage() {
                 <article
                   key={model.rank}
                   className={`grid grid-cols-[auto_1fr] md:grid-cols-[0.5fr_1.5fr_1fr_1fr_1fr] items-center gap-2 md:gap-0 px-5 py-4 ${
-                    index % 2 === 0 ? "bg-white" : "bg-[var(--color-row-alt)]"
+                    index % 2 === 0 ? "bg-[var(--color-panel)]" : "bg-[var(--color-row-alt)]"
                   }`}
                 >
                   <div>
@@ -213,22 +213,22 @@ export default function ModelsPage() {
           </div>
 
           <div className="mt-5 grid gap-3 lg:grid-cols-3">
-            <div className="rounded-[22px] border border-[var(--color-line)] bg-[var(--color-panel)] px-4 py-4">
+            <div className="card-lift rounded-[22px] border border-[var(--color-line)] bg-[var(--color-panel)] px-4 py-4 shadow-[var(--shadow-card)]">
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">先看能力</p>
               <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">用排行榜判断大方向，不要把单个低价站误当成模型能力本身。</p>
             </div>
-            <div className="rounded-[22px] border border-[var(--color-line)] bg-[var(--color-panel)] px-4 py-4">
+            <div className="card-lift rounded-[22px] border border-[var(--color-line)] bg-[var(--color-panel)] px-4 py-4 shadow-[var(--shadow-card)]">
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">再看口径</p>
               <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">同一站里 GPT、Claude、Grok 的计费可能完全不是一套口径。</p>
             </div>
-            <div className="rounded-[22px] border border-[var(--color-line)] bg-[var(--color-panel)] px-4 py-4">
+            <div className="card-lift rounded-[22px] border border-[var(--color-line)] bg-[var(--color-panel)] px-4 py-4 shadow-[var(--shadow-card)]">
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">最后看入口</p>
               <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">优先从可试用、注册送额、社区反馈多的站点开始验证。</p>
             </div>
           </div>
         </div>
 
-        <div className="rounded-[36px] border border-[var(--color-line)] bg-white p-7 shadow-[var(--shadow-card)]">
+        <div data-reveal className="surface-in rounded-[36px] border border-[var(--color-line)] bg-[var(--color-panel)] p-7 shadow-[var(--shadow-card)] backdrop-blur">
           <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-3xl">
               <p className="inline-flex rounded-full bg-[var(--color-brand-soft)] px-3 py-1 text-sm font-bold text-[var(--color-brand-deep)]">
@@ -281,7 +281,7 @@ export default function ModelsPage() {
               <article
                 key={row.rank}
                 className={`grid grid-cols-[auto_1fr] md:grid-cols-[0.8fr_0.9fr_0.9fr_1.1fr_1.2fr] items-start md:items-center gap-2 md:gap-0 px-5 py-5 ${
-                  index % 2 === 0 ? "bg-white" : "bg-[var(--color-row-alt)]"
+                  index % 2 === 0 ? "bg-[var(--color-panel)]" : "bg-[var(--color-row-alt)]"
                 }`}
               >
                 <div className="font-black">{row.rank}</div>
@@ -307,7 +307,7 @@ export default function ModelsPage() {
             {modelGuideNotes.map((item) => (
               <article
                 key={item.title}
-                className="rounded-[26px] border border-[var(--color-line)] bg-[var(--color-soft)] px-5 py-5"
+                className="stagger-in card-lift rounded-[26px] border border-[var(--color-line)] bg-[var(--color-soft)] px-5 py-5"
               >
                 <h2 className="text-xl font-bold">{item.title}</h2>
                 <p className="mt-3 text-sm leading-7 text-[var(--color-muted)]">
