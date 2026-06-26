@@ -203,7 +203,7 @@ export function UserProfileCard({ userId, position, onClose }: UserProfileCardPr
             </button>
 
             <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--color-brand-deep)]">
-              Profile Snapshot
+              个人快照
             </p>
 
             <div className="mt-4 flex items-start gap-4">
@@ -248,6 +248,24 @@ export function UserProfileCard({ userId, position, onClose }: UserProfileCardPr
               </div>
             </div>
 
+            <div className="rounded-[18px] border border-[var(--color-line)] bg-[linear-gradient(135deg,var(--color-brand-soft),rgba(255,255,255,0.76))] px-4 py-3.5">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
+                主页状态
+              </p>
+              <p className="mt-2 text-sm font-bold text-[var(--color-ink)]">
+                {completenessPercent >= 100
+                  ? "这张主页已经比较完整。"
+                  : completenessPercent >= 50
+                    ? "资料已经立起来一半以上。"
+                    : "还在补充基础身份信息。"}
+              </p>
+              <p className="mt-2 text-xs leading-5 text-[var(--color-muted)]">
+                {tags.length > 0
+                  ? "已经有自己的标签侧写，再补一点内容互动会更完整。"
+                  : "再补简介、标签或内容记录，这张主页会更像完整名片。"}
+              </p>
+            </div>
+
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
                 个人简介
@@ -281,7 +299,7 @@ export function UserProfileCard({ userId, position, onClose }: UserProfileCardPr
               className="block w-full rounded-full bg-[var(--color-brand)] py-2.5 text-center text-sm font-bold text-[var(--color-on-brand)] transition hover:bg-[var(--color-brand-deep)]"
               href="/profile"
             >
-              查看我的主页
+              查看主页
             </a>
           </div>
         </>

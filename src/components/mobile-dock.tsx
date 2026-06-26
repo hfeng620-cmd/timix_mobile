@@ -8,9 +8,9 @@ import { NotificationBell } from "@/components/notification-bell";
 const navItems = [
   { label: "首页", href: "/" },
   { label: "榜单", href: "/stations" },
-  { label: "讨论", href: "/community" },
   { label: "模型", href: "/models" },
   { label: "指南", href: "/guides" },
+  { label: "社区", href: "/community" },
   { label: "我的", href: "/profile" },
 ];
 

@@ -1309,12 +1309,35 @@ export function DiscussionFeed({
                   ) : null}
 
                   <div className="mt-4 flex flex-col gap-3 border-t border-[var(--color-line)] pt-4 sm:flex-row">
-                    <input
-                      className="min-w-0 flex-1 rounded-full border border-[var(--color-line)] bg-[var(--color-input)] px-4 py-3.5 text-sm outline-none transition focus:border-[var(--color-brand)]"
+                    <textarea
+                      className="min-h-[48px] min-w-0 flex-1 resize-none rounded-2xl border border-[var(--color-line)] bg-[var(--color-input)] px-4 py-3 text-sm leading-6 outline-none transition focus:border-[var(--color-brand)]"
+                      rows={1}
                       onChange={(event) =>
                         setReplyDrafts((current) => ({ ...current, [post.issueNumber]: event.target.value }))
                       }
-                      placeholder={`回复 ${replyTarget ?? "楼主"}`}
+                      onPaste={async (e) => {
+                        const items = e.clipboardData?.items;
+                        if (!items) return;
+                        for (const item of items) {
+                          if (item.type.startsWith("image/")) {
+                            e.preventDefault();
+                            const file = item.getAsFile();
+                            if (!file) return;
+                            if (file.size > 5 * 1024 * 1024) { setStatus("图片不能超过 5MB。"); return; }
+                            setUploadingImage(true);
+                            setStatus("图片上传中...");
+                            try {
+                              const url = await uploadForumImage(file);
+                              const currentDraft = replyDrafts[post.issueNumber] ?? "";
+                              setReplyDrafts((prev) => ({ ...prev, [post.issueNumber]: (currentDraft + `\n![图片](${url})`).trim() }));
+                              setStatus("图片已插入。");
+                            } catch { setStatus("图片上传失败。"); }
+                            finally { setUploadingImage(false); }
+                            return;
+                          }
+                        }
+                      }}
+                      placeholder={`回复 ${replyTarget ?? "楼主"}（支持粘贴图片）`}
                       value={replyDrafts[post.issueNumber] ?? ""}
                     />
                     <button

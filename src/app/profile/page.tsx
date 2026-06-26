@@ -763,19 +763,32 @@ export default function ProfilePage() {
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
                   资料补完建议
                 </p>
-                <div className="mt-3 space-y-2">
-                  {!avatarUrl ? (
-                    <p className="text-sm leading-6 text-[var(--color-muted)]">补一个头像，主页识别度会更高。</p>
-                  ) : null}
-                  {!bio.trim() ? (
-                    <p className="text-sm leading-6 text-[var(--color-muted)]">写一段简介，说明常用模型或关注站点。</p>
-                  ) : null}
-                  {tags.length === 0 ? (
-                    <p className="text-sm leading-6 text-[var(--color-muted)]">补 2-3 个标签，更容易形成个人风格。</p>
-                  ) : null}
-                  {avatarUrl && bio.trim() && tags.length > 0 ? (
-                    <p className="text-sm leading-6 text-[var(--color-muted)]">资料区已经比较完整，接下来更适合多沉淀内容。</p>
-                  ) : null}
+                <div className="mt-3 grid gap-2">
+                  {[
+                    { done: Boolean(avatarUrl), label: "补一个头像", hint: "让主页识别度更高。" },
+                    { done: Boolean(bio.trim()), label: "写一段简介", hint: "说明常用模型或关注站点。" },
+                    { done: tags.length > 0, label: "加 2 到 3 个标签", hint: "更容易形成个人风格。" },
+                    { done: totalContribution > 0, label: "留下第一条公开内容", hint: "让主页真正动起来。" },
+                  ].map((item) => (
+                    <div
+                      key={item.label}
+                      className="flex items-start gap-3 rounded-[16px] border border-[var(--color-line)] bg-white/76 px-3 py-3"
+                    >
+                      <span
+                        className={`mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-black ${
+                          item.done
+                            ? "bg-[var(--color-brand)] text-[var(--color-on-brand)]"
+                            : "bg-[var(--color-soft)] text-[var(--color-muted)]"
+                        }`}
+                      >
+                        {item.done ? "✓" : "·"}
+                      </span>
+                      <div>
+                        <p className="text-sm font-bold text-[var(--color-ink)]">{item.label}</p>
+                        <p className="mt-1 text-sm leading-6 text-[var(--color-muted)]">{item.hint}</p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import { ThemeToggleInline } from "@/components/theme-toggle";
@@ -12,6 +13,7 @@ export function FloatingQuickPanel() {
   const [open, setOpen] = useState(false);
   const [showHint, setShowHint] = useState(false);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
+  const pathname = usePathname();
 
   useEffect(() => {
     function handlePointerDown(event: MouseEvent) {
@@ -79,6 +81,26 @@ export function FloatingQuickPanel() {
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
               站内页
             </p>
+            <div className="mt-2 rounded-[16px] border border-[var(--color-line)] bg-[color:color-mix(in_srgb,var(--color-panel)_78%,white)] px-3 py-2.5">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--color-muted)]">
+                当前定位
+              </p>
+              <p className="mt-1 text-sm font-bold text-[var(--color-ink)]">
+                {pathname === "/"
+                  ? "首页"
+                  : pathname.startsWith("/stations")
+                    ? "榜单"
+                    : pathname.startsWith("/models")
+                      ? "模型"
+                      : pathname.startsWith("/guides")
+                        ? "指南"
+                        : pathname.startsWith("/community")
+                          ? "社区"
+                          : pathname.startsWith("/profile")
+                            ? "个人主页"
+                            : "站内页面"}
+              </p>
+            </div>
             <div className="mt-2 grid grid-cols-2 gap-2">
               <Link
                 className="rounded-[14px] border border-[var(--color-line)] bg-[var(--color-soft)] px-3 py-3 text-sm font-semibold text-[var(--color-ink)] transition-all duration-300 hover:border-[var(--color-brand)] hover:bg-[var(--color-brand-soft)] hover:text-[var(--color-brand-deep)]"
@@ -88,9 +110,9 @@ export function FloatingQuickPanel() {
               </Link>
               <Link
                 className="rounded-[14px] border border-[var(--color-line)] bg-[var(--color-soft)] px-3 py-3 text-sm font-semibold text-[var(--color-ink)] transition-all duration-300 hover:border-[var(--color-brand)] hover:bg-[var(--color-brand-soft)] hover:text-[var(--color-brand-deep)]"
-                href="/community"
+                href="/models"
               >
-                讨论区
+                模型页
               </Link>
               <Link
                 className="rounded-[14px] border border-[var(--color-line)] bg-[var(--color-soft)] px-3 py-3 text-sm font-semibold text-[var(--color-ink)] transition-all duration-300 hover:border-[var(--color-brand)] hover:bg-[var(--color-brand-soft)] hover:text-[var(--color-brand-deep)]"
@@ -100,9 +122,9 @@ export function FloatingQuickPanel() {
               </Link>
               <Link
                 className="rounded-[14px] border border-[var(--color-line)] bg-[var(--color-soft)] px-3 py-3 text-sm font-semibold text-[var(--color-ink)] transition-all duration-300 hover:border-[var(--color-brand)] hover:bg-[var(--color-brand-soft)] hover:text-[var(--color-brand-deep)]"
-                href="/models"
+                href="/community"
               >
-                模型页
+                社区页
               </Link>
             </div>
           </div>

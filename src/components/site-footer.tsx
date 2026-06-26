@@ -14,18 +14,18 @@ const decisionMap = [
     href: "/stations",
   },
   {
-    step: "02",
-    eyebrow: "模型",
-    title: "再把站点和模型放一起比",
-    description: "把能力、稳定性和场景放到一起看。",
-    href: "/models",
-  },
-  {
     step: "03",
     eyebrow: "指南",
     title: "有疑问时回指南校准",
     description: "有分歧时先回这里统一口径。",
     href: "/guides",
+  },
+  {
+    step: "02",
+    eyebrow: "模型",
+    title: "再把站点和模型放一起比",
+    description: "把能力、稳定性和场景放到一起看。",
+    href: "/models",
   },
   {
     step: "04",
@@ -104,7 +104,7 @@ export function SiteFooter() {
               下一步地图
             </p>
             <div className="mt-4 space-y-4 text-sm text-[var(--color-muted)]">
-              <div className="rounded-2xl border border-[var(--color-line)] px-4 py-3">
+              <div className="rounded-2xl border border-[var(--color-line)] bg-[var(--color-brand-soft)] px-4 py-3">
                 <p className="font-semibold text-[var(--color-ink)]">想先筛站点</p>
                 <p className="mt-1 leading-6">先看榜单，快速把候选缩小。</p>
               </div>

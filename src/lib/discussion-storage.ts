@@ -800,11 +800,11 @@ export async function uploadForumImage(file: File): Promise<string> {
 
 export async function uploadAvatar(file: File): Promise<string> {
   assertConfigured();
+  const ext = validateForumImageUpload(file);
   const supabase = getSupabaseClient();
   const { data: userData } = await supabase.auth.getUser();
   if (!userData.user) throw new Error("请先登录。");
 
-  const ext = file.name.split(".").pop() ?? "png";
   const fileName = `${userData.user.id}/avatar.${ext}`;
 
   const { error } = await supabase.storage
