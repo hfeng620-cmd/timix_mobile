@@ -160,7 +160,6 @@ export default function Home() {
         .home-flow-tight > :nth-child(1) { animation-delay: 60ms; }
         .home-flow-tight > :nth-child(2) { animation-delay: 110ms; }
         .home-flow-tight > :nth-child(3) { animation-delay: 160ms; }
-        }
         .stagger-in:nth-child(5) { animation-delay: 160ms; }
         .stagger-in:nth-child(6) { animation-delay: 200ms; }
         .stagger-in:nth-child(7) { animation-delay: 240ms; }

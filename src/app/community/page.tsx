@@ -99,7 +99,7 @@ export default function CommunityPage() {
           observer.unobserve(item.target);
         });
       },
-      { threshold: 0.12, rootMargin: "0px 0px -8% 0px" },
+      { threshold: 0.05, rootMargin: "0px 0px -2% 0px" },
     );
 
     entries.forEach(({ key, node }) => {
@@ -107,8 +107,14 @@ export default function CommunityPage() {
       observer.observe(node);
     });
 
+    // Safety fallback: reveal all sections after 1.5s if observer doesn't fire
+    const fallbackTimer = setTimeout(() => {
+      setRevealedSections({ hero: true, desk: true, content: true });
+    }, 1500);
+
     return () => {
       observer.disconnect();
+      clearTimeout(fallbackTimer);
     };
   }, []);
 

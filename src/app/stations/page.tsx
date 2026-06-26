@@ -9,7 +9,7 @@ export default function StationsPage() {
   return (
     <main className="theme-stage min-h-screen bg-transparent text-[var(--color-ink)]">
       <section className="sticky top-0 z-30 border-b border-[var(--color-line)] bg-[var(--color-header)] backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-4 lg:px-10">
+        <div className="mx-auto flex max-w-[1680px] items-center justify-between gap-4 px-5 py-3.5 lg:px-8">
           <div className="flex items-center gap-4">
             <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--color-brand)] text-xl font-black text-[var(--color-on-brand)] shadow-[0_10px_30px_var(--color-panel-glow)]">
               T
@@ -47,8 +47,8 @@ export default function StationsPage() {
 
       <section className="relative overflow-hidden border-b border-[var(--color-line)]">
         <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.68),rgba(255,255,255,0.18)_55%,rgba(255,255,255,0.08))]" />
-        <div className="relative mx-auto max-w-[1500px] px-6 py-5 lg:px-10 lg:py-6">
-          <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
+        <div className="relative mx-auto max-w-[1680px] px-5 py-4 lg:px-8 lg:py-5">
+          <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(520px,0.62fr)] xl:items-center">
             <div className="max-w-4xl">
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--color-brand-deep)]">
                 Relay Workflow
@@ -61,24 +61,24 @@ export default function StationsPage() {
               </p>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-3 xl:min-w-[620px]">
-              <div className="rounded-[20px] border border-white/70 bg-white/78 px-4 py-3.5 shadow-[0_16px_34px_rgba(15,23,42,0.06)] backdrop-blur">
+            <div className="grid gap-2.5 sm:grid-cols-3">
+              <div className="rounded-[18px] border border-white/70 bg-white/78 px-4 py-3 shadow-[0_16px_34px_rgba(15,23,42,0.06)] backdrop-blur">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
                   先看
                 </p>
-                <p className="mt-1.5 text-base font-black text-[var(--color-ink)]">倍率和试用门槛</p>
+                <p className="mt-1 text-sm font-black text-[var(--color-ink)]">倍率和试用门槛</p>
               </div>
-              <div className="rounded-[20px] border border-white/70 bg-white/78 px-4 py-3.5 shadow-[0_16px_34px_rgba(15,23,42,0.06)] backdrop-blur">
+              <div className="rounded-[18px] border border-white/70 bg-white/78 px-4 py-3 shadow-[0_16px_34px_rgba(15,23,42,0.06)] backdrop-blur">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
                   再做
                 </p>
-                <p className="mt-1.5 text-base font-black text-[var(--color-ink)]">把候选压到 2 到 3 个</p>
+                <p className="mt-1 text-sm font-black text-[var(--color-ink)]">把候选压到 2 到 3 个</p>
               </div>
-              <div className="rounded-[20px] border border-white/70 bg-white/78 px-4 py-3.5 shadow-[0_16px_34px_rgba(15,23,42,0.06)] backdrop-blur">
+              <div className="rounded-[18px] border border-white/70 bg-white/78 px-4 py-3 shadow-[0_16px_34px_rgba(15,23,42,0.06)] backdrop-blur">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
                   最后
                 </p>
-                <p className="mt-1.5 text-base font-black text-[var(--color-ink)]">去论坛补反馈和风险</p>
+                <p className="mt-1 text-sm font-black text-[var(--color-ink)]">去论坛补反馈和风险</p>
               </div>
             </div>
           </div>
