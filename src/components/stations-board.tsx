@@ -744,292 +744,228 @@ export function StationsBoard() {
   return (
     <>
       {/* ---- Hero + Filters ---- */}
-      <section className="mx-auto max-w-[1600px] px-6 py-8 lg:px-10">
-        <div className="grid gap-10 xl:grid-cols-[minmax(0,1.48fr)_320px] xl:items-start">
-          <div>
-            <div className="border-b border-[var(--color-line)] pb-5">
-              <div className="flex flex-wrap items-start justify-between gap-6">
-                <div className="max-w-4xl">
-                  <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--color-brand-deep)]">
-                    API Relay Index
-                  </p>
-                  <h1 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">
-                    中转站榜单
-                  </h1>
-                </div>
-
-                <div className="grid min-w-[220px] grid-cols-3 gap-4 text-sm">
-                  <div>
-                    <p className="text-[var(--color-muted)]">站点</p>
-                    <p className="mt-1 text-2xl font-black">{stations.length}</p>
-                  </div>
-                  <div>
-                    <p className="text-[var(--color-muted)]">最低</p>
-                    <p className="mt-1 text-2xl font-black">{lowestMultiplier}</p>
-                  </div>
-                  <div>
-                    <p className="text-[var(--color-muted)]">试用</p>
-                    <p className="mt-1 text-2xl font-black">{trialCount}+</p>
-                  </div>
-                </div>
-              </div>
+      <section className="mx-auto max-w-[1500px] px-6 py-8 lg:px-10">
+        <div className="border-b border-[var(--color-line)] pb-6">
+          <div className="flex flex-wrap items-start justify-between gap-6">
+            <div className="max-w-4xl">
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--color-brand-deep)]">
+                API Relay Index
+              </p>
+              <h1 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">
+                中转站榜单
+              </h1>
+              <p className="mt-3 max-w-3xl text-sm leading-7 text-[var(--color-muted)] sm:text-base">
+                先用这张工作台缩出 2 到 3 个候选，再回社区补变化和风险，不用在多页之间来回切。
+              </p>
             </div>
 
-            {/* Featured hero cards */}
-            {featuredStations.length > 0 && (
-              <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                {featuredStations.map((station, index) => {
-                  const stationHref = getSafeExternalHref(station.url);
-                  const cardContent = (
-                    <>
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--color-muted)]">
-                            {rankingBadge(index)}
-                          </p>
-                          <h2 className="mt-2 text-2xl font-black">{station.name}</h2>
-                        </div>
-                        <span className="rounded-full bg-[var(--color-brand-soft)] px-3 py-1 text-xs font-bold text-[var(--color-brand-deep)]">
-                          {station.badge}
-                        </span>
-                      </div>
-
-                      <p className="mt-4 text-sm leading-7 text-[var(--color-muted)]">{station.note}</p>
-
-                      <div className="mt-5 grid grid-cols-2 gap-3 border-t border-[var(--color-line)] pt-4 text-sm">
-                        <div>
-                          <p className="text-[var(--color-muted)]">价格</p>
-                          <p className="mt-1 font-black">{station.price}</p>
-                        </div>
-                        <div>
-                          <p className="text-[var(--color-muted)]">倍率</p>
-                          <p className="mt-1 font-black">{station.multiplier}</p>
-                        </div>
-                      </div>
-
-                      {stationHref && (
-                        <div className="mt-5 inline-flex items-center text-sm font-bold text-[var(--color-brand-deep)]">
-                          打开站点入口
-                          <span className="ml-2 transition-all duration-300 group-hover:translate-x-1.5">→</span>
-                        </div>
-                      )}
-
-                      {/* Discussion button for hero cards */}
-                      <div className="mt-3 flex items-center gap-2">
-                        <button
-                          className="inline-flex items-center gap-1.5 rounded-full bg-[var(--color-soft)] px-3 py-1.5 text-xs font-semibold text-[var(--color-muted)] transition hover:bg-[var(--color-brand-soft)] hover:text-[var(--color-brand-deep)]"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            setDiscussionStation(station);
-                          }}
-                          type="button"
-                        >
-                          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                          </svg>
-                          讨论区
-                        </button>
-                      </div>
-                    </>
-                  );
-
-                  if (stationHref) {
-                    return (
-                      <a
-                        key={`${station.id}-hero`}
-                        href={stationHref}
-                        rel="noopener noreferrer"
-                        target="_blank"
-                        className="stagger-in card-lift group min-h-[238px] rounded-[20px] border border-[var(--color-line)] bg-[var(--surface-gradient)] p-6 shadow-[var(--shadow-card)] transition-all duration-300 hover:-translate-y-[4px] hover:border-[var(--color-brand)] hover:shadow-[0_28px_72px_rgba(15,23,42,0.10)]"
-                      >
-                        {cardContent}
-                      </a>
-                    );
-                  }
-
-                  return (
-                    <div
-                      key={`${station.id}-hero`}
-                      className="stagger-in card-lift group min-h-[238px] rounded-[20px] border border-[var(--color-line)] bg-[var(--surface-gradient)] p-6 shadow-[var(--shadow-card)] transition-all duration-300 hover:-translate-y-[4px] hover:border-[var(--color-brand)] hover:shadow-[0_28px_72px_rgba(15,23,42,0.10)]"
-                    >
-                      {cardContent}
-                    </div>
-                  );
-                })}
+            <div className="grid min-w-[260px] grid-cols-3 gap-4 rounded-[24px] border border-[var(--color-line)] bg-[var(--color-panel)] px-5 py-4 text-sm shadow-[var(--shadow-card)]">
+              <div>
+                <p className="text-[var(--color-muted)]">站点</p>
+                <p className="mt-1 text-2xl font-black">{stations.length}</p>
               </div>
-            )}
-
-            {/* Search / filter panel */}
-            <div className="surface-in mt-8 rounded-[20px] border border-[var(--color-line)] bg-[var(--color-panel)] p-6 shadow-[var(--shadow-card)] backdrop-blur">
-              <div className="flex flex-wrap items-end justify-between gap-4">
-                <div>
-                  <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
-                    快速查找
-                  </p>
-                  <h2 className="mt-2 text-2xl font-black">搜索 / 筛选</h2>
-                </div>
-                <p className="text-sm text-[var(--color-muted)]">
-                  找到 <span className="font-bold text-[var(--color-ink)]">{filteredRows.length}</span> 个站点
-                </p>
+              <div>
+                <p className="text-[var(--color-muted)]">最低</p>
+                <p className="mt-1 text-2xl font-black">{lowestMultiplier}</p>
               </div>
-
-              <div className="mt-5 flex flex-wrap items-center gap-3">
-                <div className="relative flex-1 min-w-[280px]">
-                  <input
-                    id="station-search"
-                    ref={searchInputRef}
-                    className="w-full rounded-full border border-[var(--color-line)] bg-[var(--color-soft)] pl-5 pr-[88px] py-3.5 text-sm outline-none transition focus:border-[var(--color-brand)] focus:bg-white"
-                    onChange={(event) => setQuery(event.target.value)}
-                    placeholder="搜站点名、倍率、试用、免费、Claude、Grok、入口域名都可以"
-                    value={query}
-                  />
-                  <div className="absolute right-3.5 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                    {query && (
-                      <button
-                        className="flex h-5 w-5 items-center justify-center rounded-full text-[var(--color-muted)] hover:bg-[var(--color-line)] hover:text-[var(--color-ink)] transition"
-                        onClick={() => { setQuery(""); setDebouncedQuery(""); }}
-                        type="button"
-                        aria-label="清除搜索"
-                      >
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                      </button>
-                    )}
-                    <span className="text-[11px] text-[var(--color-muted)] border border-[var(--color-line)] rounded-md px-1.5 py-0.5 select-none leading-tight">
-                      Ctrl+K
-                    </span>
-                  </div>
-                </div>
-                <select
-                  className="rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] px-4 py-3.5 text-sm outline-none transition focus:border-[var(--color-brand)] cursor-pointer appearance-none text-[var(--color-ink)]"
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as SortOption)}
-                  style={{
-                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
-                    backgroundRepeat: "no-repeat",
-                    backgroundPosition: "right 14px center",
-                    paddingRight: "36px",
-                  }}
-                >
-                  {sortOptions.map((opt) => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="mt-4 flex flex-wrap gap-2">
-                {filters.map((filter) => (
-                  <button
-                    key={filter.id}
-                    className={`rounded-full px-4 py-2.5 text-sm font-semibold transition ${
-                      activeFilter === filter.id
-                        ? "bg-[var(--color-brand)] text-[var(--color-on-brand)] shadow-[0_10px_24px_var(--color-panel-glow)] pill-pulse"
-                        : "border border-[var(--color-line)] bg-[var(--color-panel)] text-[var(--color-muted)] hover:border-[var(--color-brand)] hover:text-[var(--color-brand-deep)]"
-                    }`}
-                    onClick={() => setActiveFilter(filter.id)}
-                    type="button"
-                  >
-                    {filter.label}
-                  </button>
-                ))}
-              </div>
-
-              <div className="mt-4 flex flex-wrap gap-2 text-sm text-[var(--color-muted)]">
-                {filters
-                  .filter((filter) => filter.id !== "all")
-                  .map((filter) => (
-                    <span key={`${filter.id}-desc`} className="rounded-full bg-[var(--color-soft)] px-3 py-2">
-                      {filter.label}：{filter.description}
-                    </span>
-                  ))}
+              <div>
+                <p className="text-[var(--color-muted)]">试用</p>
+                <p className="mt-1 text-2xl font-black">{trialCount}+</p>
               </div>
             </div>
           </div>
+        </div>
 
-          {/* ---- Sidebar ---- */}
-          <aside className="xl:pt-2">
-            <div className="border-b border-[var(--color-line)] pb-5">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
-                    讨论入口
-                  </p>
-                  <h2 className="mt-2 text-[28px] font-black leading-[1.1] tracking-tight">
-                    榜单看结果，
-                    <br />
-                    论坛接变化
-                  </h2>
+        {featuredStations.length > 0 && (
+          <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            {featuredStations.map((station, index) => {
+              const stationHref = getSafeExternalHref(station.url);
+              const cardContent = (
+                <>
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--color-muted)]">
+                        {rankingBadge(index)}
+                      </p>
+                      <h2 className="mt-2 text-2xl font-black">{station.name}</h2>
+                    </div>
+                    <span className="rounded-full bg-[var(--color-brand-soft)] px-3 py-1 text-xs font-bold text-[var(--color-brand-deep)]">
+                      {station.badge}
+                    </span>
+                  </div>
+
+                  <p className="mt-4 line-clamp-3 text-sm leading-7 text-[var(--color-muted)]">{station.note}</p>
+
+                  <div className="mt-5 grid grid-cols-2 gap-3 border-t border-[var(--color-line)] pt-4 text-sm">
+                    <div>
+                      <p className="text-[var(--color-muted)]">价格</p>
+                      <p className="mt-1 font-black">{station.price}</p>
+                    </div>
+                    <div>
+                      <p className="text-[var(--color-muted)]">倍率</p>
+                      <p className="mt-1 font-black">{station.multiplier}</p>
+                    </div>
+                  </div>
+
+                  {stationHref ? (
+                    <div className="mt-5 inline-flex items-center text-sm font-bold text-[var(--color-brand-deep)]">
+                      打开站点入口
+                      <span className="ml-2 transition-all duration-300 group-hover:translate-x-1.5">→</span>
+                    </div>
+                  ) : null}
+
+                  <div className="mt-3 flex items-center gap-2">
+                    <button
+                      className="inline-flex items-center gap-1.5 rounded-full bg-[var(--color-soft)] px-3 py-1.5 text-xs font-semibold text-[var(--color-muted)] transition hover:bg-[var(--color-brand-soft)] hover:text-[var(--color-brand-deep)]"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setDiscussionStation(station);
+                      }}
+                      type="button"
+                    >
+                      <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                      </svg>
+                      讨论区
+                    </button>
+                  </div>
+                </>
+              );
+
+              if (stationHref) {
+                return (
+                  <a
+                    key={`${station.id}-hero`}
+                    href={stationHref}
+                    rel="noopener noreferrer"
+                    target="_blank"
+                    className="stagger-in card-lift group min-h-[226px] rounded-[20px] border border-[var(--color-line)] bg-[var(--surface-gradient)] p-6 shadow-[var(--shadow-card)] transition-all duration-300 hover:-translate-y-[4px] hover:border-[var(--color-brand)] hover:shadow-[0_28px_72px_rgba(15,23,42,0.10)]"
+                  >
+                    {cardContent}
+                  </a>
+                );
+              }
+
+              return (
+                <div
+                  key={`${station.id}-hero`}
+                  className="stagger-in card-lift group min-h-[226px] rounded-[20px] border border-[var(--color-line)] bg-[var(--surface-gradient)] p-6 shadow-[var(--shadow-card)] transition-all duration-300 hover:-translate-y-[4px] hover:border-[var(--color-brand)] hover:shadow-[0_28px_72px_rgba(15,23,42,0.10)]"
+                >
+                  {cardContent}
                 </div>
-                <Link
-                  aria-label="打开论坛入口"
-                  href="/community"
-                  title="打开论坛入口"
-                  className="inline-flex h-11 shrink-0 items-center justify-center rounded-full bg-[var(--color-brand)] px-5 text-sm font-black text-[var(--color-on-brand)] shadow-[0_10px_28px_var(--color-panel-glow)] transition hover:scale-[1.03] hover:bg-[var(--color-brand-deep)]"
-                >
-                  讨论
-                </Link>
-              </div>
-            </div>
+              );
+            })}
+          </div>
+        )}
 
-            <div className="mt-6 grid gap-3">
-              <Link
-                href="/community"
-                className="rounded-full bg-[var(--color-brand)] px-5 py-3 text-center text-sm font-bold text-[var(--color-on-brand)] transition hover:bg-[var(--color-brand-deep)]"
-              >
-                进入站内讨论区
-              </Link>
-              <a
-                href="https://github.com/hfeng620-cmd/timin_api_test_and_forum/discussions"
-                rel="noopener noreferrer"
-                target="_blank"
-                className="rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] px-5 py-3 text-center text-sm font-bold text-[var(--color-ink)] transition hover:border-[var(--color-brand)] hover:text-[var(--color-brand-deep)]"
-              >
-                GitHub Discussions
-              </a>
-            </div>
-
-            <div className="mt-6 border-t border-[var(--color-line)] pt-6">
+        <div className="surface-in mt-8 rounded-[24px] border border-[var(--color-line)] bg-[var(--color-panel)] p-6 shadow-[var(--shadow-card)] backdrop-blur">
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div>
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
-                快速跳转
+                快速查找
               </p>
-              <div className="mt-4 grid gap-3">
-                <a
-                  href="https://huhuai.xyz/register?aff=BCPA5AKW3KHX"
-                  rel="noopener noreferrer"
-                  target="_blank"
-                  className="border-b border-[var(--color-line)] pb-3 text-sm leading-6 transition hover:text-[var(--color-brand-deep)]"
-                >
-                  虎虎注册链接：直接送额度
-                </a>
-                <a
-                  href="https://www.kdocs.cn/l/cj84YbmlJswN"
-                  rel="noopener noreferrer"
-                  target="_blank"
-                  className="border-b border-[var(--color-line)] pb-3 text-sm leading-6 transition hover:text-[var(--color-brand-deep)]"
-                >
-                  历史填表记录：以前群里有过填表送额度
-                </a>
-                <a
-                  href="https://www.kdocs.cn/l/cr2932V6f6bH"
-                  rel="noopener noreferrer"
-                  target="_blank"
-                  className="border-b border-[var(--color-line)] pb-3 text-sm leading-6 transition hover:text-[var(--color-brand-deep)]"
-                >
-                  API 中转站集合统计表：继续补更多站点
-                </a>
+              <h2 className="mt-2 text-2xl font-black">搜索 / 筛选</h2>
+            </div>
+            <p className="text-sm text-[var(--color-muted)]">
+              找到 <span className="font-bold text-[var(--color-ink)]">{filteredRows.length}</span> 个站点
+            </p>
+          </div>
+
+          <div className="mt-5 flex flex-wrap items-center gap-3">
+            <div className="relative min-w-[280px] flex-1">
+              <input
+                id="station-search"
+                ref={searchInputRef}
+                className="w-full rounded-full border border-[var(--color-line)] bg-[var(--color-soft)] py-3.5 pl-5 pr-[88px] text-sm outline-none transition focus:border-[var(--color-brand)] focus:bg-white"
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="搜站点名、倍率、试用、免费、Claude、Grok、入口域名都可以"
+                value={query}
+              />
+              <div className="absolute right-3.5 top-1/2 flex -translate-y-1/2 items-center gap-2">
+                {query ? (
+                  <button
+                    className="flex h-5 w-5 items-center justify-center rounded-full text-[var(--color-muted)] transition hover:bg-[var(--color-line)] hover:text-[var(--color-ink)]"
+                    onClick={() => { setQuery(""); setDebouncedQuery(""); }}
+                    type="button"
+                    aria-label="清除搜索"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  </button>
+                ) : null}
+                <span className="select-none rounded-md border border-[var(--color-line)] px-1.5 py-0.5 text-[11px] leading-tight text-[var(--color-muted)]">
+                  Ctrl+K
+                </span>
               </div>
             </div>
+            <select
+              className="cursor-pointer appearance-none rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] px-4 py-3.5 pr-9 text-sm text-[var(--color-ink)] outline-none transition focus:border-[var(--color-brand)]"
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as SortOption)}
+              style={{
+                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
+                backgroundRepeat: "no-repeat",
+                backgroundPosition: "right 14px center",
+              }}
+            >
+              {sortOptions.map((opt) => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+          </div>
 
-            <div className="mt-6 rounded-[24px] bg-[var(--color-soft)] px-4 py-4 text-sm leading-7 text-[var(--color-muted)]">
-              <p className="font-semibold text-[var(--color-ink)]">QQ群 602190132</p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {filters.map((filter) => (
+              <button
+                key={filter.id}
+                className={`rounded-full px-4 py-2.5 text-sm font-semibold transition ${
+                  activeFilter === filter.id
+                    ? "pill-pulse bg-[var(--color-brand)] text-[var(--color-on-brand)] shadow-[0_10px_24px_var(--color-panel-glow)]"
+                    : "border border-[var(--color-line)] bg-[var(--color-panel)] text-[var(--color-muted)] hover:border-[var(--color-brand)] hover:text-[var(--color-brand-deep)]"
+                }`}
+                onClick={() => setActiveFilter(filter.id)}
+                type="button"
+              >
+                {filter.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="mt-4 flex flex-wrap gap-2 text-sm text-[var(--color-muted)]">
+            {filters
+              .filter((filter) => filter.id !== "all")
+              .map((filter) => (
+                <span key={`${filter.id}-desc`} className="rounded-full bg-[var(--color-soft)] px-3 py-2">
+                  {filter.label}：{filter.description}
+                </span>
+              ))}
+          </div>
+
+          <div className="mt-5 grid gap-3 border-t border-[var(--color-line)] pt-5 lg:grid-cols-4">
+            <div className="rounded-[18px] bg-[var(--color-soft)] px-4 py-3.5">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--color-muted)]">结果</p>
+              <p className="mt-2 text-lg font-black text-[var(--color-ink)]">{filteredRows.length} 个站点</p>
             </div>
-          </aside>
+            <div className="rounded-[18px] bg-[var(--color-soft)] px-4 py-3.5">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--color-muted)]">本周更新</p>
+              <p className="mt-2 text-lg font-black text-[var(--color-ink)]">{freshnessStats.updatedThisWeek} 个</p>
+            </div>
+            <div className="rounded-[18px] bg-[var(--color-soft)] px-4 py-3.5">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--color-muted)]">最低倍率</p>
+              <p className="mt-2 text-lg font-black text-[var(--color-ink)]">{lowestMultiplier}</p>
+            </div>
+            <div className="rounded-[18px] bg-[var(--color-brand-soft)] px-4 py-3.5">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--color-muted)]">下一步</p>
+              <p className="mt-2 text-lg font-black text-[var(--color-ink)]">缩候选，再补反馈</p>
+            </div>
+          </div>
         </div>
       </section>
 
       {/* ---- Table ---- */}
-      <section className="mx-auto max-w-7xl px-6 pb-14 lg:px-10">
-        <div className="surface-in overflow-hidden rounded-[20px] border border-[var(--color-line)] bg-[var(--color-panel)] shadow-[var(--shadow-card)]">
+      <section className="mx-auto max-w-[1500px] px-6 pb-14 lg:px-10">
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1.34fr)_320px] xl:items-start">
+          <div className="surface-in overflow-hidden rounded-[24px] border border-[var(--color-line)] bg-[var(--color-panel)] shadow-[var(--shadow-card)]">
           {/* Table header */}
           <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[var(--color-line)] px-6 py-5">
             <div>
@@ -1245,7 +1181,7 @@ export function StationsBoard() {
           </div>
 
           <div className="hidden overflow-x-auto lg:block">
-            <div className="min-w-[1180px]">
+            <div className="min-w-[1280px]">
               {/* Column headers */}
               <div className="grid grid-cols-[0.8fr_1.05fr_1fr_0.92fr_0.9fr_0.8fr_1.3fr] bg-[var(--color-soft)] px-6 py-4 text-sm font-bold uppercase tracking-[0.18em] text-[var(--color-muted)]">
                 <span>排序</span>
@@ -1466,6 +1402,87 @@ export function StationsBoard() {
               </button>
             ) : null}
           </div>
+
+          </div>
+
+          <aside className="hidden xl:block xl:space-y-5">
+            <div className="rounded-[24px] border border-[var(--color-line)] bg-[var(--color-panel)] p-5 shadow-[var(--shadow-card)]">
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
+                榜单怎么用
+              </p>
+              <div className="mt-4 space-y-3">
+                <div className="rounded-[18px] bg-[var(--color-soft)] px-4 py-3">
+                  <p className="text-sm font-black text-[var(--color-ink)]">1. 先看倍率和门槛</p>
+                  <p className="mt-1 text-sm leading-6 text-[var(--color-muted)]">先排除明显不适合做第一轮验证的样本。</p>
+                </div>
+                <div className="rounded-[18px] bg-[var(--color-soft)] px-4 py-3">
+                  <p className="text-sm font-black text-[var(--color-ink)]">2. 再把候选缩到 2 到 3 个</p>
+                  <p className="mt-1 text-sm leading-6 text-[var(--color-muted)]">先缩小决策面，再决定要不要深入看详情。</p>
+                </div>
+                <div className="rounded-[18px] bg-[var(--color-soft)] px-4 py-3">
+                  <p className="text-sm font-black text-[var(--color-ink)]">3. 最后回社区补变化</p>
+                  <p className="mt-1 text-sm leading-6 text-[var(--color-muted)]">价格和倍率负责初筛，真实变化还要靠讨论流补证据。</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-[24px] border border-[var(--color-line)] bg-[var(--color-panel)] p-5 shadow-[var(--shadow-card)]">
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
+                协作入口
+              </p>
+              <div className="mt-4 grid gap-3">
+                <Link
+                  href="/community"
+                  className="rounded-full bg-[var(--color-brand)] px-5 py-3 text-center text-sm font-bold text-[var(--color-on-brand)] transition hover:bg-[var(--color-brand-deep)]"
+                >
+                  进入站内讨论区
+                </Link>
+                <a
+                  href="https://github.com/hfeng620-cmd/timin_api_test_and_forum/discussions"
+                  rel="noopener noreferrer"
+                  target="_blank"
+                  className="rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] px-5 py-3 text-center text-sm font-bold text-[var(--color-ink)] transition hover:border-[var(--color-brand)] hover:text-[var(--color-brand-deep)]"
+                >
+                  GitHub Discussions
+                </a>
+              </div>
+            </div>
+
+            <div className="rounded-[24px] border border-[var(--color-line)] bg-[var(--color-panel)] p-5 shadow-[var(--shadow-card)]">
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
+                快速跳转
+              </p>
+              <div className="mt-4 grid gap-3">
+                <a
+                  href="https://huhuai.xyz/register?aff=BCPA5AKW3KHX"
+                  rel="noopener noreferrer"
+                  target="_blank"
+                  className="border-b border-[var(--color-line)] pb-3 text-sm leading-6 transition hover:text-[var(--color-brand-deep)]"
+                >
+                  虎虎注册链接：直接送额度
+                </a>
+                <a
+                  href="https://www.kdocs.cn/l/cj84YbmlJswN"
+                  rel="noopener noreferrer"
+                  target="_blank"
+                  className="border-b border-[var(--color-line)] pb-3 text-sm leading-6 transition hover:text-[var(--color-brand-deep)]"
+                >
+                  历史填表记录：以前群里有过填表送额度
+                </a>
+                <a
+                  href="https://www.kdocs.cn/l/cr2932V6f6bH"
+                  rel="noopener noreferrer"
+                  target="_blank"
+                  className="border-b border-[var(--color-line)] pb-3 text-sm leading-6 transition hover:text-[var(--color-brand-deep)]"
+                >
+                  API 中转站集合统计表：继续补更多站点
+                </a>
+              </div>
+              <div className="mt-5 rounded-[18px] bg-[var(--color-soft)] px-4 py-3 text-sm leading-7 text-[var(--color-muted)]">
+                <p className="font-semibold text-[var(--color-ink)]">QQ群 602190132</p>
+              </div>
+            </div>
+          </aside>
         </div>
       </section>
 

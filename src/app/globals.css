@@ -465,6 +465,9 @@ main#main-content::after {
 main#main-content > .theme-stage {
   position: relative;
   isolation: isolate;
+  background:
+    radial-gradient(circle at 50% -6%, rgba(255,255,255,0.16), transparent 34%),
+    linear-gradient(180deg, rgba(var(--theme-glow-rgb), 0.035), rgba(var(--theme-glow-rgb), 0) 24%, rgba(var(--theme-secondary-rgb), 0.03) 100%);
 }
 
 main#main-content > .theme-stage::before,
@@ -615,12 +618,14 @@ main#main-content > .theme-stage::after {
   background-size: 46px 46px, 46px 46px;
 }
 
-main#main-content > section {
+main#main-content > section,
+main#main-content > .theme-stage > section {
   position: relative;
   isolation: isolate;
 }
 
-main#main-content > section::before {
+main#main-content > section::before,
+main#main-content > .theme-stage > section::before {
   content: "";
   position: absolute;
   inset: 0;
@@ -629,7 +634,20 @@ main#main-content > section::before {
   opacity: 0.72;
   background:
     radial-gradient(circle at 12% 0%, rgba(255,255,255,0.5), transparent 18%),
-    radial-gradient(circle at 88% 100%, rgba(37,99,235,0.05), transparent 22%);
+    radial-gradient(circle at 88% 100%, rgba(var(--theme-glow-rgb), 0.08), transparent 22%),
+    linear-gradient(180deg, rgba(var(--theme-secondary-rgb), 0.03), rgba(var(--theme-secondary-rgb), 0) 42%);
+}
+
+main#main-content > .theme-stage > section::after {
+  content: "";
+  position: absolute;
+  inset: auto 8% -42px;
+  height: 88px;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.34;
+  background: radial-gradient(circle at center, rgba(var(--theme-glow-rgb), 0.14), transparent 72%);
+  filter: blur(24px);
 }
 
 :root[data-theme="midnight"] body::after {

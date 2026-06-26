@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useForumAuth } from "@/lib/forum-auth";
+import { normalizeOptionalHttpUrl } from "@/lib/discussion-storage";
 import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase";
 
 export interface AiNewsSubmitProps {
@@ -23,9 +24,14 @@ export function AiNewsSubmit({ open, onClose }: AiNewsSubmitProps) {
   const [error, setError] = useState<string | null>(null);
   const [titleError, setTitleError] = useState<string | null>(null);
   const [summaryError, setSummaryError] = useState<string | null>(null);
+  const [urlError, setUrlError] = useState<string | null>(null);
+  const [lastSubmittedFingerprint, setLastSubmittedFingerprint] = useState("");
 
   const TITLE_MIN = 5;
   const SUMMARY_MIN = 20;
+  const TITLE_MAX = 200;
+  const SUMMARY_MAX = 1000;
+  const SOURCE_MAX = 100;
 
   const dialogRef = useRef<HTMLDialogElement>(null);
 
@@ -44,6 +50,7 @@ export function AiNewsSubmit({ open, onClose }: AiNewsSubmitProps) {
       setError(null);
       setTitleError(null);
       setSummaryError(null);
+      setUrlError(null);
     } else if (!open && el.open) {
       el.close();
     }
@@ -78,9 +85,15 @@ export function AiNewsSubmit({ open, onClose }: AiNewsSubmitProps) {
       setError(null);
       setTitleError(null);
       setSummaryError(null);
+      setUrlError(null);
+
+      if (submitting) {
+        return;
+      }
 
       const trimmedTitle = title.trim();
       const trimmedSummary = summary.trim();
+      const trimmedSource = source.replace(/\s+/g, " ").trim();
 
       if (!trimmedTitle) {
         setTitleError("请填写新闻标题。");
@@ -90,6 +103,10 @@ export function AiNewsSubmit({ open, onClose }: AiNewsSubmitProps) {
         setTitleError(`标题至少需要 ${TITLE_MIN} 个字符（当前 ${trimmedTitle.length} 个）。`);
         return;
       }
+      if (trimmedTitle.length > TITLE_MAX) {
+        setTitleError(`标题不能超过 ${TITLE_MAX} 个字符。`);
+        return;
+      }
 
       if (!trimmedSummary) {
         setSummaryError("请填写内容摘要。");
@@ -97,6 +114,33 @@ export function AiNewsSubmit({ open, onClose }: AiNewsSubmitProps) {
       }
       if (trimmedSummary.length < SUMMARY_MIN) {
         setSummaryError(`摘要至少需要 ${SUMMARY_MIN} 个字符（当前 ${trimmedSummary.length} 个）。`);
+        return;
+      }
+      if (trimmedSummary.length > SUMMARY_MAX) {
+        setSummaryError(`摘要不能超过 ${SUMMARY_MAX} 个字符。`);
+        return;
+      }
+      if (trimmedSource.length > SOURCE_MAX) {
+        setError(`来源不能超过 ${SOURCE_MAX} 个字符。`);
+        return;
+      }
+
+      let cleanUrl = "";
+      try {
+        cleanUrl = normalizeOptionalHttpUrl(url, "原文链接");
+      } catch (err) {
+        setUrlError(err instanceof Error ? err.message : "原文链接格式不正确。");
+        return;
+      }
+
+      const fingerprint = JSON.stringify({
+        title: trimmedTitle,
+        summary: trimmedSummary,
+        source: trimmedSource,
+        url: cleanUrl,
+      });
+      if (fingerprint === lastSubmittedFingerprint) {
+        setError("相同内容刚刚已经提交，无需重复提交。");
         return;
       }
 
@@ -124,18 +168,17 @@ export function AiNewsSubmit({ open, onClose }: AiNewsSubmitProps) {
           return;
         }
 
-        const cleanUrl = url.trim();
-
         const { error: insertError } = await supabase.from("ai_news").insert({
           author_id: user.id,
-          title: title.trim(),
-          summary: summary.trim(),
-          source: source.trim(),
+          title: trimmedTitle,
+          summary: trimmedSummary,
+          source: trimmedSource,
           url: cleanUrl,
         });
 
         if (insertError) throw insertError;
 
+        setLastSubmittedFingerprint(fingerprint);
         setSuccess(true);
       } catch (err) {
         setError(
@@ -145,7 +188,7 @@ export function AiNewsSubmit({ open, onClose }: AiNewsSubmitProps) {
         setSubmitting(false);
       }
     },
-    [title, summary, source, url, isConnected, isConfigured, showAuthModal],
+    [title, summary, source, url, isConnected, isConfigured, showAuthModal, submitting, lastSubmittedFingerprint],
   );
 
   if (!open) return null;
@@ -319,8 +362,11 @@ export function AiNewsSubmit({ open, onClose }: AiNewsSubmitProps) {
                     placeholder="https://..."
                     type="url"
                     value={url}
-                    onChange={(e) => setUrl(e.target.value)}
+                    onChange={(e) => { setUrl(e.target.value); setUrlError(null); }}
                   />
+                  {urlError && (
+                    <p className="mt-1.5 text-xs font-medium text-[#be123c]">{urlError}</p>
+                  )}
                 </div>
 
                 {error && (

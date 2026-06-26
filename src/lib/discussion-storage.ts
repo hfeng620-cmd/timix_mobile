@@ -5,6 +5,7 @@ import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase";
 const FORUM_POSTS_PUBLIC_VIEW = "forum_posts_public";
 const FORUM_PUBLIC_REPLIES_VIEW = "forum_public_replies";
 const MAX_FORUM_IMAGE_BYTES = 5 * 1024 * 1024;
+const MAX_EXTERNAL_URL_LENGTH = 500;
 const ALLOWED_FORUM_IMAGE_TYPES = {
   "image/avif": "avif",
   "image/gif": "gif",
@@ -22,6 +23,7 @@ const DEFAULT_SPAM_KEYWORDS = [
   "代理",
   "广告",
 ] as const;
+const DISALLOWED_TEXT_CHARACTERS = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g;
 
 export type DiscussionPost = {
   issueNumber: string;
@@ -144,11 +146,55 @@ function replyFromRow(row: ForumReplyRow): DiscussionReply {
 }
 
 function normalizeRequiredText(value: string, emptyMessage: string) {
-  const trimmed = value.trim();
+  const trimmed = value
+    .replace(DISALLOWED_TEXT_CHARACTERS, "")
+    .replace(/\r\n?/g, "\n")
+    .trim();
   if (!trimmed) {
     throw new Error(emptyMessage);
   }
   return trimmed;
+}
+
+function normalizeSingleLineText(value: string) {
+  return value
+    .replace(DISALLOWED_TEXT_CHARACTERS, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+export function normalizeOptionalHttpUrl(value: string, fieldName: string = "链接") {
+  const trimmed = normalizeSingleLineText(value);
+  if (!trimmed) {
+    return "";
+  }
+
+  if (trimmed.length > MAX_EXTERNAL_URL_LENGTH) {
+    throw new Error(`${fieldName}不能超过 ${MAX_EXTERNAL_URL_LENGTH} 个字符。`);
+  }
+
+  let parsedUrl: URL;
+  try {
+    parsedUrl = new URL(trimmed);
+  } catch {
+    throw new Error(`请填写有效的${fieldName}。`);
+  }
+
+  if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") {
+    throw new Error(`${fieldName}仅支持 http 或 https。`);
+  }
+
+  if (!parsedUrl.hostname) {
+    throw new Error(`请填写有效的${fieldName}。`);
+  }
+
+  parsedUrl.username = "";
+  parsedUrl.password = "";
+  return parsedUrl.toString();
+}
+
+export function normalizeOptionalImageUrl(value: string, fieldName: string = "图片链接") {
+  return normalizeOptionalHttpUrl(value, fieldName);
 }
 
 function normalizeTags(tags?: string[]) {
@@ -156,7 +202,7 @@ function normalizeTags(tags?: string[]) {
 
   const uniqueTags = new Set<string>();
   for (const tag of tags) {
-    const trimmed = tag.trim();
+    const trimmed = normalizeSingleLineText(tag);
     if (trimmed) {
       uniqueTags.add(trimmed.slice(0, 40));
     }
@@ -795,7 +841,7 @@ export async function uploadForumImage(file: File): Promise<string> {
   if (error) throw error;
 
   const { data: urlData } = supabase.storage.from("forum-images").getPublicUrl(fileName);
-  return urlData.publicUrl;
+  return normalizeOptionalImageUrl(urlData.publicUrl, "图片链接");
 }
 
 export async function uploadAvatar(file: File): Promise<string> {
@@ -814,7 +860,7 @@ export async function uploadAvatar(file: File): Promise<string> {
   if (error) throw error;
 
   const { data: urlData } = supabase.storage.from("forum-avatars").getPublicUrl(fileName);
-  return urlData.publicUrl;
+  return normalizeOptionalImageUrl(urlData.publicUrl, "头像链接");
 }
 
 export async function updateProfileAvatar(avatarUrl: string): Promise<void> {
@@ -822,10 +868,11 @@ export async function updateProfileAvatar(avatarUrl: string): Promise<void> {
   const supabase = getSupabaseClient();
   const { data: userData } = await supabase.auth.getUser();
   if (!userData.user) throw new Error("请先登录。");
+  const normalizedAvatarUrl = normalizeOptionalImageUrl(avatarUrl, "头像链接");
 
   const { error } = await supabase
     .from("forum_profiles")
-    .upsert({ id: userData.user.id, avatar_url: avatarUrl }, { onConflict: "id" });
+    .upsert({ id: userData.user.id, avatar_url: normalizedAvatarUrl }, { onConflict: "id" });
 
   if (error) throw error;
 }
@@ -901,7 +948,7 @@ function normalizeProfileTags(tags?: string[]) {
 
   const uniqueTags = new Set<string>();
   for (const tag of tags) {
-    const trimmed = tag.trim();
+    const trimmed = normalizeSingleLineText(tag);
     if (trimmed) {
       uniqueTags.add(trimmed.slice(0, 20));
     }

@@ -33,6 +33,14 @@ type FootprintItem = {
   detail: string;
 };
 
+type ActivityEmptyState = {
+  eyebrow: string;
+  title: string;
+  detail: string;
+  primaryAction: { href: string; label: string };
+  secondaryAction: { href: string; label: string };
+};
+
 const activityTabs: { key: ActivityTab; label: string }[] = [
   { key: "posts", label: "发帖" },
   { key: "replies", label: "回复" },
@@ -52,6 +60,31 @@ function formatDateLabel(value?: string | null) {
   } catch {
     return value;
   }
+}
+
+function formatProfileJoinDate(value?: string | null) {
+  if (!value) return "加入时间未知";
+
+  try {
+    return new Intl.DateTimeFormat("zh-CN", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    }).format(new Date(value));
+  } catch {
+    return "加入时间未知";
+  }
+}
+
+function createArchiveId(value?: string | null) {
+  if (!value) return "PF-UNSET";
+  return `PF-${value.slice(0, 8).toUpperCase()}`;
+}
+
+function normalizeTagList(value: string[]) {
+  return Array.from(
+    new Set(value.map((item) => item.trim()).filter((item) => item.length > 0)),
+  ).slice(0, 5);
 }
 
 function truncateText(value?: string | null, maxLength = 72) {
@@ -136,7 +169,7 @@ export default function ProfilePage() {
           .single();
         if (data?.avatar_url) setAvatarUrl(data.avatar_url);
         if (data?.bio) setBio(data.bio);
-        if (Array.isArray(data?.tags)) setTags(data.tags);
+        if (Array.isArray(data?.tags)) setTags(normalizeTagList(data.tags));
       } catch {
         // ignore
       }
@@ -164,14 +197,9 @@ export default function ProfilePage() {
   const authoredReplyCount = replies.length;
   const totalContribution = postCount + authoredReplyCount;
   const uniqueStations = new Set(posts.map((post) => post.station).filter(Boolean)).size;
+  const archiveId = createArchiveId(user?.id);
 
-  const joinDate = user?.created_at
-    ? new Date(user.created_at).toLocaleDateString("zh-CN", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      })
-    : "未知";
+  const joinDate = formatProfileJoinDate(user?.created_at);
 
   const name = displayName || email?.split("@")[0] || "用户";
   const initial = name.charAt(0).toUpperCase();
@@ -269,6 +297,30 @@ export default function ProfilePage() {
       hint: mostDiscussedStation ? `最常提及 ${mostDiscussedStation.station}` : "还没有站点足迹",
     },
   ];
+  const identityFacts = [
+    {
+      label: "档案编号",
+      value: archiveId,
+    },
+    {
+      label: "加入 Timix",
+      value: joinDate,
+    },
+    {
+      label: "内容互动",
+      value: `${totalContribution} 次`,
+    },
+    {
+      label: "资料字段",
+      value: `${profileCompleteness}/4 已填写`,
+    },
+  ];
+  const profileCompletionItems = [
+    { done: Boolean(avatarUrl), label: "头像", hint: "让主页识别度更高。" },
+    { done: hasCustomName, label: "昵称", hint: "统一你的公开身份名称。" },
+    { done: Boolean(bio.trim()), label: "简介", hint: "说明使用场景或关注方向。" },
+    { done: tags.length > 0, label: "标签", hint: "补出个人观察风格。" },
+  ];
 
   const overviewCards = [
     {
@@ -337,6 +389,39 @@ export default function ProfilePage() {
         : "点过赞的内容会留在这里，逐步沉淀出你的关注方向。",
     },
   ];
+  const activityEmptyStates: Record<ActivityTab, ActivityEmptyState> = {
+    posts: {
+      eyebrow: "公开发声",
+      title: "你的发帖档案还没开始建立",
+      detail:
+        completenessPercent >= 75
+          ? "资料已经准备得差不多了，现在只差第一条公开观察，让这张主页真正动起来。"
+          : "先补头像、简介或标签，再发第一条帖子，主页会更有身份感和连续性。",
+      primaryAction: { href: "/community", label: "去发第一条帖子" },
+      secondaryAction: { href: "/stations", label: "先看看站点榜单" },
+    },
+    replies: {
+      eyebrow: "讨论轨迹",
+      title: "你的回复档案暂时还是空白",
+      detail:
+        postCount > 0
+          ? "你已经开始公开发声，再参与几次追问、补充或纠错，主页会更像完整讨论档案。"
+          : "先去讨论区浏览熟悉的话题，挑一条你愿意补充的内容留下回应。",
+      primaryAction: { href: "/community", label: "去参与讨论" },
+      secondaryAction: { href: "/stations", label: "先补充观察素材" },
+    },
+    likes: {
+      eyebrow: "兴趣记录",
+      title: "你的点赞偏好还没有沉淀出来",
+      detail:
+        uniqueStations > 0
+          ? "你已经在一些站点话题里留下足迹，看到值得收藏的内容时点个赞，这里会开始形成兴趣侧写。"
+          : "逛逛讨论区或榜单页，遇到认可的内容点个赞，这里就会逐步长出你的关注方向。",
+      primaryAction: { href: "/community", label: "去逛讨论区" },
+      secondaryAction: { href: "/stations", label: "看看站点榜单" },
+    },
+  };
+  const activeEmptyState = activityEmptyStates[activeTab];
 
   return (
     <main className="theme-stage min-h-screen bg-transparent text-[var(--color-ink)]">
@@ -483,9 +568,18 @@ export default function ProfilePage() {
                           {email ? (
                             <p className="mt-3 text-sm text-[var(--color-muted)]">{email}</p>
                           ) : null}
-                          <p className="mt-2 text-sm text-[var(--color-muted)]">
-                            {joinDate} 加入，已累计参与 {totalContribution} 次内容互动
-                          </p>
+                          <div className="mt-4 flex flex-wrap gap-2">
+                            {identityFacts.map((item) => (
+                              <div
+                                key={item.label}
+                                className="rounded-full border border-white/80 bg-white/74 px-3 py-1.5 text-xs text-[var(--color-muted)] shadow-[0_10px_22px_rgba(15,23,42,0.04)]"
+                              >
+                                <span className="font-semibold text-[var(--color-muted)]">{item.label}</span>
+                                <span className="mx-1 text-[var(--color-line)]">·</span>
+                                <span className="font-bold text-[var(--color-ink)]">{item.value}</span>
+                              </div>
+                            ))}
+                          </div>
                           <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--color-muted)]">
                             {profileHeadline}
                           </p>
@@ -514,25 +608,42 @@ export default function ProfilePage() {
                         </div>
                       </div>
 
-                      <p className="mt-5 max-w-3xl text-sm leading-7 text-[var(--color-muted)] sm:text-base">
-                        {bio || "还没有留下个人简介，先补一句常用场景或关注方向会更像完整主页。"}
-                      </p>
+                      <div className="mt-5 grid gap-4 lg:grid-cols-[1.12fr_0.88fr]">
+                        <div className="rounded-[22px] border border-white/80 bg-white/76 px-4 py-4 shadow-[0_12px_28px_rgba(15,23,42,0.04)]">
+                          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
+                            个人摘要
+                          </p>
+                          <p className="mt-3 text-sm leading-7 text-[var(--color-muted)] sm:text-base">
+                            {bio || "还没有留下个人简介，先补一句常用场景、偏好模型或关注方向，会更像完整主页。"}
+                          </p>
+                        </div>
 
-                      <div className="mt-5 flex flex-wrap gap-2">
-                        {tags.length > 0 ? (
-                          tags.map((tag, index) => (
-                            <span
-                              key={`${tag}-${index}`}
-                              className="rounded-full bg-[var(--color-brand)]/10 px-3 py-1 text-xs font-bold text-[var(--color-brand-deep)] ring-1 ring-[var(--color-brand)]/20"
-                            >
-                              {tag}
+                        <div className="rounded-[22px] border border-white/80 bg-white/76 px-4 py-4 shadow-[0_12px_28px_rgba(15,23,42,0.04)]">
+                          <div className="flex items-center justify-between gap-3">
+                            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
+                              身份标签
+                            </p>
+                            <span className="text-xs font-bold text-[var(--color-brand-deep)]">
+                              {tags.length}/5
                             </span>
-                          ))
-                        ) : (
-                          <span className="rounded-full border border-dashed border-[var(--color-line)] px-3 py-1 text-xs font-semibold text-[var(--color-muted)]">
-                            还没有个人标签
-                          </span>
-                        )}
+                          </div>
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            {tags.length > 0 ? (
+                              tags.map((tag, index) => (
+                                <span
+                                  key={`${tag}-${index}`}
+                                  className="rounded-full bg-[var(--color-brand)]/10 px-3 py-1 text-xs font-bold text-[var(--color-brand-deep)] ring-1 ring-[var(--color-brand)]/20"
+                                >
+                                  {tag}
+                                </span>
+                              ))
+                            ) : (
+                              <span className="rounded-full border border-dashed border-[var(--color-line)] px-3 py-1 text-xs font-semibold text-[var(--color-muted)]">
+                                还没有个人标签
+                              </span>
+                            )}
+                          </div>
+                        </div>
                       </div>
 
                       <div className="mt-6 grid gap-3 sm:grid-cols-3">
@@ -550,6 +661,28 @@ export default function ProfilePage() {
                             <p className="mt-2 text-xs leading-5 text-[var(--color-muted)]">{item.hint}</p>
                           </div>
                         ))}
+                      </div>
+
+                      <div className="mt-4 rounded-[22px] border border-white/80 bg-white/76 px-4 py-4 shadow-[0_12px_28px_rgba(15,23,42,0.04)]">
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                          <div>
+                            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
+                              档案完成进度
+                            </p>
+                            <p className="mt-2 text-sm font-black text-[var(--color-ink)]">
+                              {completionTone}，已填写 {profileCompleteness}/4 项核心资料字段
+                            </p>
+                          </div>
+                          <span className="text-sm font-black text-[var(--color-brand-deep)]">
+                            {completenessPercent}%
+                          </span>
+                        </div>
+                        <div className="mt-4 h-2 overflow-hidden rounded-full bg-[var(--color-soft)]">
+                          <div
+                            className="h-full rounded-full bg-[var(--color-brand)] transition-[width]"
+                            style={{ width: `${completenessPercent}%` }}
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -593,6 +726,7 @@ export default function ProfilePage() {
                           onClick={async () => {
                             if (!newName.trim()) return;
                             setNameSaving(true);
+                            const nextTags = normalizeTagList(newTags);
                             if (newName !== name) {
                               await setDisplayName(newName.trim());
                             }
@@ -600,11 +734,11 @@ export default function ProfilePage() {
                               await getSupabaseClient()
                                 .from("forum_profiles")
                                 .upsert(
-                                  { id: user!.id, bio: newBio.trim(), tags: newTags },
+                                  { id: user!.id, bio: newBio.trim(), tags: nextTags },
                                   { onConflict: "id" },
                                 );
                               setBio(newBio.trim());
-                              setTags([...newTags]);
+                              setTags(nextTags);
                             } catch {
                               // ignore
                             }
@@ -657,11 +791,11 @@ export default function ProfilePage() {
                             onKeyDown={(event) => {
                               if (event.key === "Enter" && tagInput.trim() && newTags.length < 5) {
                                 event.preventDefault();
-                                setNewTags([...newTags, tagInput.trim()]);
+                                setNewTags(normalizeTagList([...newTags, tagInput]));
                                 setTagInput("");
                               }
                             }}
-                            placeholder="添加标签..."
+                            placeholder="回车添加标签"
                             value={tagInput}
                           />
                         ) : null}
@@ -871,15 +1005,50 @@ export default function ProfilePage() {
               <>
                 {activeTab === "posts" ? (
                   posts.length === 0 ? (
-                    <div className="px-6 py-12 text-center">
-                      <p className="text-sm font-bold text-[var(--color-ink)]">暂无发帖。</p>
-                      <p className="mt-2 text-sm text-[var(--color-muted)]">
-                        你的内容档案还是空的，去
-                        <Link className="mx-1 font-semibold text-[var(--color-brand-deep)]" href="/community">
-                          讨论区
-                        </Link>
-                        发出第一条公开观察吧。
-                      </p>
+                    <div className="px-6 py-10">
+                      <div className="mx-auto max-w-2xl rounded-[26px] border border-[var(--color-line)] bg-[linear-gradient(135deg,rgba(37,99,235,0.08),rgba(255,255,255,0.92))] px-6 py-8 text-center shadow-[0_18px_48px_rgba(15,23,42,0.05)]">
+                        <span className="inline-flex rounded-full bg-white/86 px-3 py-1 text-xs font-bold text-[var(--color-brand-deep)] ring-1 ring-[var(--color-line)]">
+                          {activeEmptyState.eyebrow}
+                        </span>
+                        <h3 className="mt-4 text-2xl font-black tracking-tight text-[var(--color-ink)]">
+                          {activeEmptyState.title}
+                        </h3>
+                        <p className="mx-auto mt-3 max-w-xl text-sm leading-7 text-[var(--color-muted)]">
+                          {activeEmptyState.detail}
+                        </p>
+                        <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                          <div className="rounded-[18px] border border-[var(--color-line)] bg-white/80 px-4 py-4 text-left">
+                            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
+                              账号阶段
+                            </p>
+                            <p className="mt-2 text-sm font-black text-[var(--color-ink)]">{profileStage}</p>
+                            <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">{profileStageHint}</p>
+                          </div>
+                          <div className="rounded-[18px] border border-[var(--color-line)] bg-white/80 px-4 py-4 text-left">
+                            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
+                              资料完成度
+                            </p>
+                            <p className="mt-2 text-sm font-black text-[var(--color-ink)]">
+                              {completenessPercent}% · {profileCompleteness}/4
+                            </p>
+                            <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">{completionTone}</p>
+                          </div>
+                        </div>
+                        <div className="mt-6 flex flex-wrap justify-center gap-3">
+                          <Link
+                            className="rounded-full bg-[var(--color-brand)] px-5 py-2.5 text-sm font-bold text-[var(--color-on-brand)] shadow-[0_10px_24px_var(--color-panel-glow)] transition hover:bg-[var(--color-brand-deep)]"
+                            href={activeEmptyState.primaryAction.href}
+                          >
+                            {activeEmptyState.primaryAction.label}
+                          </Link>
+                          <Link
+                            className="rounded-full border border-[var(--color-line)] bg-white/82 px-5 py-2.5 text-sm font-semibold text-[var(--color-ink)] transition hover:border-[var(--color-brand)] hover:text-[var(--color-brand-deep)]"
+                            href={activeEmptyState.secondaryAction.href}
+                          >
+                            {activeEmptyState.secondaryAction.label}
+                          </Link>
+                        </div>
+                      </div>
                     </div>
                   ) : (
                     <div className="divide-y divide-[var(--color-line)]">
@@ -915,11 +1084,56 @@ export default function ProfilePage() {
 
                 {activeTab === "replies" ? (
                   replies.length === 0 ? (
-                    <div className="px-6 py-12 text-center">
-                      <p className="text-sm font-bold text-[var(--color-ink)]">暂无回复。</p>
-                      <p className="mt-2 text-sm text-[var(--color-muted)]">
-                        还没有形成讨论轨迹，参与一次追问、补充或纠错后就会收进这里。
-                      </p>
+                    <div className="px-6 py-10">
+                      <div className="mx-auto max-w-2xl rounded-[26px] border border-[var(--color-line)] bg-[linear-gradient(135deg,rgba(37,99,235,0.08),rgba(255,255,255,0.92))] px-6 py-8 text-center shadow-[0_18px_48px_rgba(15,23,42,0.05)]">
+                        <span className="inline-flex rounded-full bg-white/86 px-3 py-1 text-xs font-bold text-[var(--color-brand-deep)] ring-1 ring-[var(--color-line)]">
+                          {activeEmptyState.eyebrow}
+                        </span>
+                        <h3 className="mt-4 text-2xl font-black tracking-tight text-[var(--color-ink)]">
+                          {activeEmptyState.title}
+                        </h3>
+                        <p className="mx-auto mt-3 max-w-xl text-sm leading-7 text-[var(--color-muted)]">
+                          {activeEmptyState.detail}
+                        </p>
+                        <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                          <div className="rounded-[18px] border border-[var(--color-line)] bg-white/80 px-4 py-4 text-left">
+                            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
+                              已有发帖
+                            </p>
+                            <p className="mt-2 text-sm font-black text-[var(--color-ink)]">{postCount} 条</p>
+                            <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">
+                              {postCount > 0 ? "你已经有公开表达，可以继续补足对话层。" : "还没有发帖和回复记录。"}
+                            </p>
+                          </div>
+                          <div className="rounded-[18px] border border-[var(--color-line)] bg-white/80 px-4 py-4 text-left">
+                            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
+                              关注站点
+                            </p>
+                            <p className="mt-2 text-sm font-black text-[var(--color-ink)]">
+                              {uniqueStations} 个
+                            </p>
+                            <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">
+                              {mostDiscussedStation
+                                ? `目前最常提及 ${mostDiscussedStation.station}。`
+                                : "继续参与站点话题后会逐步形成焦点。"}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="mt-6 flex flex-wrap justify-center gap-3">
+                          <Link
+                            className="rounded-full bg-[var(--color-brand)] px-5 py-2.5 text-sm font-bold text-[var(--color-on-brand)] shadow-[0_10px_24px_var(--color-panel-glow)] transition hover:bg-[var(--color-brand-deep)]"
+                            href={activeEmptyState.primaryAction.href}
+                          >
+                            {activeEmptyState.primaryAction.label}
+                          </Link>
+                          <Link
+                            className="rounded-full border border-[var(--color-line)] bg-white/82 px-5 py-2.5 text-sm font-semibold text-[var(--color-ink)] transition hover:border-[var(--color-brand)] hover:text-[var(--color-brand-deep)]"
+                            href={activeEmptyState.secondaryAction.href}
+                          >
+                            {activeEmptyState.secondaryAction.label}
+                          </Link>
+                        </div>
+                      </div>
                     </div>
                   ) : (
                     <div className="divide-y divide-[var(--color-line)]">
@@ -945,11 +1159,55 @@ export default function ProfilePage() {
 
                 {activeTab === "likes" ? (
                   likedPosts.length === 0 ? (
-                    <div className="px-6 py-12 text-center">
-                      <p className="text-sm font-bold text-[var(--color-ink)]">暂无点赞。</p>
-                      <p className="mt-2 text-sm text-[var(--color-muted)]">
-                        这里还没有兴趣记录，点过赞的内容之后会自动归档在这里。
-                      </p>
+                    <div className="px-6 py-10">
+                      <div className="mx-auto max-w-2xl rounded-[26px] border border-[var(--color-line)] bg-[linear-gradient(135deg,rgba(37,99,235,0.08),rgba(255,255,255,0.92))] px-6 py-8 text-center shadow-[0_18px_48px_rgba(15,23,42,0.05)]">
+                        <span className="inline-flex rounded-full bg-white/86 px-3 py-1 text-xs font-bold text-[var(--color-brand-deep)] ring-1 ring-[var(--color-line)]">
+                          {activeEmptyState.eyebrow}
+                        </span>
+                        <h3 className="mt-4 text-2xl font-black tracking-tight text-[var(--color-ink)]">
+                          {activeEmptyState.title}
+                        </h3>
+                        <p className="mx-auto mt-3 max-w-xl text-sm leading-7 text-[var(--color-muted)]">
+                          {activeEmptyState.detail}
+                        </p>
+                        <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                          <div className="rounded-[18px] border border-[var(--color-line)] bg-white/80 px-4 py-4 text-left">
+                            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
+                              点赞记录
+                            </p>
+                            <p className="mt-2 text-sm font-black text-[var(--color-ink)]">{likedCount} 条</p>
+                            <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">
+                              认可过的内容会在这里逐步沉淀成你的兴趣侧写。
+                            </p>
+                          </div>
+                          <div className="rounded-[18px] border border-[var(--color-line)] bg-white/80 px-4 py-4 text-left">
+                            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
+                              补完建议
+                            </p>
+                            <div className="mt-2 space-y-2">
+                              {profileCompletionItems.slice(0, 2).map((item) => (
+                                <p key={item.label} className="text-sm leading-6 text-[var(--color-muted)]">
+                                  {item.done ? "已补" : "待补"} {item.label}，{item.hint}
+                                </p>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="mt-6 flex flex-wrap justify-center gap-3">
+                          <Link
+                            className="rounded-full bg-[var(--color-brand)] px-5 py-2.5 text-sm font-bold text-[var(--color-on-brand)] shadow-[0_10px_24px_var(--color-panel-glow)] transition hover:bg-[var(--color-brand-deep)]"
+                            href={activeEmptyState.primaryAction.href}
+                          >
+                            {activeEmptyState.primaryAction.label}
+                          </Link>
+                          <Link
+                            className="rounded-full border border-[var(--color-line)] bg-white/82 px-5 py-2.5 text-sm font-semibold text-[var(--color-ink)] transition hover:border-[var(--color-brand)] hover:text-[var(--color-brand-deep)]"
+                            href={activeEmptyState.secondaryAction.href}
+                          >
+                            {activeEmptyState.secondaryAction.label}
+                          </Link>
+                        </div>
+                      </div>
                     </div>
                   ) : (
                     <div className="divide-y divide-[var(--color-line)]">

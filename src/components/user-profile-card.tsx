@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getSupabaseClient } from "@/lib/supabase";
 
@@ -46,7 +47,7 @@ function normalizeProfile(row: UserProfileRow): UserProfile {
   };
 }
 
-function formatJoinDate(value: string | null) {
+function formatProfileJoinDate(value: string | null) {
   if (!value) return "加入时间未知";
 
   try {
@@ -60,18 +61,20 @@ function formatJoinDate(value: string | null) {
   }
 }
 
+function createArchiveId(userId: string) {
+  return `PF-${userId.slice(0, 8).toUpperCase()}`;
+}
+
 export function UserProfileCard({ userId, position, onClose }: UserProfileCardProps) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [cardPosition, setCardPosition] = useState(position);
-  const [isVisible, setIsVisible] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
   // Smooth entrance animation
   useEffect(() => {
     const timer = setTimeout(() => {
-      setIsVisible(true);
       setIsAnimating(true);
     }, 10);
     return () => clearTimeout(timer);
@@ -109,7 +112,7 @@ export function UserProfileCard({ userId, position, onClose }: UserProfileCardPr
     if (typeof window === "undefined") return;
 
     const width = 320;
-    const height = 420;
+    const height = 500;
     const padding = 12;
     const nextLeft = Math.min(
       Math.max(padding, position.x),
@@ -145,7 +148,7 @@ export function UserProfileCard({ userId, position, onClose }: UserProfileCardPr
 
   const name = profile?.display_name || "用户";
   const initial = name.charAt(0).toUpperCase();
-  const bio = profile?.bio?.trim() || "这个人很懒，什么都没写...";
+  const bio = profile?.bio?.trim() || "还没有留下个人简介，这张名片暂时只展示基础身份信息。";
   const tags = profile?.tags ?? [];
   const profileCompleteness = [
     Boolean(profile?.display_name?.trim()),
@@ -155,8 +158,26 @@ export function UserProfileCard({ userId, position, onClose }: UserProfileCardPr
   ].filter(Boolean).length;
   const completenessPercent = Math.round((profileCompleteness / 4) * 100);
   const completenessLabel =
-    completenessPercent >= 100 ? "主页已完成" : completenessPercent >= 50 ? "资料逐步成形" : "还在补充中";
-  const joinDate = formatJoinDate(profile?.created_at ?? null);
+    completenessPercent >= 100
+      ? "主页已完成"
+      : completenessPercent >= 75
+        ? "接近完整"
+        : completenessPercent >= 50
+          ? "还差一点"
+          : "建议继续补充";
+  const joinDate = formatProfileJoinDate(profile?.created_at ?? null);
+  const archiveId = createArchiveId(userId);
+  const identityRows = [
+    { label: "档案编号", value: archiveId },
+    { label: "加入 Timix", value: joinDate },
+    { label: "资料字段", value: `${profileCompleteness}/4 已填写` },
+  ];
+  const completionItems = [
+    { label: "头像", done: Boolean(profile?.avatar_url) },
+    { label: "昵称", done: Boolean(profile?.display_name?.trim()) },
+    { label: "简介", done: Boolean(profile?.bio?.trim()) },
+    { label: "标签", done: tags.length > 0 },
+  ];
 
   return (
     <div
@@ -203,7 +224,7 @@ export function UserProfileCard({ userId, position, onClose }: UserProfileCardPr
             </button>
 
             <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--color-brand-deep)]">
-              个人快照
+              个人档案
             </p>
 
             <div className="mt-4 flex items-start gap-4">
@@ -230,6 +251,19 @@ export function UserProfileCard({ userId, position, onClose }: UserProfileCardPr
                 <p className="mt-1 text-xs font-medium text-[var(--color-brand-deep)]">{completenessLabel}</p>
               </div>
             </div>
+
+            <div className="mt-4 flex flex-wrap gap-2">
+              {identityRows.map((item) => (
+                <span
+                  key={item.label}
+                  className="rounded-full border border-white/80 bg-white/76 px-2.5 py-1 text-[10px] font-medium text-[var(--color-muted)]"
+                >
+                  <span>{item.label}</span>
+                  <span className="mx-1 text-[var(--color-line)]">·</span>
+                  <span className="font-bold text-[var(--color-ink)]">{item.value}</span>
+                </span>
+              ))}
+            </div>
           </div>
 
           <div className="space-y-4 p-5">
@@ -249,21 +283,58 @@ export function UserProfileCard({ userId, position, onClose }: UserProfileCardPr
             </div>
 
             <div className="rounded-[18px] border border-[var(--color-line)] bg-[linear-gradient(135deg,var(--color-brand-soft),rgba(255,255,255,0.76))] px-4 py-3.5">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
-                主页状态
-              </p>
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
+                  主页状态
+                </p>
+                <span className="text-xs font-bold text-[var(--color-brand-deep)]">
+                  {completenessPercent}%
+                </span>
+              </div>
               <p className="mt-2 text-sm font-bold text-[var(--color-ink)]">
                 {completenessPercent >= 100
                   ? "这张主页已经比较完整。"
-                  : completenessPercent >= 50
-                    ? "资料已经立起来一半以上。"
-                    : "还在补充基础身份信息。"}
+                  : completenessPercent >= 75
+                    ? "资料已经很接近完整。"
+                    : completenessPercent >= 50
+                      ? "身份信息已经立起来一半以上。"
+                      : "还在补充基础身份信息。"}
               </p>
               <p className="mt-2 text-xs leading-5 text-[var(--color-muted)]">
                 {tags.length > 0
                   ? "已经有自己的标签侧写，再补一点内容互动会更完整。"
                   : "再补简介、标签或内容记录，这张主页会更像完整名片。"}
               </p>
+              <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/72">
+                <div
+                  className="h-full rounded-full bg-[var(--color-brand)] transition-[width]"
+                  style={{ width: `${completenessPercent}%` }}
+                />
+              </div>
+            </div>
+
+            <div className="rounded-[18px] border border-[var(--color-line)] bg-[var(--color-soft)] px-4 py-3.5">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
+                  身份字段
+                </p>
+                <span className="text-[11px] font-bold text-[var(--color-brand-deep)]">
+                  {profileCompleteness}/4
+                </span>
+              </div>
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                {completionItems.map((item) => (
+                  <div
+                    key={item.label}
+                    className="rounded-[14px] border border-[var(--color-line)] bg-white/72 px-3 py-2"
+                  >
+                    <p className="text-[11px] font-semibold text-[var(--color-muted)]">{item.label}</p>
+                    <p className="mt-1 text-xs font-bold text-[var(--color-ink)]">
+                      {item.done ? "已填写" : "待补充"}
+                    </p>
+                  </div>
+                ))}
+              </div>
             </div>
 
             <div>
@@ -295,12 +366,12 @@ export function UserProfileCard({ userId, position, onClose }: UserProfileCardPr
               </div>
             </div>
 
-            <a
+            <Link
               className="block w-full rounded-full bg-[var(--color-brand)] py-2.5 text-center text-sm font-bold text-[var(--color-on-brand)] transition hover:bg-[var(--color-brand-deep)]"
               href="/profile"
             >
               查看主页
-            </a>
+            </Link>
           </div>
         </>
       )}

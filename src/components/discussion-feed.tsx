@@ -507,6 +507,21 @@ export function DiscussionFeed({
     return sorted;
   }, [bookmarkedIds, bookmarksOnly, compact, posts, searchQuery, searchResult, selectedTag, sortOption]);
 
+  const resultCount = searchResult ? totalCount : visiblePosts.length;
+  const sortLabel =
+    sortOption === "mostReplies"
+      ? "按回复优先"
+      : sortOption === "mostLikes"
+        ? "按点赞优先"
+        : "按最新优先";
+  const activeFilters = [
+    stationFilter ? `站点 ${stationFilter}` : null,
+    searchQuery.trim() ? `搜索 ${searchQuery.trim()}` : null,
+    selectedTag ? `标签 #${selectedTag}` : null,
+    bookmarksOnly ? "只看收藏" : null,
+  ].filter((value): value is string => Boolean(value));
+  const hasActiveFilters = activeFilters.length > 0;
+
   async function handleSubmitPost() {
     if (!isConnected) {
       showAuthModal();
@@ -757,38 +772,104 @@ export function DiscussionFeed({
       className="card-lift overflow-hidden rounded-[20px] border border-[var(--color-line)] bg-[var(--color-panel)] shadow-[var(--shadow-card)] transition-all duration-300"
       data-selection-comments="off"
     >
-      <div className="border-b border-[var(--color-line)] px-5 py-4">
-        <div className="flex items-center justify-between gap-4">
-          <h2 className="text-2xl font-black tracking-tight">{title}</h2>
-          <span className="text-sm text-[var(--color-muted)]">
-            找到 {searchResult ? totalCount : visiblePosts.length} 条讨论
-            {searchLoading ? " — 搜索中..." : ""}
-          </span>
+      <div className="border-b border-[var(--color-line)] bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(248,250,252,0.98))] px-5 py-5">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand-deep)]">
+              Discussion Workbench
+            </p>
+            <h2 className="mt-2 text-2xl font-black tracking-tight">{title}</h2>
+            <p className="mt-2 text-sm text-[var(--color-muted)]">
+              {stationFilter
+                ? `围绕 ${stationFilter} 聚合最新反馈，先处理短流，再决定是否转长期讨论。`
+                : "把新动态、标签筛选和重点讨论收在同一工作台里处理。"}
+            </p>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-3">
+            <div className="rounded-[18px] border border-[var(--color-line)] bg-[var(--color-panel)] px-4 py-3">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
+                结果
+              </p>
+              <p className="mt-1 text-lg font-black text-[var(--color-ink)]">{resultCount}</p>
+            </div>
+            <div className="rounded-[18px] border border-[var(--color-line)] bg-[var(--color-panel)] px-4 py-3">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
+                排序
+              </p>
+              <p className="mt-1 text-sm font-bold text-[var(--color-ink)]">{sortLabel}</p>
+            </div>
+            <div className="rounded-[18px] border border-[var(--color-line)] bg-[var(--color-panel)] px-4 py-3">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
+                状态
+              </p>
+              <p className="mt-1 text-sm font-bold text-[var(--color-ink)]">
+                {searchLoading ? "更新中" : hasActiveFilters ? "筛选中" : "全量查看"}
+              </p>
+            </div>
+          </div>
         </div>
-        <div className="mt-4 flex flex-wrap items-center gap-3">
-          <div className="relative flex-1 min-w-[240px]">
+
+        <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
+          <div className="relative min-w-0">
             <input
               className="w-full rounded-full border border-[var(--color-line)] bg-[var(--color-soft)] pl-5 pr-4 py-3 text-sm outline-none transition focus:border-[var(--color-brand)] focus:bg-white"
               onChange={(event) => setSearchQuery(event.target.value)}
-              placeholder="搜索帖子内容、站点名或标签..."
+              placeholder="搜索内容、站点名或标签..."
               value={searchQuery}
             />
           </div>
-          <select
-            className="rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] px-4 py-3 text-sm outline-none transition focus:border-[var(--color-brand)] cursor-pointer appearance-none text-[var(--color-ink)]"
-            value={sortOption}
-            onChange={(e) => setSortOption(e.target.value as "latest" | "mostReplies" | "mostLikes")}
-            style={{
-              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
-              backgroundRepeat: "no-repeat",
-              backgroundPosition: "right 14px center",
-              paddingRight: "36px",
-            }}
-          >
-            <option value="latest">最新发布</option>
-            <option value="mostReplies">最多回复</option>
-            <option value="mostLikes">最多点赞</option>
-          </select>
+          <div className="flex flex-wrap items-center gap-3">
+            <select
+              className="rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] px-4 py-3 text-sm outline-none transition focus:border-[var(--color-brand)] cursor-pointer appearance-none text-[var(--color-ink)]"
+              value={sortOption}
+              onChange={(e) => setSortOption(e.target.value as "latest" | "mostReplies" | "mostLikes")}
+              style={{
+                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
+                backgroundRepeat: "no-repeat",
+                backgroundPosition: "right 14px center",
+                paddingRight: "36px",
+              }}
+            >
+              <option value="latest">最新发布</option>
+              <option value="mostReplies">最多回复</option>
+              <option value="mostLikes">最多点赞</option>
+            </select>
+            {hasActiveFilters ? (
+              <button
+                className="rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] px-4 py-3 text-sm font-semibold text-[var(--color-muted)] transition hover:border-[var(--color-brand)] hover:text-[var(--color-brand-deep)]"
+                onClick={() => {
+                  setSearchQuery("");
+                  setSelectedTag(null);
+                  setBookmarksOnly(false);
+                }}
+                type="button"
+              >
+                清空筛选
+              </button>
+            ) : null}
+          </div>
+        </div>
+
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          {hasActiveFilters ? (
+            <>
+              <span className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
+                当前上下文
+              </span>
+              {activeFilters.map((item) => (
+                <span
+                  key={item}
+                  className="rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] px-3 py-1.5 text-xs font-semibold text-[var(--color-ink)]"
+                >
+                  {item}
+                </span>
+              ))}
+            </>
+          ) : (
+            <p className="text-sm text-[var(--color-muted)]">
+              当前显示全部讨论，可直接搜索、按标签筛选或只看收藏。
+            </p>
+          )}
         </div>
       </div>
 
@@ -879,40 +960,46 @@ export function DiscussionFeed({
 
       {/* Tag filters + bookmark toggle */}
       <div className="border-b border-[var(--color-line)] px-5 py-3">
-        <div className="flex flex-wrap items-center gap-2">
-          {topTags.length > 0 ? (
-            <>
-              <button
-                className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${
-                  selectedTag === null
-                    ? "bg-[var(--color-brand)] text-[var(--color-on-brand)]"
-                    : "bg-[var(--color-soft)] text-[var(--color-muted)] hover:bg-[var(--color-hover)] hover:text-[var(--color-ink)]"
-                }`}
-                onClick={() => setSelectedTag(null)}
-                type="button"
-              >
-                全部
-              </button>
-              {topTags.map(([tag, count]) => (
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
+              高频标签
+            </span>
+            {topTags.length > 0 ? (
+              <>
                 <button
-                  key={tag}
                   className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${
-                    selectedTag === tag
+                    selectedTag === null
                       ? "bg-[var(--color-brand)] text-[var(--color-on-brand)]"
                       : "bg-[var(--color-soft)] text-[var(--color-muted)] hover:bg-[var(--color-hover)] hover:text-[var(--color-ink)]"
                   }`}
-                  onClick={() => setSelectedTag(selectedTag === tag ? null : tag)}
+                  onClick={() => setSelectedTag(null)}
                   type="button"
                 >
-                  {tag} ({count})
+                  全部
                 </button>
-              ))}
-            </>
-          ) : null}
-          {/* Bookmark filter toggle */}
+                {topTags.map(([tag, count]) => (
+                  <button
+                    key={tag}
+                    className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${
+                      selectedTag === tag
+                        ? "bg-[var(--color-brand)] text-[var(--color-on-brand)]"
+                        : "bg-[var(--color-soft)] text-[var(--color-muted)] hover:bg-[var(--color-hover)] hover:text-[var(--color-ink)]"
+                    }`}
+                    onClick={() => setSelectedTag(selectedTag === tag ? null : tag)}
+                    type="button"
+                  >
+                    {tag} ({count})
+                  </button>
+                ))}
+              </>
+            ) : (
+              <span className="text-sm text-[var(--color-muted)]">还没有可聚合的标签。</span>
+            )}
+          </div>
           {user?.id ? (
             <button
-              className={`ml-auto inline-flex items-center rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${
+              className={`inline-flex items-center self-start rounded-full px-3.5 py-1.5 text-xs font-semibold transition lg:self-auto ${
                 bookmarksOnly
                   ? "bg-[var(--color-brand)] text-[var(--color-on-brand)]"
                   : "bg-[var(--color-soft)] text-[var(--color-muted)] hover:bg-[var(--color-hover)] hover:text-[var(--color-ink)]"
@@ -929,8 +1016,8 @@ export function DiscussionFeed({
 
       {/* Search loading indicator */}
       {searchLoading && !loadingMore ? (
-        <div className="border-b border-[var(--color-line)] px-5 py-8 text-center">
-          <p className="text-sm text-[var(--color-muted)]">搜索中...</p>
+        <div className="border-b border-[var(--color-line)] bg-[var(--color-soft)]/70 px-5 py-3">
+          <p className="text-sm text-[var(--color-muted)]">正在更新结果...</p>
         </div>
       ) : null}
 
@@ -940,6 +1027,7 @@ export function DiscussionFeed({
             {bookmarksOnly ? (
               <>
                 <p className="text-base font-bold text-[var(--color-ink)]">还没有收藏过帖子。</p>
+                <p className="mt-2 text-sm text-[var(--color-muted)]">先在讨论流里标记重点，再回来集中处理。</p>
                 <button
                   className="mt-3 rounded-full bg-[var(--color-brand)] px-4 py-2 text-sm font-bold text-[var(--color-on-brand)] transition hover:bg-[var(--color-brand-deep)]"
                   onClick={() => setBookmarksOnly(false)}
@@ -950,7 +1038,8 @@ export function DiscussionFeed({
               </>
             ) : searchQuery.trim() ? (
               <>
-                <p className="text-base font-bold text-[var(--color-ink)]">没有匹配的讨论，试试其他关键词</p>
+                <p className="text-base font-bold text-[var(--color-ink)]">没有匹配的讨论。</p>
+                <p className="mt-2 text-sm text-[var(--color-muted)]">换个关键词，或者清空筛选后查看全部工作流。</p>
               </>
             ) : selectedTag ? (
               <>
@@ -966,7 +1055,7 @@ export function DiscussionFeed({
             ) : (
               <>
                 <p className="text-base font-bold text-[var(--color-ink)]">还没有讨论。</p>
-                <p className="mt-2 text-sm text-[var(--color-muted)]">在上面发第一条帖子，发布后即显示在讨论区。</p>
+                <p className="mt-2 text-sm text-[var(--color-muted)]">第一条短反馈发出后，这里就会开始形成可跟进的讨论流。</p>
               </>
             )}
           </div>

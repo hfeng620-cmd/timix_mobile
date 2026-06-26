@@ -116,6 +116,8 @@ function syncTheme(mode: ThemeModeId, palette: PaletteId) {
 export function ThemeToggleInline() {
   const [mode, setMode] = useState<ThemeModeId>(DEFAULT_THEME_MODE);
   const [palette, setPalette] = useState<PaletteId>(DEFAULT_PALETTE);
+  const activeMode = THEME_MODES.find((item) => item.id === mode) ?? THEME_MODES[0];
+  const activePalette = PALETTES.find((item) => item.id === palette) ?? PALETTES[0];
 
   useEffect(() => {
     const nextMode = resolveStoredThemeMode();
@@ -225,6 +227,29 @@ export function ThemeToggleInline() {
               </button>
             );
           })}
+        </div>
+      </div>
+
+      <div className="mt-4 overflow-hidden rounded-[18px] border border-[var(--color-line)] bg-[var(--color-panel-strong)]">
+        <div
+          aria-hidden="true"
+          className="h-20 border-b border-[var(--color-line)]"
+          style={{
+            background: `${activeMode.accent}, ${activePalette.swatch}`,
+          }}
+        />
+        <div className="flex items-center justify-between gap-3 px-4 py-3">
+          <div className="min-w-0">
+            <p className="text-sm font-bold text-[var(--color-ink)]">
+              {activeMode.label} x {activePalette.label}
+            </p>
+            <p className="mt-1 text-[11px] leading-5 text-[var(--color-muted)]">
+              主题继续负责背景板氛围，配色继续负责全站主色与面板倾向。
+            </p>
+          </div>
+          <span className="shrink-0 rounded-full border border-[var(--color-line)] bg-[var(--color-soft)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--color-brand-deep)]">
+            Preview
+          </span>
         </div>
       </div>
     </div>

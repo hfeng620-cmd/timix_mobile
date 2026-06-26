@@ -9,11 +9,71 @@ import { siteLinks } from "@/lib/site-links";
 
 const HINT_DISMISSED_KEY = "relay-theme-hint-seen";
 
+const primaryRoutes = [
+  {
+    label: "榜单",
+    href: "/stations",
+    title: "先锁定候选站点",
+    description: "先从榜单圈定候选。",
+  },
+  {
+    label: "模型",
+    href: "/models",
+    title: "再把站点和模型放一起比",
+    description: "把能力、稳定性和场景放到一起看。",
+  },
+  {
+    label: "指南",
+    href: "/guides",
+    title: "有疑问时回指南校准",
+    description: "有分歧时先回这里统一口径。",
+  },
+  {
+    label: "社区",
+    href: "/community",
+    title: "把结论带回社区",
+    description: "把体验和提醒沉淀回讨论区。",
+  },
+] as const;
+
+const utilityRoutes = [
+  {
+    label: "首页",
+    href: "/",
+    description: "回到总览入口",
+  },
+  {
+    label: "我的",
+    href: "/profile",
+    description: "查看个人记录与收藏",
+  },
+] as const;
+
+function isRouteActive(pathname: string, href: string) {
+  return href === "/" ? pathname === "/" : pathname.startsWith(href);
+}
+
+function getCurrentPageLabel(pathname: string) {
+  if (pathname === "/") return "首页";
+  if (pathname.startsWith("/stations")) return "榜单";
+  if (pathname.startsWith("/models")) return "模型";
+  if (pathname.startsWith("/guides")) return "指南";
+  if (pathname.startsWith("/community")) return "社区";
+  if (pathname.startsWith("/profile")) return "个人主页";
+  if (pathname.startsWith("/admin")) return "管理员面板";
+  return "站内页面";
+}
+
 export function FloatingQuickPanel() {
   const [open, setOpen] = useState(false);
   const [showHint, setShowHint] = useState(false);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const pathname = usePathname();
+  const activePrimaryIndex = primaryRoutes.findIndex((item) =>
+    isRouteActive(pathname, item.href),
+  );
+  const nextPrimaryRoute =
+    activePrimaryIndex >= 0 ? primaryRoutes[activePrimaryIndex + 1] : primaryRoutes[0];
 
   useEffect(() => {
     function handlePointerDown(event: MouseEvent) {
@@ -32,6 +92,10 @@ export function FloatingQuickPanel() {
     setShowHint(true);
   }, []);
 
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
+
   function dismissHint() {
     setShowHint(false);
     if (typeof window !== "undefined") {
@@ -48,7 +112,7 @@ export function FloatingQuickPanel() {
               <div>
                 <p className="text-sm font-bold text-[var(--color-ink)]">观察站导航台</p>
                 <p className="mt-1 text-xs leading-5 text-[var(--color-muted)]">
-                  常用入口、协作出口、背景主题和配色都收在这里。
+                  推荐路径、协作入口和外观设置都收在这里。
                 </p>
               </div>
               <span className="rounded-full border border-[var(--color-line)] bg-[var(--color-soft)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--color-brand-deep)]">
@@ -58,80 +122,116 @@ export function FloatingQuickPanel() {
             <div className="mt-3 grid grid-cols-3 gap-2">
               <div className="rounded-[14px] border border-[var(--color-line)] bg-[color:color-mix(in_srgb,var(--color-panel)_76%,white)] px-3 py-2.5">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--color-muted)]">
-                  主题
+                  主路径
                 </p>
-                <p className="mt-1 text-sm font-bold text-[var(--color-ink)]">背景板</p>
+                <p className="mt-1 text-sm font-bold text-[var(--color-ink)]">4 步完成</p>
               </div>
               <div className="rounded-[14px] border border-[var(--color-line)] bg-[color:color-mix(in_srgb,var(--color-panel)_76%,white)] px-3 py-2.5">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--color-muted)]">
-                  配色
+                  协作
                 </p>
-                <p className="mt-1 text-sm font-bold text-[var(--color-ink)]">主色系</p>
+                <p className="mt-1 text-sm font-bold text-[var(--color-ink)]">3 个入口</p>
               </div>
               <div className="rounded-[14px] border border-[var(--color-line)] bg-[color:color-mix(in_srgb,var(--color-panel)_76%,white)] px-3 py-2.5">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--color-muted)]">
-                  导航
+                  外观
                 </p>
-                <p className="mt-1 text-sm font-bold text-[var(--color-ink)]">直达页</p>
+                <p className="mt-1 text-sm font-bold text-[var(--color-ink)]">主题切换</p>
               </div>
             </div>
           </div>
 
           <div className="mt-4">
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
-              站内页
+              推荐路径
             </p>
             <div className="mt-2 rounded-[16px] border border-[var(--color-line)] bg-[color:color-mix(in_srgb,var(--color-panel)_78%,white)] px-3 py-2.5">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--color-muted)]">
-                当前定位
-              </p>
-              <p className="mt-1 text-sm font-bold text-[var(--color-ink)]">
-                {pathname === "/"
-                  ? "首页"
-                  : pathname.startsWith("/stations")
-                    ? "榜单"
-                    : pathname.startsWith("/models")
-                      ? "模型"
-                      : pathname.startsWith("/guides")
-                        ? "指南"
-                        : pathname.startsWith("/community")
-                          ? "社区"
-                          : pathname.startsWith("/profile")
-                            ? "个人主页"
-                            : "站内页面"}
-              </p>
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--color-muted)]">
+                    当前定位
+                  </p>
+                  <p className="mt-1 text-sm font-bold text-[var(--color-ink)]">
+                    {getCurrentPageLabel(pathname)}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--color-muted)]">
+                    下一步
+                  </p>
+                  <p className="mt-1 text-sm font-bold text-[var(--color-brand-deep)]">
+                    {nextPrimaryRoute?.label ?? "已到终点"}
+                  </p>
+                </div>
+              </div>
             </div>
-            <div className="mt-2 grid grid-cols-2 gap-2">
-              <Link
-                className="rounded-[14px] border border-[var(--color-line)] bg-[var(--color-soft)] px-3 py-3 text-sm font-semibold text-[var(--color-ink)] transition-all duration-300 hover:border-[var(--color-brand)] hover:bg-[var(--color-brand-soft)] hover:text-[var(--color-brand-deep)]"
-                href="/stations"
-              >
-                榜单页
-              </Link>
-              <Link
-                className="rounded-[14px] border border-[var(--color-line)] bg-[var(--color-soft)] px-3 py-3 text-sm font-semibold text-[var(--color-ink)] transition-all duration-300 hover:border-[var(--color-brand)] hover:bg-[var(--color-brand-soft)] hover:text-[var(--color-brand-deep)]"
-                href="/models"
-              >
-                模型页
-              </Link>
-              <Link
-                className="rounded-[14px] border border-[var(--color-line)] bg-[var(--color-soft)] px-3 py-3 text-sm font-semibold text-[var(--color-ink)] transition-all duration-300 hover:border-[var(--color-brand)] hover:bg-[var(--color-brand-soft)] hover:text-[var(--color-brand-deep)]"
-                href="/guides"
-              >
-                指南页
-              </Link>
-              <Link
-                className="rounded-[14px] border border-[var(--color-line)] bg-[var(--color-soft)] px-3 py-3 text-sm font-semibold text-[var(--color-ink)] transition-all duration-300 hover:border-[var(--color-brand)] hover:bg-[var(--color-brand-soft)] hover:text-[var(--color-brand-deep)]"
-                href="/community"
-              >
-                社区页
-              </Link>
+            <div className="mt-2 grid gap-2">
+              {primaryRoutes.map((item, index) => {
+                const active = isRouteActive(pathname, item.href);
+
+                return (
+                  <Link
+                    key={item.href}
+                    aria-current={active ? "page" : undefined}
+                    className={`rounded-[16px] border px-3 py-3 transition-all duration-300 ${
+                      active
+                        ? "border-[var(--color-brand)] bg-[var(--color-brand-soft)] text-[var(--color-brand-deep)] shadow-[0_10px_26px_rgba(37,99,235,0.12)]"
+                        : "border-[var(--color-line)] bg-[var(--color-soft)] text-[var(--color-ink)] hover:border-[var(--color-brand)] hover:bg-[var(--color-brand-soft)] hover:text-[var(--color-brand-deep)]"
+                    }`}
+                    href={item.href}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--color-muted)]">
+                          {String(index + 1).padStart(2, "0")} · {item.label}
+                        </p>
+                        <p className="mt-1 text-sm font-bold">{item.title}</p>
+                        <p className="mt-1 text-xs leading-5 text-[var(--color-muted)]">
+                          {item.description}
+                        </p>
+                      </div>
+                      <span className="text-xs font-semibold uppercase tracking-[0.18em]">
+                        {active ? "当前" : "进入"}
+                      </span>
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
           </div>
 
           <div className="mt-4">
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
-              外部入口
+              辅助入口
+            </p>
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              {utilityRoutes.map((item) => {
+                const active = isRouteActive(pathname, item.href);
+
+                return (
+                  <Link
+                    key={item.href}
+                    aria-current={active ? "page" : undefined}
+                    className={`rounded-[14px] border px-3 py-3 text-left transition-all duration-300 ${
+                      active
+                        ? "border-[var(--color-brand)] bg-[var(--color-brand-soft)] text-[var(--color-brand-deep)]"
+                        : "border-[var(--color-line)] bg-[var(--color-soft)] text-[var(--color-ink)] hover:border-[var(--color-brand)] hover:bg-[var(--color-brand-soft)] hover:text-[var(--color-brand-deep)]"
+                    }`}
+                    href={item.href}
+                  >
+                    <p className="text-sm font-semibold">{item.label}</p>
+                    <p className="mt-1 text-xs leading-5 text-[var(--color-muted)]">
+                      {item.description}
+                    </p>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="mt-4">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
+              协作入口
             </p>
             <div className="mt-2 grid gap-2">
               <a

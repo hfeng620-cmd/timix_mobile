@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { normalizeOptionalHttpUrl } from "@/lib/discussion-storage";
 import { createSubmission } from "@/lib/submission-storage";
 
 const submissionKinds = ["新站点", "纠错", "补充备注"] as const;
@@ -14,12 +15,26 @@ export function SubmissionPanel() {
   const [note, setNote] = useState("");
   const [contact, setContact] = useState("");
   const [status, setStatus] = useState("提交后进入审核区。");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [lastSubmittedFingerprint, setLastSubmittedFingerprint] = useState("");
   const NOTE_MIN = 10;
   const NOTE_MAX = 2000;
+  const STATION_NAME_MAX = 120;
+  const CONTACT_MAX = 200;
+  const PRICE_OR_RATE_MAX = 120;
 
   function handleSubmit() {
-    if (!stationName.trim()) {
+    if (isSubmitting) {
+      return;
+    }
+
+    const trimmedStationName = stationName.replace(/\s+/g, " ").trim();
+    if (!trimmedStationName) {
       setStatus("请填写站点名。");
+      return;
+    }
+    if (trimmedStationName.length > STATION_NAME_MAX) {
+      setStatus(`站点名不能超过 ${STATION_NAME_MAX} 个字符。`);
       return;
     }
 
@@ -39,21 +54,62 @@ export function SubmissionPanel() {
       return;
     }
 
-    createSubmission({
-      kind,
-      stationName: stationName.trim(),
-      url: url.trim(),
-      priceOrRate: priceOrRate.trim(),
-      note: note.trim(),
-      contact: contact.trim(),
-    });
+    const trimmedPriceOrRate = priceOrRate.replace(/\s+/g, " ").trim();
+    if (trimmedPriceOrRate.length > PRICE_OR_RATE_MAX) {
+      setStatus(`倍率或价格不能超过 ${PRICE_OR_RATE_MAX} 个字符。`);
+      return;
+    }
 
-    setStationName("");
-    setUrl("");
-    setPriceOrRate("");
-    setNote("");
-    setContact("");
-    setStatus("已提交到待审核区。");
+    const trimmedContact = contact.replace(/\s+/g, " ").trim();
+    if (trimmedContact.length > CONTACT_MAX) {
+      setStatus(`联系方式或备注来源不能超过 ${CONTACT_MAX} 个字符。`);
+      return;
+    }
+
+    let normalizedUrl = "";
+    try {
+      normalizedUrl = normalizeOptionalHttpUrl(url, "地址或入口");
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "地址或入口格式不正确。");
+      return;
+    }
+
+    const fingerprint = JSON.stringify({
+      kind,
+      stationName: trimmedStationName,
+      url: normalizedUrl,
+      priceOrRate: trimmedPriceOrRate,
+      note: trimmedNote,
+      contact: trimmedContact,
+    });
+    if (fingerprint === lastSubmittedFingerprint) {
+      setStatus("相同内容刚刚已经提交，无需重复提交。");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      createSubmission({
+        kind,
+        stationName: trimmedStationName,
+        url: normalizedUrl,
+        priceOrRate: trimmedPriceOrRate,
+        note: trimmedNote,
+        contact: trimmedContact,
+      });
+
+      setLastSubmittedFingerprint(fingerprint);
+
+      setStationName("");
+      setUrl("");
+      setPriceOrRate("");
+      setNote("");
+      setContact("");
+      setStatus("已提交到待审核区。");
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -91,6 +147,7 @@ export function SubmissionPanel() {
           <input
             className="w-full rounded-[12px] border border-[var(--color-line)] bg-[var(--color-input)] px-4 py-3 outline-none transition focus:border-[var(--color-brand)]"
             onChange={(event) => setStationName(event.target.value)}
+            maxLength={STATION_NAME_MAX}
             value={stationName}
           />
         </label>
@@ -100,6 +157,8 @@ export function SubmissionPanel() {
           <input
             className="w-full rounded-[12px] border border-[var(--color-line)] bg-[var(--color-input)] px-4 py-3 outline-none transition focus:border-[var(--color-brand)]"
             onChange={(event) => setUrl(event.target.value)}
+            placeholder="https://..."
+            type="url"
             value={url}
           />
         </label>
@@ -109,6 +168,7 @@ export function SubmissionPanel() {
           <input
             className="w-full rounded-[12px] border border-[var(--color-line)] bg-[var(--color-input)] px-4 py-3 outline-none transition focus:border-[var(--color-brand)]"
             onChange={(event) => setPriceOrRate(event.target.value)}
+            maxLength={PRICE_OR_RATE_MAX}
             placeholder="例如：0.12x / GPT 0.2 / 免费"
             value={priceOrRate}
           />
@@ -138,6 +198,7 @@ export function SubmissionPanel() {
         <input
           className="w-full rounded-[12px] border border-[var(--color-line)] bg-[var(--color-input)] px-4 py-3 outline-none transition focus:border-[var(--color-brand)]"
           onChange={(event) => setContact(event.target.value)}
+          maxLength={CONTACT_MAX}
           placeholder="例如：QQ群昵称 / 金山文档来源 / 自己实测"
           value={contact}
         />
@@ -146,11 +207,12 @@ export function SubmissionPanel() {
       <div className="mt-5 flex flex-wrap items-center justify-between gap-4">
         <p className="text-sm leading-6 text-[var(--color-muted)]">{status}</p>
         <button
-          className="rounded-full bg-[var(--color-brand)] px-6 py-3 text-sm font-bold text-[var(--color-on-brand)] transition hover:bg-[var(--color-brand-deep)]"
+          className="rounded-full bg-[var(--color-brand)] px-6 py-3 text-sm font-bold text-[var(--color-on-brand)] transition hover:bg-[var(--color-brand-deep)] disabled:cursor-not-allowed disabled:opacity-60"
+          disabled={isSubmitting}
           onClick={handleSubmit}
           type="button"
         >
-          提交给管理员审核
+          {isSubmitting ? "提交中..." : "提交给管理员审核"}
         </button>
       </div>
     </div>

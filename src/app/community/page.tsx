@@ -73,6 +73,21 @@ const quickSignals = [
   },
 ];
 
+const workbenchRoutes = [
+  {
+    title: "站内短流",
+    detail: "短反馈、跳价、试用进展先在这里处理。",
+  },
+  {
+    title: "专题沉淀",
+    detail: "能复用的经验和对比再转去 Discussions。",
+  },
+  {
+    title: "群内同步",
+    detail: "紧急线索先拉齐，再回流成可检索内容。",
+  },
+];
+
 export default function CommunityPage() {
   const { isAdmin } = useForumAuth();
   const [feedRefreshKey, setFeedRefreshKey] = useState(0);
@@ -279,57 +294,49 @@ export default function CommunityPage() {
           </div>
         </div>
 
-        <div className="mb-4 rounded-[24px] border border-[var(--color-line)] bg-[var(--color-panel)] px-4 py-4 shadow-[0_10px_30px_rgba(15,23,42,0.05)]">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--color-line)] pb-3 text-sm text-[var(--color-muted)]">
-            <span>这里先接短反馈，再把可沉淀内容转去 Discussions。</span>
-            <a
-              className="font-semibold text-[var(--color-brand-deep)] transition hover:text-[var(--color-brand)]"
-              href={siteLinks.discussions}
-              rel="noopener noreferrer"
-              target="_blank"
-            >
-              去 Discussions 归档
-            </a>
+        <div
+          id="qq-group-entry"
+          className="mb-4 rounded-[24px] border border-[var(--color-line)] bg-[var(--color-panel)] px-4 py-4 shadow-[0_10px_30px_rgba(15,23,42,0.05)]"
+        >
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
+                Discussion Desk
+              </p>
+              <p className="mt-2 text-lg font-black tracking-tight text-[var(--color-ink)]">
+                站内先处理短流，能沉淀的再转长期讨论区。
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Link
+                className="rounded-[16px] bg-[var(--color-brand)] px-4 py-3 text-sm font-bold text-[var(--color-on-brand)] shadow-[0_12px_24px_var(--color-panel-glow)]"
+                href="#community-composer"
+              >
+                发站内反馈
+              </Link>
+              <a
+                className="rounded-[16px] border border-[var(--color-line)] bg-[var(--color-panel)] px-4 py-3 text-sm font-bold text-[var(--color-ink)] transition hover:border-[var(--color-brand)] hover:text-[var(--color-brand-deep)]"
+                href={siteLinks.discussions}
+                rel="noopener noreferrer"
+                target="_blank"
+              >
+                去 Discussions
+              </a>
+              <div className="rounded-[16px] border border-[var(--color-line)] bg-[var(--color-soft)] px-3 py-2">
+                <QqGroupModalButton />
+              </div>
+            </div>
           </div>
-          <div className="mt-3 grid gap-2 text-sm text-[var(--color-muted)] md:grid-cols-3">
-            <div className="rounded-[18px] bg-[var(--color-soft)] px-4 py-3">
-              <p className="font-bold text-[var(--color-ink)]">站内快反馈</p>
-              <p className="mt-1 leading-6">适合短消息、价格变化和一线试用。</p>
-            </div>
-            <div className="rounded-[18px] bg-[var(--color-soft)] px-4 py-3">
-              <p className="font-bold text-[var(--color-ink)]">长期主题</p>
-              <p className="mt-1 leading-6">适合整理经验、对比方案和持续追踪。</p>
-            </div>
-            <div
-              id="qq-group-entry"
-              className="rounded-[18px] bg-[var(--color-soft)] px-4 py-3"
-            >
-              <p className="font-bold text-[var(--color-ink)]">QQ 群同步</p>
-              <p className="mt-1 leading-6">适合先拉齐情况，再回流成结构化内容。</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="mb-4 grid gap-2 sm:grid-cols-3 xl:hidden">
-          <Link
-            className="rounded-[18px] border border-[var(--color-line)] bg-[var(--color-panel)] px-4 py-3 text-sm font-bold text-[var(--color-ink)] transition hover:border-[var(--color-brand)] hover:bg-[var(--color-brand-soft)] hover:text-[var(--color-brand-deep)]"
-            href="#community-composer"
-          >
-            30 秒发站内反馈
-          </Link>
-          <a
-            className="rounded-[18px] border border-[var(--color-line)] bg-[var(--color-panel)] px-4 py-3 text-sm font-bold text-[var(--color-ink)] transition hover:border-[var(--color-brand)] hover:bg-[var(--color-brand-soft)] hover:text-[var(--color-brand-deep)]"
-            href={siteLinks.discussions}
-            rel="noopener noreferrer"
-            target="_blank"
-          >
-            去长期讨论区
-          </a>
-          <div className="rounded-[18px] border border-[var(--color-line)] bg-[var(--color-panel)] px-4 py-3">
-            <div className="flex items-center justify-between gap-3">
-              <span className="text-sm font-bold text-[var(--color-ink)]">打开 QQ 群入口</span>
-              <QqGroupModalButton />
-            </div>
+          <div className="mt-4 grid gap-2 text-sm text-[var(--color-muted)] md:grid-cols-3">
+            {workbenchRoutes.map((route) => (
+              <div
+                key={route.title}
+                className="rounded-[18px] border border-[var(--color-line)] bg-[var(--color-soft)] px-4 py-3"
+              >
+                <p className="font-bold text-[var(--color-ink)]">{route.title}</p>
+                <p className="mt-1 leading-6">{route.detail}</p>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -366,7 +373,7 @@ export default function CommunityPage() {
             <DiscussionFeed
               key={feedRefreshKey}
               hideComposer
-              title="站内流转"
+              title="讨论工作台"
               limit={8}
             />
           </div>
