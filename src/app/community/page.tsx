@@ -58,36 +58,6 @@ const decisionRules = [
   "要同步: QQ 群",
 ];
 
-const quickSignals = [
-  {
-    label: "快反馈",
-    value: "站内",
-  },
-  {
-    label: "专题帖",
-    value: "Discussions",
-  },
-  {
-    label: "急同步",
-    value: "QQ 群",
-  },
-];
-
-const workbenchRoutes = [
-  {
-    title: "站内短流",
-    detail: "短反馈、跳价、试用进展先在这里处理。",
-  },
-  {
-    title: "专题沉淀",
-    detail: "能复用的经验和对比再转去 Discussions。",
-  },
-  {
-    title: "群内同步",
-    detail: "紧急线索先拉齐，再回流成可检索内容。",
-  },
-];
-
 export default function CommunityPage() {
   const { isAdmin } = useForumAuth();
   const [feedRefreshKey, setFeedRefreshKey] = useState(0);
@@ -102,7 +72,15 @@ export default function CommunityPage() {
   }, []);
 
   return (
-    <main className="theme-stage min-h-screen bg-transparent text-[var(--color-ink)]">
+    <main className="theme-stage relative min-h-screen overflow-hidden bg-transparent text-[var(--color-ink)]">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 top-0 h-[680px] bg-[radial-gradient(circle_at_top_left,rgba(56,189,248,0.12),transparent_34%),radial-gradient(circle_at_85%_10%,rgba(245,158,11,0.14),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.8),transparent_72%)]"
+      />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute left-1/2 top-24 h-72 w-72 -translate-x-1/2 rounded-full bg-[var(--color-brand-soft)]/70 blur-3xl"
+      />
       <section className="border-b border-[var(--color-line)] bg-[var(--color-header)] backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-4 lg:px-10">
           <div className="flex items-center gap-4">
@@ -152,29 +130,43 @@ export default function CommunityPage() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-3 py-4 sm:px-6 lg:px-10">
-        <div className="mb-5 overflow-hidden rounded-[32px] border border-[var(--color-line)] bg-[var(--surface-gradient)] shadow-[var(--shadow-card)]">
-          <div className="grid gap-6 px-5 py-6 sm:px-6 lg:grid-cols-[1.12fr_0.88fr] lg:px-8 lg:py-8">
+      <section className="relative mx-auto max-w-6xl px-3 py-4 sm:px-6 lg:px-10">
+        <div className="relative mb-5 overflow-hidden rounded-[36px] border border-[var(--color-line)] bg-[linear-gradient(145deg,rgba(255,255,255,0.92),rgba(255,247,237,0.82)_48%,rgba(248,250,252,0.96))] shadow-[0_28px_90px_rgba(15,23,42,0.1)]">
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(59,130,246,0.12),transparent_26%),radial-gradient(circle_at_20%_20%,rgba(245,158,11,0.14),transparent_24%),linear-gradient(180deg,transparent,rgba(255,255,255,0.38))]"
+          />
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.9),transparent)]"
+          />
+          <div className="relative grid gap-6 px-5 py-6 sm:px-6 lg:grid-cols-[1.16fr_0.84fr] lg:px-8 lg:py-9">
             <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.22em] text-[var(--color-brand-deep)]">
-                Community Routing Desk
-              </p>
-              <h1 className="mt-3 max-w-3xl text-3xl font-black tracking-tight sm:text-4xl">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="rounded-full border border-[rgba(15,23,42,0.08)] bg-white/80 px-3 py-1 text-[11px] font-black uppercase tracking-[0.24em] text-[var(--color-brand-deep)] shadow-[0_10px_24px_rgba(15,23,42,0.06)]">
+                  Community Routing Desk
+                </span>
+                <span className="rounded-full border border-[var(--color-line)] bg-[rgba(255,255,255,0.68)] px-3 py-1 text-xs font-semibold text-[var(--color-muted)]">
+                  入口只保留 3 个
+                </span>
+              </div>
+              <h1 className="mt-4 max-w-3xl text-3xl font-black tracking-tight sm:text-4xl lg:text-[3.4rem] lg:leading-[1.02]">
                 先分流，再协作。
               </h1>
-              <p className="mt-4 max-w-2xl text-sm leading-6 text-[var(--color-muted)]">
-                快反馈走站内，专题进 Discussions，急线索先到 QQ 群。
+              <p className="mt-4 max-w-2xl text-sm leading-6 text-[var(--color-muted)] sm:text-[15px] sm:leading-7">
+                站内处理短流，Discussions 承接长期主题，QQ 群只做急同步。
               </p>
 
-              <div className="mt-5 flex flex-wrap gap-2.5">
-                {quickSignals.map((signal) => (
+              <div className="mt-6 grid gap-3 sm:grid-cols-3">
+                {decisionRules.map((rule, index) => (
                   <div
-                    key={signal.label}
-                    className="rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] px-4 py-2 text-sm shadow-[0_10px_24px_rgba(15,23,42,0.06)]"
+                    key={rule}
+                    className="rounded-[20px] border border-white/70 bg-white/72 px-4 py-3 shadow-[0_14px_34px_rgba(15,23,42,0.06)] backdrop-blur"
                   >
-                    <span className="text-[var(--color-muted)]">{signal.label}</span>
-                    <span className="mx-2 text-[var(--color-line)]">/</span>
-                    <span className="font-bold text-[var(--color-ink)]">{signal.value}</span>
+                    <p className="text-[11px] font-black uppercase tracking-[0.18em] text-[var(--color-brand-deep)]">
+                      0{index + 1}
+                    </p>
+                    <p className="mt-2 text-sm font-bold text-[var(--color-ink)]">{rule}</p>
                   </div>
                 ))}
               </div>
@@ -221,6 +213,7 @@ export default function CommunityPage() {
                 </div>
 
                 <Link
+                  id="qq-group-entry"
                   className={`group flex min-h-[188px] flex-col justify-between rounded-[24px] border px-5 py-5 transition hover:-translate-y-1 hover:shadow-[0_18px_44px_rgba(15,23,42,0.12)] xl:min-h-full ${qqCard.accent}`}
                   href={qqCard.href}
                 >
@@ -241,52 +234,29 @@ export default function CommunityPage() {
             </div>
 
             <div className="grid gap-3">
-              <div className="rounded-[24px] border border-[var(--color-line)] bg-[linear-gradient(180deg,var(--color-panel),rgba(255,255,255,0.72))] p-5 shadow-[0_14px_34px_rgba(15,23,42,0.08)]">
+              <div className="rounded-[28px] border border-white/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.8),rgba(255,247,237,0.76))] p-5 shadow-[0_18px_44px_rgba(15,23,42,0.08)] backdrop-blur">
                 <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
-                  分流规则
+                  协作节奏
+                </p>
+                <p className="mt-3 text-2xl font-black tracking-tight text-[var(--color-ink)]">
+                  先把短流接住，再决定沉淀去向。
                 </p>
                 <p className="mt-3 text-sm leading-6 text-[var(--color-muted)]">
-                  先快，后沉淀。
+                  这个页面只负责判断入口和推进当下讨论，不在这里堆长期说明。
                 </p>
-                <div className="mt-4 grid gap-3">
-                  {decisionRules.map((rule, index) => (
-                    <div
-                      key={rule}
-                      className="flex items-start gap-3 rounded-[18px] border border-[var(--color-line)] bg-[var(--color-panel)] px-4 py-3"
-                    >
-                      <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--color-brand-soft)] text-sm font-black text-[var(--color-brand-deep)]">
-                        {index + 1}
-                      </span>
-                      <p className="pt-1 text-sm leading-6 text-[var(--color-ink)]">{rule}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="rounded-[24px] border border-[var(--color-line)] bg-[var(--color-brand-soft)] p-5">
-                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--color-brand-deep)]">
-                  移动端直达
-                </p>
-                <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">
-                  主内容前先选入口，不用翻侧栏。
-                </p>
-                <div className="mt-4 grid gap-2 sm:grid-cols-2">
-                  <Link
-                    className="rounded-[18px] bg-[var(--color-brand)] px-4 py-3 text-sm font-bold text-[var(--color-on-brand)] shadow-[0_12px_24px_var(--color-panel-glow)]"
-                    href="#community-composer"
-                  >
-                    发站内反馈
-                  </Link>
-                  <a
-                    className="rounded-[18px] border border-[var(--color-line)] bg-[var(--color-panel)] px-4 py-3 text-sm font-bold text-[var(--color-ink)] transition hover:border-[var(--color-brand)] hover:text-[var(--color-brand-deep)]"
-                    href={siteLinks.discussions}
-                    rel="noopener noreferrer"
-                    target="_blank"
-                  >
-                    去 Discussions
-                  </a>
-                  <div className="sm:col-span-2 md:hidden">
-                    <QqGroupModalButton />
+                <div className="mt-5 rounded-[22px] border border-[var(--color-line)] bg-[rgba(255,255,255,0.72)] p-4">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
+                    当前原则
+                  </p>
+                  <div className="mt-3 space-y-2">
+                    {decisionRules.map((rule) => (
+                      <div
+                        key={rule}
+                        className="rounded-[16px] border border-[var(--color-line)] bg-[var(--color-panel)] px-4 py-3 text-sm font-bold text-[var(--color-ink)]"
+                      >
+                        {rule}
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -295,8 +265,7 @@ export default function CommunityPage() {
         </div>
 
         <div
-          id="qq-group-entry"
-          className="mb-4 rounded-[24px] border border-[var(--color-line)] bg-[var(--color-panel)] px-4 py-4 shadow-[0_10px_30px_rgba(15,23,42,0.05)]"
+          className="mb-4 rounded-[28px] border border-[var(--color-line)] bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(248,250,252,0.94))] px-4 py-4 shadow-[0_18px_44px_rgba(15,23,42,0.06)]"
         >
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
@@ -304,7 +273,7 @@ export default function CommunityPage() {
                 Discussion Desk
               </p>
               <p className="mt-2 text-lg font-black tracking-tight text-[var(--color-ink)]">
-                站内先处理短流，能沉淀的再转长期讨论区。
+                先把站内短反馈处理掉，再转长期讨论区。
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -322,20 +291,16 @@ export default function CommunityPage() {
               >
                 去 Discussions
               </a>
-              <div className="rounded-[16px] border border-[var(--color-line)] bg-[var(--color-soft)] px-3 py-2">
-                <QqGroupModalButton />
-              </div>
             </div>
           </div>
-          <div className="mt-4 grid gap-2 text-sm text-[var(--color-muted)] md:grid-cols-3">
-            {workbenchRoutes.map((route) => (
-              <div
-                key={route.title}
-                className="rounded-[18px] border border-[var(--color-line)] bg-[var(--color-soft)] px-4 py-3"
+          <div className="mt-4 flex flex-wrap gap-2 text-xs font-semibold text-[var(--color-muted)]">
+            {decisionRules.map((rule) => (
+              <span
+                key={rule}
+                className="rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] px-3 py-1.5"
               >
-                <p className="font-bold text-[var(--color-ink)]">{route.title}</p>
-                <p className="mt-1 leading-6">{route.detail}</p>
-              </div>
+                {rule}
+              </span>
             ))}
           </div>
         </div>
@@ -381,37 +346,14 @@ export default function CommunityPage() {
           <aside className="hidden w-[320px] shrink-0 xl:block">
             <div className="sticky top-24 space-y-5">
               <HotTopicsPanel onTopicClick={handleTopicClick} />
-
-              <div className="rounded-[20px] border border-[var(--color-line)] bg-[var(--color-panel)] p-5 shadow-[var(--shadow-card)]">
-                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
-                  群内同步入口
-                </p>
-                <p className="mt-3 text-lg font-black tracking-tight">群号 602190132</p>
-                <p className="mt-1 text-sm text-[var(--color-muted)]">
-                  扫码或搜索群号加入，先同步，再回流。
-                </p>
-              </div>
-
               <UserRankPanel />
             </div>
           </aside>
         </div>
 
         {mobilePanel === "hot" && (
-          <div className="mt-5 space-y-5 xl:hidden">
+          <div className="mt-5 xl:hidden">
             <HotTopicsPanel onTopicClick={handleTopicClick} />
-            <div className="rounded-[20px] border border-[var(--color-line)] bg-[var(--color-panel)] p-5 shadow-[var(--shadow-card)]">
-              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
-                群内同步入口
-              </p>
-              <p className="mt-3 text-lg font-black tracking-tight">群号 602190132</p>
-              <p className="mt-1 text-sm text-[var(--color-muted)]">
-                扫码或搜索群号加入，先同步，再回流。
-              </p>
-              <div className="mt-4">
-                <QqGroupModalButton />
-              </div>
-            </div>
           </div>
         )}
         {mobilePanel === "rank" && (

@@ -7,50 +7,79 @@ export const THEME_MODES = [
     id: "signal",
     label: "信号板",
     description: "网格、数据线、桌面感。",
+    response: "会随配色微调线条硬度与发光锐度。",
     accent: "linear-gradient(135deg, rgba(37,99,235,0.24), rgba(255,255,255,0.92))",
   },
   {
     id: "starfield",
     label: "星幕",
     description: "星点、雾光、深空感。",
+    response: "会随配色微调星雾冷暖与高光密度。",
     accent: "radial-gradient(circle at 24% 26%, rgba(255,255,255,0.96) 0 10%, transparent 12%), radial-gradient(circle at 72% 34%, rgba(255,255,255,0.7) 0 8%, transparent 10%), linear-gradient(135deg, rgba(15,23,42,0.86), rgba(37,99,235,0.22))",
   },
   {
     id: "bubble",
     label: "气泡层",
     description: "漂浮圆泡、玻璃感、柔和。",
+    response: "会随配色微调玻璃白度与浮层折射感。",
     accent: "radial-gradient(circle at 28% 30%, rgba(255,255,255,0.88) 0 16%, transparent 18%), radial-gradient(circle at 74% 70%, rgba(255,255,255,0.52) 0 12%, transparent 14%), linear-gradient(135deg, rgba(255,255,255,0.96), rgba(148,163,184,0.18))",
   },
   {
     id: "orbit",
     label: "轨道场",
     description: "环轨、雷达、轻 3D。",
+    response: "会随配色微调结构感和轨道压迫度。",
     accent: "radial-gradient(circle at 74% 26%, transparent 0 18%, rgba(255,255,255,0.48) 19% 20%, transparent 21% 33%, rgba(255,255,255,0.28) 34% 35%, transparent 36%), linear-gradient(135deg, rgba(255,255,255,0.92), rgba(37,99,235,0.18))",
   },
   {
     id: "aurora",
     label: "流幕",
     description: "层幕、光带、官网感。",
+    response: "会随配色微调幕光温度和边缘雾感。",
     accent: "linear-gradient(135deg, rgba(255,255,255,0.94), rgba(125,211,252,0.22)), radial-gradient(circle at 18% 72%, rgba(255,255,255,0.62), transparent 20%), linear-gradient(115deg, rgba(37,99,235,0.14), rgba(16,185,129,0.18), rgba(255,255,255,0))",
+  },
+  {
+    id: "mist",
+    label: "雾幕",
+    description: "薄雾、留白、长内容页友好。",
+    response: "会随配色微调雾层厚度与高光温度。",
+    accent: "radial-gradient(circle at 20% 28%, rgba(255,255,255,0.9) 0 18%, transparent 24%), radial-gradient(circle at 78% 36%, rgba(255,255,255,0.54) 0 14%, transparent 22%), linear-gradient(135deg, rgba(255,255,255,0.95), rgba(148,163,184,0.14))",
+  },
+  {
+    id: "linen",
+    label: "亚麻纹",
+    description: "纤维、织感、克制高级。",
+    response: "会随配色微调纸纹冷暖与纹理颗粒。",
+    accent: "linear-gradient(135deg, rgba(255,252,246,0.96), rgba(214,197,172,0.28)), repeating-linear-gradient(0deg, rgba(150,124,92,0.08) 0 1px, transparent 1px 8px), repeating-linear-gradient(90deg, rgba(255,255,255,0.22) 0 1px, transparent 1px 9px)",
   },
   {
     id: "paper",
     label: "纸感板",
     description: "纸纹、暖线、编辑稿感。",
+    response: "会随配色微调纸张类型与压印暖度。",
     accent: "linear-gradient(135deg, rgba(255,248,237,0.96), rgba(224,197,161,0.3)), repeating-linear-gradient(0deg, rgba(172,122,73,0.08) 0 1px, transparent 1px 8px)",
+  },
+  {
+    id: "velvet",
+    label: "丝绒幕",
+    description: "聚光、暗边、展陈感。",
+    response: "会随配色微调边缘压暗与聚光柔顺度。",
+    accent: "radial-gradient(circle at 50% 40%, rgba(255,255,255,0.62) 0 22%, transparent 44%), linear-gradient(135deg, rgba(15,23,42,0.16), rgba(255,255,255,0.12), rgba(15,23,42,0.36))",
   },
 ] as const;
 
 export const PALETTES = [
-  { id: "blue", label: "白蓝", note: "清爽默认", swatch: "linear-gradient(135deg, #f7fbff, #2563eb)" },
-  { id: "green", label: "苹果绿", note: "轻亮冷静", swatch: "linear-gradient(135deg, #f6fbf8, #30d158)" },
-  { id: "stone", label: "岩茶", note: "暖白琥珀", swatch: "linear-gradient(135deg, #fbf7ef, #ff9500)" },
-  { id: "midnight", label: "深夜蓝", note: "深色克制", swatch: "linear-gradient(135deg, #081120, #0a84ff)" },
-  { id: "cyber", label: "终端绿", note: "黑绿信号", swatch: "linear-gradient(135deg, #07120d, #30d158)" },
-  { id: "ocean", label: "海雾青", note: "高级冷感", swatch: "linear-gradient(135deg, #f3fbfb, #0f8b8d)" },
-  { id: "sage", label: "雾松绿", note: "柔和产品感", swatch: "linear-gradient(135deg, #f3f7f2, #567c6d)" },
-  { id: "ember", label: "余烬橙", note: "暖调品牌感", swatch: "linear-gradient(135deg, #fbf4ee, #c96a3d)" },
-  { id: "pearl", label: "珍珠灰粉", note: "轻奢柔亮", swatch: "linear-gradient(135deg, #fbf7fa, #b7797f)" },
+  { id: "blue", label: "白蓝", note: "清爽默认", mood: "冷锐轻盈", swatch: "linear-gradient(135deg, #f7fbff, #2563eb)" },
+  { id: "green", label: "苹果绿", note: "轻亮冷静", mood: "清透自然", swatch: "linear-gradient(135deg, #f6fbf8, #30d158)" },
+  { id: "stone", label: "岩茶", note: "暖白琥珀", mood: "暖纸质感", swatch: "linear-gradient(135deg, #fbf7ef, #ff9500)" },
+  { id: "sand", label: "香槟沙", note: "米金柔亮", mood: "展陈暖雾", swatch: "linear-gradient(135deg, #fcf7ef, #b28a54)" },
+  { id: "graphite", label: "石墨灰", note: "中性专业", mood: "理性克制", swatch: "linear-gradient(135deg, #f4f6f9, #58657a)" },
+  { id: "midnight", label: "深夜蓝", note: "深色克制", mood: "冷夜专注", swatch: "linear-gradient(135deg, #081120, #0a84ff)" },
+  { id: "cyber", label: "终端绿", note: "黑绿信号", mood: "电子压强", swatch: "linear-gradient(135deg, #07120d, #30d158)" },
+  { id: "ocean", label: "海雾青", note: "高级冷感", mood: "雾面海风", swatch: "linear-gradient(135deg, #f3fbfb, #0f8b8d)" },
+  { id: "sage", label: "雾松绿", note: "柔和产品感", mood: "有机柔静", swatch: "linear-gradient(135deg, #f3f7f2, #567c6d)" },
+  { id: "ember", label: "余烬橙", note: "暖调品牌感", mood: "暖光展厅", swatch: "linear-gradient(135deg, #fbf4ee, #c96a3d)" },
+  { id: "pearl", label: "珍珠灰粉", note: "轻奢柔亮", mood: "柔雾轻奢", swatch: "linear-gradient(135deg, #fbf7fa, #b7797f)" },
 ] as const;
 
 export type ThemeModeId = (typeof THEME_MODES)[number]["id"];
@@ -245,6 +274,9 @@ export function ThemeToggleInline() {
             </p>
             <p className="mt-1 text-[11px] leading-5 text-[var(--color-muted)]">
               主题继续负责背景板氛围，配色继续负责全站主色与面板倾向。
+            </p>
+            <p className="mt-1 text-[11px] leading-5 text-[var(--color-muted)]">
+              {activePalette.mood} · {activeMode.response}
             </p>
           </div>
           <span className="shrink-0 rounded-full border border-[var(--color-line)] bg-[var(--color-soft)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--color-brand-deep)]">

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useForumAuth } from "@/lib/forum-auth";
 import { normalizeOptionalHttpUrl } from "@/lib/discussion-storage";
-import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase";
+import { getSupabaseClient } from "@/lib/supabase";
 
 export interface AiNewsSubmitProps {
   open: boolean;

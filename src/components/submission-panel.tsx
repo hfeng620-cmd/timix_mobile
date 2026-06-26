@@ -16,12 +16,14 @@ export function SubmissionPanel() {
   const [contact, setContact] = useState("");
   const [status, setStatus] = useState("提交后进入审核区。");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [lastSubmittedFingerprint, setLastSubmittedFingerprint] = useState("");
   const NOTE_MIN = 10;
   const NOTE_MAX = 2000;
   const STATION_NAME_MAX = 120;
   const CONTACT_MAX = 200;
   const PRICE_OR_RATE_MAX = 120;
+  const STATUS_ERROR_CLASS = "text-[var(--color-brand-strong)]";
+  const STATUS_NEUTRAL_CLASS = "text-[var(--color-muted)]";
+  const [statusTone, setStatusTone] = useState<"neutral" | "error">("neutral");
 
   function handleSubmit() {
     if (isSubmitting) {
@@ -30,38 +32,45 @@ export function SubmissionPanel() {
 
     const trimmedStationName = stationName.replace(/\s+/g, " ").trim();
     if (!trimmedStationName) {
+      setStatusTone("error");
       setStatus("请填写站点名。");
       return;
     }
     if (trimmedStationName.length > STATION_NAME_MAX) {
+      setStatusTone("error");
       setStatus(`站点名不能超过 ${STATION_NAME_MAX} 个字符。`);
       return;
     }
 
     const trimmedNote = note.trim();
     if (!trimmedNote) {
+      setStatusTone("error");
       setStatus("请填写备注说明。");
       return;
     }
 
     if (trimmedNote.length < NOTE_MIN) {
+      setStatusTone("error");
       setStatus(`备注说明至少需要 ${NOTE_MIN} 个字符（当前 ${trimmedNote.length} 个）。`);
       return;
     }
 
     if (trimmedNote.length > NOTE_MAX) {
+      setStatusTone("error");
       setStatus(`备注说明不能超过 ${NOTE_MAX} 个字符（当前 ${trimmedNote.length} 个）。`);
       return;
     }
 
     const trimmedPriceOrRate = priceOrRate.replace(/\s+/g, " ").trim();
     if (trimmedPriceOrRate.length > PRICE_OR_RATE_MAX) {
+      setStatusTone("error");
       setStatus(`倍率或价格不能超过 ${PRICE_OR_RATE_MAX} 个字符。`);
       return;
     }
 
     const trimmedContact = contact.replace(/\s+/g, " ").trim();
     if (trimmedContact.length > CONTACT_MAX) {
+      setStatusTone("error");
       setStatus(`联系方式或备注来源不能超过 ${CONTACT_MAX} 个字符。`);
       return;
     }
@@ -70,24 +79,13 @@ export function SubmissionPanel() {
     try {
       normalizedUrl = normalizeOptionalHttpUrl(url, "地址或入口");
     } catch (error) {
+      setStatusTone("error");
       setStatus(error instanceof Error ? error.message : "地址或入口格式不正确。");
       return;
     }
 
-    const fingerprint = JSON.stringify({
-      kind,
-      stationName: trimmedStationName,
-      url: normalizedUrl,
-      priceOrRate: trimmedPriceOrRate,
-      note: trimmedNote,
-      contact: trimmedContact,
-    });
-    if (fingerprint === lastSubmittedFingerprint) {
-      setStatus("相同内容刚刚已经提交，无需重复提交。");
-      return;
-    }
-
     setIsSubmitting(true);
+    setStatusTone("neutral");
 
     try {
       createSubmission({
@@ -99,14 +97,16 @@ export function SubmissionPanel() {
         contact: trimmedContact,
       });
 
-      setLastSubmittedFingerprint(fingerprint);
-
       setStationName("");
       setUrl("");
       setPriceOrRate("");
       setNote("");
       setContact("");
+      setStatusTone("neutral");
       setStatus("已提交到待审核区。");
+    } catch (error) {
+      setStatusTone("error");
+      setStatus(error instanceof Error ? error.message : "提交失败，请稍后重试。");
     } finally {
       setIsSubmitting(false);
     }
@@ -205,7 +205,7 @@ export function SubmissionPanel() {
       </label>
 
       <div className="mt-5 flex flex-wrap items-center justify-between gap-4">
-        <p className="text-sm leading-6 text-[var(--color-muted)]">{status}</p>
+        <p className={`text-sm leading-6 ${statusTone === "error" ? STATUS_ERROR_CLASS : STATUS_NEUTRAL_CLASS}`}>{status}</p>
         <button
           className="rounded-full bg-[var(--color-brand)] px-6 py-3 text-sm font-bold text-[var(--color-on-brand)] transition hover:bg-[var(--color-brand-deep)] disabled:cursor-not-allowed disabled:opacity-60"
           disabled={isSubmitting}

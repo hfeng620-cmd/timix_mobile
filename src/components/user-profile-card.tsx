@@ -112,7 +112,7 @@ export function UserProfileCard({ userId, position, onClose }: UserProfileCardPr
     if (typeof window === "undefined") return;
 
     const width = 320;
-    const height = 500;
+    const height = 560;
     const padding = 12;
     const nextLeft = Math.min(
       Math.max(padding, position.x),
@@ -148,7 +148,8 @@ export function UserProfileCard({ userId, position, onClose }: UserProfileCardPr
 
   const name = profile?.display_name || "用户";
   const initial = name.charAt(0).toUpperCase();
-  const bio = profile?.bio?.trim() || "还没有留下个人简介，这张名片暂时只展示基础身份信息。";
+  const bioText = profile?.bio?.trim() ?? "";
+  const bio = bioText || "还没有留下个人简介，这张名片暂时只展示基础身份信息。";
   const tags = profile?.tags ?? [];
   const profileCompleteness = [
     Boolean(profile?.display_name?.trim()),
@@ -167,6 +168,18 @@ export function UserProfileCard({ userId, position, onClose }: UserProfileCardPr
           : "建议继续补充";
   const joinDate = formatProfileJoinDate(profile?.created_at ?? null);
   const archiveId = createArchiveId(userId);
+  const introStatusLabel = bioText ? `已写 ${bioText.length} 字简介` : "简介仍待补充";
+  const identityConsistencyValue =
+    profile?.display_name?.trim() && tags.length > 0
+      ? "已统一"
+      : profile?.display_name?.trim() || tags.length > 0
+        ? "部分统一"
+        : "待统一";
+  const profilePresentationTone = bioText
+    ? tags.length > 0
+      ? "这张主页已经具备对外自我说明和标签侧写。"
+      : "简介已经补上，再加几个标签会更像完整名片。"
+    : "还缺一句能代表自己的介绍，进入主页补完后展示会更完整。";
   const identityRows = [
     { label: "档案编号", value: archiveId },
     { label: "加入 Timix", value: joinDate },
@@ -337,17 +350,28 @@ export function UserProfileCard({ userId, position, onClose }: UserProfileCardPr
               </div>
             </div>
 
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
-                个人简介
-              </p>
-              <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">{bio}</p>
+            <div className="rounded-[18px] border border-[var(--color-line)] bg-white/72 px-4 py-3.5">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
+                  个人简介
+                </p>
+                <span className="rounded-full bg-[var(--color-brand)]/10 px-2.5 py-1 text-[10px] font-bold text-[var(--color-brand-deep)] ring-1 ring-[var(--color-brand)]/15">
+                  {introStatusLabel}
+                </span>
+              </div>
+              <p className="mt-3 text-sm leading-6 text-[var(--color-muted)]">{bio}</p>
+              <p className="mt-3 text-xs leading-5 text-[var(--color-muted)]">{profilePresentationTone}</p>
             </div>
 
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
-                标签侧写
-              </p>
+            <div className="rounded-[18px] border border-[var(--color-line)] bg-[var(--color-soft)] px-4 py-3.5">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
+                  标签侧写
+                </p>
+                <span className="text-[11px] font-bold text-[var(--color-brand-deep)]">
+                  {identityConsistencyValue}
+                </span>
+              </div>
               <div className="mt-2 flex flex-wrap gap-2">
                 {tags.length > 0 ? (
                   tags.map((tag) => (
@@ -364,14 +388,27 @@ export function UserProfileCard({ userId, position, onClose }: UserProfileCardPr
                   </span>
                 )}
               </div>
+              <p className="mt-3 text-xs leading-5 text-[var(--color-muted)]">
+                {tags.length > 0
+                  ? "这些标签会直接影响别人对这张主页的第一印象。"
+                  : "进入主页补 2 到 3 个稳定标签，会让身份展示更统一。"}
+              </p>
             </div>
 
-            <Link
-              className="block w-full rounded-full bg-[var(--color-brand)] py-2.5 text-center text-sm font-bold text-[var(--color-on-brand)] transition hover:bg-[var(--color-brand-deep)]"
-              href="/profile"
-            >
-              查看主页
-            </Link>
+            <div className="grid grid-cols-2 gap-2">
+              <Link
+                className="block rounded-full bg-[var(--color-brand)] py-2.5 text-center text-sm font-bold text-[var(--color-on-brand)] transition hover:bg-[var(--color-brand-deep)]"
+                href="/profile"
+              >
+                查看主页
+              </Link>
+              <Link
+                className="block rounded-full border border-[var(--color-line)] bg-white/82 py-2.5 text-center text-sm font-semibold text-[var(--color-ink)] transition hover:border-[var(--color-brand)] hover:text-[var(--color-brand-deep)]"
+                href="/community"
+              >
+                去讨论区
+              </Link>
+            </div>
           </div>
         </>
       )}

@@ -745,7 +745,7 @@ export function StationsBoard() {
     <>
       {/* ---- Hero + Filters ---- */}
       <section className="mx-auto max-w-[1500px] px-6 py-8 lg:px-10">
-        <div className="border-b border-[var(--color-line)] pb-6">
+        <div className="border-b border-[var(--color-line)] pb-5">
           <div className="flex flex-wrap items-start justify-between gap-6">
             <div className="max-w-4xl">
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--color-brand-deep)]">
@@ -859,17 +859,28 @@ export function StationsBoard() {
           </div>
         )}
 
-        <div className="surface-in mt-8 rounded-[24px] border border-[var(--color-line)] bg-[var(--color-panel)] p-6 shadow-[var(--shadow-card)] backdrop-blur">
-          <div className="flex flex-wrap items-end justify-between gap-4">
-            <div>
+        <div className="surface-in mt-6 rounded-[28px] border border-[var(--color-line)] bg-[var(--color-panel)] p-6 shadow-[var(--shadow-card)] backdrop-blur">
+          <div className="flex flex-wrap items-start justify-between gap-5">
+            <div className="max-w-2xl">
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
                 快速查找
               </p>
               <h2 className="mt-2 text-2xl font-black">搜索 / 筛选</h2>
+              <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">
+                先把结果收成可比较的一批，再往下看总表和右侧协作提示，不要在第一屏就读完所有备注。
+              </p>
             </div>
-            <p className="text-sm text-[var(--color-muted)]">
-              找到 <span className="font-bold text-[var(--color-ink)]">{filteredRows.length}</span> 个站点
-            </p>
+            <div className="min-w-[240px] rounded-[20px] border border-[var(--color-line)] bg-[var(--color-soft)] px-4 py-3.5 text-sm">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--color-muted)]">
+                当前结果面
+              </p>
+              <p className="mt-2 text-lg font-black text-[var(--color-ink)]">
+                找到 {filteredRows.length} 个站点
+              </p>
+              <p className="mt-1 text-sm text-[var(--color-muted)]">
+                先看前 {Math.min(visibleRows.length, filteredRows.length)} 条，再决定要不要展开更多。
+              </p>
+            </div>
           </div>
 
           <div className="mt-5 flex flex-wrap items-center gap-3">
@@ -964,8 +975,8 @@ export function StationsBoard() {
 
       {/* ---- Table ---- */}
       <section className="mx-auto max-w-[1500px] px-6 pb-14 lg:px-10">
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,1.34fr)_320px] xl:items-start">
-          <div className="surface-in overflow-hidden rounded-[24px] border border-[var(--color-line)] bg-[var(--color-panel)] shadow-[var(--shadow-card)]">
+        <div className="grid gap-5 xl:grid-cols-[minmax(0,1.5fr)_300px] xl:items-start">
+          <div className="surface-in overflow-hidden rounded-[28px] border border-[var(--color-line)] bg-[var(--color-panel)] shadow-[var(--shadow-card)]">
           {/* Table header */}
           <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[var(--color-line)] px-6 py-5">
             <div>
@@ -1181,16 +1192,16 @@ export function StationsBoard() {
           </div>
 
           <div className="hidden overflow-x-auto lg:block">
-            <div className="min-w-[1280px]">
+            <div className="min-w-[1320px]">
               {/* Column headers */}
-              <div className="grid grid-cols-[0.8fr_1.05fr_1fr_0.92fr_0.9fr_0.8fr_1.3fr] bg-[var(--color-soft)] px-6 py-4 text-sm font-bold uppercase tracking-[0.18em] text-[var(--color-muted)]">
+              <div className="grid grid-cols-[0.64fr_1.36fr_1.08fr_0.92fr_0.98fr_0.84fr_0.98fr] bg-[var(--color-soft)] px-6 py-4 text-sm font-bold uppercase tracking-[0.18em] text-[var(--color-muted)]">
                 <span>排序</span>
                 <span>站点</span>
                 <span>入口 / 地址</span>
                 <span>收费方式</span>
                 <span>标称价格</span>
                 <span>倍率</span>
-                <span>状态与社区备注</span>
+                <span>状态与备注摘要</span>
               </div>
 
               {/* Rows */}
@@ -1228,7 +1239,7 @@ export function StationsBoard() {
                 return (
                   <div key={station.id}>
                     <article
-                      className="grid grid-cols-[0.8fr_1.05fr_1fr_0.92fr_0.9fr_0.8fr_1.3fr] items-start border-l-2 border-l-transparent px-6 py-5 transition-all duration-300 hover:border-l-[var(--color-brand)] hover:bg-[var(--color-hover)]"
+                      className="grid grid-cols-[0.64fr_1.36fr_1.08fr_0.92fr_0.98fr_0.84fr_0.98fr] items-start border-l-2 border-l-transparent px-6 py-5 transition-all duration-300 hover:border-l-[var(--color-brand)] hover:bg-[var(--color-hover)]"
                     >
                       {/* 排序 */}
                       <div className="font-bold text-[var(--color-muted)]">
@@ -1274,12 +1285,12 @@ export function StationsBoard() {
                             href={stationHref}
                             rel="noopener noreferrer"
                             target="_blank"
-                            className="mt-2 inline-block text-sm leading-6 font-semibold text-[var(--color-brand-deep)] transition hover:text-[var(--color-brand)]"
+                            className="mt-2 inline-block line-clamp-2 text-sm leading-6 font-semibold text-[var(--color-brand-deep)] transition hover:text-[var(--color-brand)]"
                           >
                             {station.entry || stationHref}
                           </a>
                         ) : (
-                          <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">
+                          <p className="mt-2 line-clamp-2 text-sm leading-6 text-[var(--color-muted)]">
                             {station.groupName || station.entry}
                           </p>
                         )}
@@ -1316,7 +1327,7 @@ export function StationsBoard() {
                       {/* 收费方式 */}
                       <div>
                         <p className="font-bold">{station.packageType}</p>
-                        <p className="mt-1 text-sm leading-6 text-[var(--color-muted)]">
+                        <p className="mt-1 line-clamp-2 text-sm leading-6 text-[var(--color-muted)]">
                           {station.models}
                         </p>
                       </div>
@@ -1332,7 +1343,7 @@ export function StationsBoard() {
                         <div className="flex items-start justify-between gap-2">
                           <div>
                             <p className="font-bold">{station.status}</p>
-                            <p className="mt-1 text-sm leading-6 text-[var(--color-muted)]">
+                            <p className="mt-1 line-clamp-2 text-sm leading-6 text-[var(--color-muted)]">
                               {station.note}
                             </p>
                           </div>
@@ -1405,35 +1416,43 @@ export function StationsBoard() {
 
           </div>
 
-          <aside className="hidden xl:block xl:space-y-5">
-            <div className="rounded-[24px] border border-[var(--color-line)] bg-[var(--color-panel)] p-5 shadow-[var(--shadow-card)]">
+          <aside className="hidden xl:block">
+            <div className="surface-in sticky top-24 rounded-[28px] border border-[var(--color-line)] bg-[var(--color-panel)] p-5 shadow-[var(--shadow-card)]">
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
-                榜单怎么用
+                右侧协作栏
               </p>
-              <div className="mt-4 space-y-3">
+              <p className="mt-3 text-sm leading-6 text-[var(--color-muted)]">
+                右边只保留决策时最常用的辅助信息，不和总表抢视觉重心。
+              </p>
+
+              <div className="mt-5 grid gap-3">
                 <div className="rounded-[18px] bg-[var(--color-soft)] px-4 py-3">
-                  <p className="text-sm font-black text-[var(--color-ink)]">1. 先看倍率和门槛</p>
-                  <p className="mt-1 text-sm leading-6 text-[var(--color-muted)]">先排除明显不适合做第一轮验证的样本。</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--color-muted)]">
+                    当前显示
+                  </p>
+                  <p className="mt-2 text-lg font-black text-[var(--color-ink)]">
+                    {visibleRows.length} / {filteredRows.length} 条
+                  </p>
+                  <p className="mt-1 text-sm leading-6 text-[var(--color-muted)]">
+                    先把眼前这一批看完，再决定要不要展开更多样本。
+                  </p>
                 </div>
+
                 <div className="rounded-[18px] bg-[var(--color-soft)] px-4 py-3">
-                  <p className="text-sm font-black text-[var(--color-ink)]">2. 再把候选缩到 2 到 3 个</p>
-                  <p className="mt-1 text-sm leading-6 text-[var(--color-muted)]">先缩小决策面，再决定要不要深入看详情。</p>
-                </div>
-                <div className="rounded-[18px] bg-[var(--color-soft)] px-4 py-3">
-                  <p className="text-sm font-black text-[var(--color-ink)]">3. 最后回社区补变化</p>
-                  <p className="mt-1 text-sm leading-6 text-[var(--color-muted)]">价格和倍率负责初筛，真实变化还要靠讨论流补证据。</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--color-muted)]">
+                    判断顺序
+                  </p>
+                  <p className="mt-2 text-sm font-black text-[var(--color-ink)]">倍率和门槛先看，备注后看</p>
+                  <p className="mt-1 text-sm leading-6 text-[var(--color-muted)]">
+                    详细口径更适合进历史或讨论区，不要在总表里一次读完。
+                  </p>
                 </div>
               </div>
-            </div>
 
-            <div className="rounded-[24px] border border-[var(--color-line)] bg-[var(--color-panel)] p-5 shadow-[var(--shadow-card)]">
-              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
-                协作入口
-              </p>
-              <div className="mt-4 grid gap-3">
+              <div className="mt-5 space-y-3 border-t border-[var(--color-line)] pt-5">
                 <Link
                   href="/community"
-                  className="rounded-full bg-[var(--color-brand)] px-5 py-3 text-center text-sm font-bold text-[var(--color-on-brand)] transition hover:bg-[var(--color-brand-deep)]"
+                  className="block rounded-full bg-[var(--color-brand)] px-5 py-3 text-center text-sm font-bold text-[var(--color-on-brand)] transition hover:bg-[var(--color-brand-deep)]"
                 >
                   进入站内讨论区
                 </Link>
@@ -1441,23 +1460,18 @@ export function StationsBoard() {
                   href="https://github.com/hfeng620-cmd/timin_api_test_and_forum/discussions"
                   rel="noopener noreferrer"
                   target="_blank"
-                  className="rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] px-5 py-3 text-center text-sm font-bold text-[var(--color-ink)] transition hover:border-[var(--color-brand)] hover:text-[var(--color-brand-deep)]"
+                  className="block rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] px-5 py-3 text-center text-sm font-bold text-[var(--color-ink)] transition hover:border-[var(--color-brand)] hover:text-[var(--color-brand-deep)]"
                 >
                   GitHub Discussions
                 </a>
               </div>
-            </div>
 
-            <div className="rounded-[24px] border border-[var(--color-line)] bg-[var(--color-panel)] p-5 shadow-[var(--shadow-card)]">
-              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
-                快速跳转
-              </p>
-              <div className="mt-4 grid gap-3">
+              <div className="mt-5 space-y-3 border-t border-[var(--color-line)] pt-5 text-sm">
                 <a
                   href="https://huhuai.xyz/register?aff=BCPA5AKW3KHX"
                   rel="noopener noreferrer"
                   target="_blank"
-                  className="border-b border-[var(--color-line)] pb-3 text-sm leading-6 transition hover:text-[var(--color-brand-deep)]"
+                  className="block rounded-[18px] bg-[var(--color-soft)] px-4 py-3 leading-6 transition hover:text-[var(--color-brand-deep)]"
                 >
                   虎虎注册链接：直接送额度
                 </a>
@@ -1465,7 +1479,7 @@ export function StationsBoard() {
                   href="https://www.kdocs.cn/l/cj84YbmlJswN"
                   rel="noopener noreferrer"
                   target="_blank"
-                  className="border-b border-[var(--color-line)] pb-3 text-sm leading-6 transition hover:text-[var(--color-brand-deep)]"
+                  className="block rounded-[18px] bg-[var(--color-soft)] px-4 py-3 leading-6 transition hover:text-[var(--color-brand-deep)]"
                 >
                   历史填表记录：以前群里有过填表送额度
                 </a>
@@ -1473,11 +1487,12 @@ export function StationsBoard() {
                   href="https://www.kdocs.cn/l/cr2932V6f6bH"
                   rel="noopener noreferrer"
                   target="_blank"
-                  className="border-b border-[var(--color-line)] pb-3 text-sm leading-6 transition hover:text-[var(--color-brand-deep)]"
+                  className="block rounded-[18px] bg-[var(--color-soft)] px-4 py-3 leading-6 transition hover:text-[var(--color-brand-deep)]"
                 >
                   API 中转站集合统计表：继续补更多站点
                 </a>
               </div>
+
               <div className="mt-5 rounded-[18px] bg-[var(--color-soft)] px-4 py-3 text-sm leading-7 text-[var(--color-muted)]">
                 <p className="font-semibold text-[var(--color-ink)]">QQ群 602190132</p>
               </div>
@@ -1487,7 +1502,7 @@ export function StationsBoard() {
       </section>
 
       {/* ---- Submission ---- */}
-      <section className="mx-auto max-w-7xl px-6 pb-16 lg:px-10">
+      <section className="mx-auto max-w-[1500px] px-6 pb-16 lg:px-10">
         <SubmissionPanel />
       </section>
 

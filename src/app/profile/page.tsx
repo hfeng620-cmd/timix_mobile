@@ -41,6 +41,12 @@ type ActivityEmptyState = {
   secondaryAction: { href: string; label: string };
 };
 
+type ShowcaseRow = {
+  label: string;
+  value: string;
+  hint: string;
+};
+
 const activityTabs: { key: ActivityTab; label: string }[] = [
   { key: "posts", label: "发帖" },
   { key: "replies", label: "回复" },
@@ -198,6 +204,7 @@ export default function ProfilePage() {
   const totalContribution = postCount + authoredReplyCount;
   const uniqueStations = new Set(posts.map((post) => post.station).filter(Boolean)).size;
   const archiveId = createArchiveId(user?.id);
+  const bioText = bio.trim();
 
   const joinDate = formatProfileJoinDate(user?.created_at);
 
@@ -219,6 +226,7 @@ export default function ProfilePage() {
         : completenessPercent >= 50
           ? "还差一点"
           : "建议继续补充";
+  const introStatusLabel = bioText ? `已写 ${bioText.length} 字简介` : "简介仍待补充";
   const mostDiscussedStation = pickTopStation(posts);
   const latestPost = posts[0];
   const latestReply = replies[0];
@@ -254,6 +262,27 @@ export default function ProfilePage() {
       : completenessPercent >= 75
         ? "资料已经差不多，只差第一条内容就能让主页真正动起来。"
         : "先补头像、简介或标签，让这张主页先有更清晰的身份感。";
+  const profilePresentationTone = bioText
+    ? tags.length > 0
+      ? "这张主页已经同时具备自我说明和标签侧写，别人进入时能更快读懂你在关注什么。"
+      : "这段简介已经让主页更像个人名片，再补 2 到 3 个标签会更有辨识度。"
+    : hasCustomName
+      ? "昵称已经统一，但主页还缺一段能代表你的自我说明。"
+      : "先统一昵称并补一句简介，主页会更像完整产品页，而不只是账户入口。";
+  const identityConsistencyValue =
+    hasCustomName && tags.length > 0
+      ? "已统一"
+      : hasCustomName || tags.length > 0
+        ? "部分统一"
+        : "待统一";
+  const identityConsistencyHint =
+    hasCustomName && tags.length > 0
+      ? "昵称和标签已经开始形成稳定对外身份。"
+      : hasCustomName
+        ? "昵称已经固定，再补标签会更完整。"
+        : tags.length > 0
+          ? "标签已经有方向，再补昵称会更统一。"
+          : "昵称、简介和标签补齐后，主页会更像可被识别的个人空间。";
   const profileMeta = [
     {
       label: "账号阶段",
@@ -320,6 +349,25 @@ export default function ProfilePage() {
     { done: hasCustomName, label: "昵称", hint: "统一你的公开身份名称。" },
     { done: Boolean(bio.trim()), label: "简介", hint: "说明使用场景或关注方向。" },
     { done: tags.length > 0, label: "标签", hint: "补出个人观察风格。" },
+  ];
+  const showcaseRows: ShowcaseRow[] = [
+    {
+      label: "简介状态",
+      value: bioText ? "已公开展示" : "仍待补充",
+      hint: bioText ? "别人进入主页时，能先读到你的使用场景或关注方向。" : "建议补一句你常用的场景、模型偏好或观察站点。",
+    },
+    {
+      label: "身份统一",
+      value: identityConsistencyValue,
+      hint: identityConsistencyHint,
+    },
+    {
+      label: "观察焦点",
+      value: mostDiscussedStation ? mostDiscussedStation.station : "仍在形成",
+      hint: mostDiscussedStation
+        ? `目前最常提及 ${mostDiscussedStation.station}，已经能形成对外识别点。`
+        : "等你继续参与内容后，主页会逐步长出更明确的长期观察方向。",
+    },
   ];
 
   const overviewCards = [
@@ -422,6 +470,20 @@ export default function ProfilePage() {
     },
   };
   const activeEmptyState = activityEmptyStates[activeTab];
+  const activeArchiveCount =
+    activeTab === "posts"
+      ? posts.length
+      : activeTab === "replies"
+        ? replies.length
+        : likedPosts.length;
+  const archiveScopeLabel =
+    activeTab === "posts"
+      ? postCount > 10
+        ? "当前展示最近 10 条发帖记录"
+        : `当前展示 ${postCount} 条发帖记录`
+      : activeTab === "replies"
+        ? `当前展示 ${replies.length} 条回复记录`
+        : `当前展示 ${likedPosts.length} 条点赞记录`;
 
   return (
     <main className="theme-stage min-h-screen bg-transparent text-[var(--color-ink)]">
@@ -610,22 +672,44 @@ export default function ProfilePage() {
 
                       <div className="mt-5 grid gap-4 lg:grid-cols-[1.12fr_0.88fr]">
                         <div className="rounded-[22px] border border-white/80 bg-white/76 px-4 py-4 shadow-[0_12px_28px_rgba(15,23,42,0.04)]">
-                          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
-                            个人摘要
-                          </p>
+                          <div className="flex flex-wrap items-center justify-between gap-3">
+                            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
+                              个人说明
+                            </p>
+                            <span className="rounded-full bg-[var(--color-brand)]/10 px-3 py-1 text-[11px] font-bold text-[var(--color-brand-deep)] ring-1 ring-[var(--color-brand)]/15">
+                              {introStatusLabel}
+                            </span>
+                          </div>
                           <p className="mt-3 text-sm leading-7 text-[var(--color-muted)] sm:text-base">
-                            {bio || "还没有留下个人简介，先补一句常用场景、偏好模型或关注方向，会更像完整主页。"}
+                            {bioText || "还没有留下个人简介，先补一句常用场景、偏好模型或关注方向，会更像完整主页。"}
                           </p>
+                          <p className="mt-4 text-xs leading-6 text-[var(--color-muted)]">{profilePresentationTone}</p>
                         </div>
 
                         <div className="rounded-[22px] border border-white/80 bg-white/76 px-4 py-4 shadow-[0_12px_28px_rgba(15,23,42,0.04)]">
                           <div className="flex items-center justify-between gap-3">
                             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
-                              身份标签
+                              展示摘要
                             </p>
                             <span className="text-xs font-bold text-[var(--color-brand-deep)]">
-                              {tags.length}/5
+                              {identityConsistencyValue}
                             </span>
+                          </div>
+                          <div className="mt-3 space-y-2">
+                            {showcaseRows.map((row) => (
+                              <div
+                                key={row.label}
+                                className="rounded-[16px] border border-[var(--color-line)] bg-white/72 px-3 py-3"
+                              >
+                                <div className="flex items-center justify-between gap-3">
+                                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
+                                    {row.label}
+                                  </p>
+                                  <span className="text-xs font-bold text-[var(--color-ink)]">{row.value}</span>
+                                </div>
+                                <p className="mt-2 text-xs leading-5 text-[var(--color-muted)]">{row.hint}</p>
+                              </div>
+                            ))}
                           </div>
                           <div className="mt-3 flex flex-wrap gap-2">
                             {tags.length > 0 ? (
@@ -766,6 +850,10 @@ export default function ProfilePage() {
                         rows={4}
                         value={newBio}
                       />
+                      <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-[var(--color-muted)]">
+                        <p>建议写使用场景、偏好模型、长期关注站点中的任意一项。</p>
+                        <span>{newBio.trim().length}/200</span>
+                      </div>
 
                       <div className="mt-4 flex flex-wrap items-center gap-2">
                         {newTags.map((tag, index) => (
@@ -800,6 +888,10 @@ export default function ProfilePage() {
                           />
                         ) : null}
                       </div>
+                      <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-[var(--color-muted)]">
+                        <p>标签越稳定，主页对外展示越统一。</p>
+                        <span>{newTags.length}/5</span>
+                      </div>
                     </div>
                   ) : null}
                 </div>
@@ -826,35 +918,30 @@ export default function ProfilePage() {
 
                 <div className="rounded-[28px] border border-white/70 bg-[var(--color-panel)] p-6 shadow-[0_24px_80px_rgba(15,23,42,0.08)]">
                   <p className="text-sm font-semibold uppercase tracking-[0.22em] text-[var(--color-brand-deep)]">
-                    观察侧写
+                    主页展示
                   </p>
                   <div className="mt-4 space-y-4">
                     <div className="rounded-[20px] border border-[var(--color-line)] bg-white/78 px-4 py-4">
                       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
-                        活跃画像
+                        简介呈现
                       </p>
                       <p className="mt-2 text-base font-black text-[var(--color-ink)]">
-                        {totalContribution > 0 ? "持续参与型用户" : "待激活的新成员"}
+                        {bioText ? "已经有对外自我说明" : "还缺一句能代表你的简介"}
                       </p>
                       <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">
-                        {totalContribution > 0
-                          ? "你已经开始留下可回溯的讨论足迹，主页可以进一步沉淀成个人名片。"
-                          : "先补充资料、发出第一条帖子，主页就会更像一个完整个人空间。"}
+                        {profilePresentationTone}
                       </p>
                     </div>
                     <div className="rounded-[20px] border border-[var(--color-line)] bg-white/78 px-4 py-4">
                       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
-                        关注站点
+                        身份统一
                       </p>
                       <p className="mt-2 text-base font-black text-[var(--color-ink)]">
-                        {mostDiscussedStation
-                          ? `${mostDiscussedStation.station} · ${mostDiscussedStation.count} 次提及`
-                          : "还没有形成明确偏好"}
+                        {hasCustomName ? "昵称已统一" : "昵称仍待明确"}
+                        {tags.length > 0 ? ` · ${tags.length} 个标签` : " · 暂无标签"}
                       </p>
                       <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">
-                        {mostDiscussedStation
-                          ? "这是你发帖中提及最多的站点，可继续沉淀为个人长期观察方向。"
-                          : "多参与几个站点话题后，这里会更好地显示你的关注重心。"}
+                        {identityConsistencyHint}
                       </p>
                     </div>
                   </div>
@@ -968,6 +1055,11 @@ export default function ProfilePage() {
                   <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--color-muted)]">
                     {activeTabDescription}
                   </p>
+                  {activeArchiveCount > 0 ? (
+                    <p className="mt-2 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
+                      {archiveScopeLabel}
+                    </p>
+                  ) : null}
                 </div>
                 <div className="flex flex-wrap gap-2 rounded-full border border-[var(--color-line)] bg-[var(--color-soft)] p-1">
                   {activityTabs.map((tab) => {
@@ -1064,7 +1156,7 @@ export default function ProfilePage() {
                                 {post.station}
                               </span>
                             ) : null}
-                            <span>{post.postedAt}</span>
+                            <span>{formatDateLabel(post.postedAt)}</span>
                             <span>·</span>
                             <span>{post.likes} 赞</span>
                             <span>·</span>
@@ -1223,7 +1315,7 @@ export default function ProfilePage() {
                                 {post.station}
                               </span>
                             ) : null}
-                            <span>{post.postedAt}</span>
+                            <span>{formatDateLabel(post.postedAt)}</span>
                             <span>·</span>
                             <span>{post.likes} 赞</span>
                           </div>

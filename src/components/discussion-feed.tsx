@@ -769,36 +769,36 @@ export function DiscussionFeed({
 
   return (
     <section
-      className="card-lift overflow-hidden rounded-[20px] border border-[var(--color-line)] bg-[var(--color-panel)] shadow-[var(--shadow-card)] transition-all duration-300"
+      className="card-lift overflow-hidden rounded-[24px] border border-[var(--color-line)] bg-[var(--color-panel)] shadow-[0_20px_60px_rgba(15,23,42,0.08)] transition-all duration-300"
       data-selection-comments="off"
     >
-      <div className="border-b border-[var(--color-line)] bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(248,250,252,0.98))] px-5 py-5">
+      <div className="border-b border-[var(--color-line)] bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(248,250,252,0.98)_58%,rgba(255,247,237,0.84))] px-5 py-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand-deep)]">
               Discussion Workbench
             </p>
             <h2 className="mt-2 text-2xl font-black tracking-tight">{title}</h2>
-            <p className="mt-2 text-sm text-[var(--color-muted)]">
+            <p className="mt-2 max-w-2xl text-sm text-[var(--color-muted)]">
               {stationFilter
-                ? `围绕 ${stationFilter} 聚合最新反馈，先处理短流，再决定是否转长期讨论。`
-                : "把新动态、标签筛选和重点讨论收在同一工作台里处理。"}
+                ? `围绕 ${stationFilter} 聚合最新反馈，优先处理当下短流。`
+                : "把新动态、筛选和重点讨论收在同一工作台里。"}
             </p>
           </div>
           <div className="grid gap-2 sm:grid-cols-3">
-            <div className="rounded-[18px] border border-[var(--color-line)] bg-[var(--color-panel)] px-4 py-3">
+            <div className="rounded-[18px] border border-white/70 bg-white/80 px-4 py-3 shadow-[0_12px_30px_rgba(15,23,42,0.05)]">
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
                 结果
               </p>
               <p className="mt-1 text-lg font-black text-[var(--color-ink)]">{resultCount}</p>
             </div>
-            <div className="rounded-[18px] border border-[var(--color-line)] bg-[var(--color-panel)] px-4 py-3">
+            <div className="rounded-[18px] border border-white/70 bg-white/80 px-4 py-3 shadow-[0_12px_30px_rgba(15,23,42,0.05)]">
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
                 排序
               </p>
               <p className="mt-1 text-sm font-bold text-[var(--color-ink)]">{sortLabel}</p>
             </div>
-            <div className="rounded-[18px] border border-[var(--color-line)] bg-[var(--color-panel)] px-4 py-3">
+            <div className="rounded-[18px] border border-white/70 bg-white/80 px-4 py-3 shadow-[0_12px_30px_rgba(15,23,42,0.05)]">
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
                 状态
               </p>
@@ -812,7 +812,7 @@ export function DiscussionFeed({
         <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
           <div className="relative min-w-0">
             <input
-              className="w-full rounded-full border border-[var(--color-line)] bg-[var(--color-soft)] pl-5 pr-4 py-3 text-sm outline-none transition focus:border-[var(--color-brand)] focus:bg-white"
+              className="w-full rounded-full border border-[var(--color-line)] bg-white/88 pl-5 pr-4 py-3 text-sm outline-none transition focus:border-[var(--color-brand)] focus:bg-white"
               onChange={(event) => setSearchQuery(event.target.value)}
               placeholder="搜索内容、站点名或标签..."
               value={searchQuery}
@@ -867,7 +867,7 @@ export function DiscussionFeed({
             </>
           ) : (
             <p className="text-sm text-[var(--color-muted)]">
-              当前显示全部讨论，可直接搜索、按标签筛选或只看收藏。
+              当前显示全部讨论，可直接搜索、筛标签或只看收藏。
             </p>
           )}
         </div>
@@ -875,7 +875,7 @@ export function DiscussionFeed({
 
       {!hideComposer ? (
         <div className="border-b border-[var(--color-line)] px-6 py-5">
-          <div className="rounded-[20px] bg-[var(--color-soft)] p-5">
+          <div className="rounded-[22px] border border-[var(--color-line)] bg-[linear-gradient(180deg,rgba(255,255,255,0.88),rgba(248,250,252,0.9))] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]">
             <textarea
               className="min-h-28 w-full resize-none bg-transparent text-base leading-7 outline-none"
               onChange={(event) => setBody(event.target.value)}
@@ -904,7 +904,7 @@ export function DiscussionFeed({
                   }
                 }
               }}
-              placeholder="例如：虎虎这两天试用额度还在吗？Aether 高峰期稳不稳？杂货铺 Plus / Pro 的口径最近有没有变化？"
+              placeholder="一句反馈、一个价格变化、一次试用观察，都可以先发在这里。"
               value={body}
             />
             <div className="mt-4 flex flex-wrap items-center justify-between gap-4 border-t border-[var(--color-line)] pt-4">
@@ -912,7 +912,7 @@ export function DiscussionFeed({
                 <input
                   className="min-w-52 rounded-full border border-[var(--color-line)] bg-[var(--color-input)] px-4 py-2 text-sm outline-none transition focus:border-[var(--color-brand)]"
                   onChange={(event) => setStation(event.target.value)}
-                  placeholder="带一个站点名或标签，例如 虎虎 / Aether"
+                  placeholder="带一个站点名或标签"
                   value={station}
                 />
                 <input
@@ -1023,7 +1023,7 @@ export function DiscussionFeed({
 
       <div className="divide-y divide-[var(--color-line)]">
         {visiblePosts.length === 0 ? (
-          <div className="px-5 py-10 text-center sm:px-6">
+          <div className="bg-[linear-gradient(180deg,rgba(255,255,255,0.42),transparent)] px-5 py-10 text-center sm:px-6">
             {bookmarksOnly ? (
               <>
                 <p className="text-base font-bold text-[var(--color-ink)]">还没有收藏过帖子。</p>
@@ -1069,8 +1069,8 @@ export function DiscussionFeed({
           const replyQuote = replyQuotes[post.issueNumber];
 
           return (
-            <article id={post.issueNumber} key={post.issueNumber} className={`card-lift border-l-2 border-l-transparent px-5 py-5 transition hover:border-l-[var(--color-brand)] hover:bg-[var(--color-hover)] sm:px-6 ${
-                post.is_pinned ? "bg-[var(--color-brand-soft)]/50" : ""
+            <article id={post.issueNumber} key={post.issueNumber} className={`card-lift border-l-2 border-l-transparent px-5 py-5 transition hover:border-l-[var(--color-brand)] hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.9),rgba(248,250,252,0.88))] sm:px-6 ${
+                post.is_pinned ? "bg-[linear-gradient(180deg,rgba(255,247,237,0.86),rgba(255,255,255,0.9))]" : ""
               }`}>
               <div className="flex items-start gap-3 sm:gap-4">
                 {post.authorAvatarUrl ? (
@@ -1169,7 +1169,23 @@ export function DiscussionFeed({
                       </span>
                     ) : null}
                   </div>
-                  <hr className="mt-2 border-t border-[var(--color-line)]" />
+                  <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] font-semibold text-[var(--color-muted)]">
+                    {post.is_pinned ? (
+                      <span className="rounded-full border border-[var(--color-brand)]/20 bg-[var(--color-brand-soft)] px-2.5 py-1 text-[var(--color-brand-deep)]">
+                        优先处理
+                      </span>
+                    ) : null}
+                    {post.replyCount > 0 ? (
+                      <span className="rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] px-2.5 py-1">
+                        {post.replyCount} 条回复
+                      </span>
+                    ) : null}
+                    {post.likes > 0 ? (
+                      <span className="rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] px-2.5 py-1">
+                        {post.likes} 个赞
+                      </span>
+                    ) : null}
+                  </div>
                   {editingPostId === post.issueNumber ? (
                     <div className="mt-3">
                       <textarea
@@ -1244,7 +1260,14 @@ export function DiscussionFeed({
                       </button>
                     ))}
                   </div>
-                  <div className="mt-4 flex items-center justify-between sm:justify-start sm:gap-7">
+                  <div className="mt-4 flex flex-wrap items-center gap-2 sm:gap-3">
+                    <button
+                      className="rounded-full bg-[var(--color-brand)] px-4 py-2.5 text-sm font-bold text-[var(--color-on-brand)] shadow-[0_10px_24px_var(--color-panel-glow)] transition hover:bg-[var(--color-brand-deep)]"
+                      onClick={() => openReplyBox(post.issueNumber)}
+                      type="button"
+                    >
+                      回复讨论
+                    </button>
                     <ActionButton count={post.replyCount} icon="comment" onClick={() => openReplyBox(post.issueNumber)} />
                     <ActionButton count={post.likes} icon="like" liked={likedPosts.has(post.issueNumber)} onClick={() => handleLike(post.issueNumber)} />
                     {/* Bookmark button */}
@@ -1255,6 +1278,7 @@ export function DiscussionFeed({
                       title={isBookmarked ? "取消收藏" : "收藏"}
                     >
                       <ActionIcon kind={isBookmarked ? "bookmarkFilled" : "bookmark"} />
+                      <span className="text-xs font-semibold">{isBookmarked ? "已收藏" : "收藏"}</span>
                     </button>
                     {/* Sync to main discussion button (only in station view) */}
                     {showSyncButton && stationFilter && (
@@ -1272,11 +1296,11 @@ export function DiscussionFeed({
                       </a>
                     )}
                     <button
-                      className="min-h-[44px] min-w-[44px] rounded-lg px-3 py-2 text-xs font-bold text-[var(--color-muted)] transition hover:bg-[var(--color-soft)] hover:text-[var(--color-brand-deep)]"
+                      className="min-h-[44px] rounded-full border border-[var(--color-line)] px-3 py-2 text-xs font-bold text-[var(--color-muted)] transition hover:bg-[var(--color-soft)] hover:text-[var(--color-brand-deep)]"
                       onClick={() => togglePost(post.issueNumber, expanded)}
                       type="button"
                     >
-                      {expanded ? "收起 ▲" : "展开 ▼"}
+                      {expanded ? "收起讨论" : "查看详情"}
                     </button>
                   </div>
                 </div>
@@ -1288,7 +1312,7 @@ export function DiscussionFeed({
                     {comments === undefined ? (
                       <p className="text-sm text-[var(--color-muted)]">正在加载回复...</p>
                     ) : comments.length === 0 ? (
-                      <p className="text-sm text-[var(--color-muted)]">还没有回复。来抢沙发，第一个回复这条讨论吧。</p>
+                      <p className="text-sm text-[var(--color-muted)]">还没有回复，可以先补充处理结论或下一步判断。</p>
                     ) : (
                       comments.map((reply) => (
                         <div key={reply.id} className="group">
