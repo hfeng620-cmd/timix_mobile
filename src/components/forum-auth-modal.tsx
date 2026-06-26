@@ -666,13 +666,13 @@ export function ForumAuthModal({ open, onClose }: ForumAuthModalProps) {
                       <input
                         className="w-full rounded-[12px] border border-[var(--color-line)] bg-[var(--color-input)] px-4 py-3 text-center text-lg tracking-[0.5em] outline-none transition focus:border-[var(--color-brand)]"
                         onChange={(event) => {
-                          setOtpCode(event.target.value.replace(/\D/g, "").slice(0, 6));
+                          setOtpCode(event.target.value.replace(/\D/g, "").slice(0, 8));
                           setError("");
                         }}
-                        placeholder="输入 6 位验证码"
+                        placeholder="输入验证码"
                         type="text"
                         inputMode="numeric"
-                        maxLength={6}
+                        maxLength={8}
                         value={otpCode}
                         autoFocus
                       />
@@ -724,7 +724,7 @@ export function ForumAuthModal({ open, onClose }: ForumAuthModalProps) {
                   !normalizedEmail ||
                   (mode === "login" && !password) ||
                   (mode === "register" && !otpSent && (!displayNameInput.trim() || !password || !confirmPassword)) ||
-                  (mode === "register" && otpSent && otpCode.length < 6)
+                  (mode === "register" && otpSent && otpCode.length < 1)
                 }
                 onClick={mode === "login" ? handlePasswordLogin : otpSent ? handleVerifyAndRegister : handleSendCode}
                 type="button"
