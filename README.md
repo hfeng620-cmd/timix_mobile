@@ -2,7 +2,7 @@
 
 社区共建的 AI 中转站观测平台 —— 用公开、可修正、可持续补充的方式，整理各中转站的价格、倍率、模型覆盖、试用入口和真实使用反馈。
 
-**在线访问**：https://hfeng620-cmd.github.io/timin_api_test_and_forum/
+**在线访问**：http://www.1bex.com/
 
 **一句话描述**：AI 中转站的「大众点评」—— 社区成员共同录入、维护、讨论各个中转站的价格、倍率、模型覆盖和真实使用反馈。
 
@@ -48,7 +48,7 @@
 ## 技术架构
 
 ```
-用户浏览器 ──→ GitHub Pages（静态页面）
+用户浏览器 ──→ www.1bex.com（VPS 主站）
                     │
                     └──→ Supabase（数据库 + 认证 + 存储）
                              │
@@ -66,7 +66,7 @@
 
 - **前端**：Next.js 16 + React 19 + Tailwind CSS + TypeScript
 - **后端**：Supabase（PostgreSQL + Auth + Storage + RLS）
-- **部署**：GitHub Pages（静态导出） + VPS（standalone 模式，Docker/PM2 就绪）
+- **部署**：VPS 主站 `www.1bex.com` + GitHub Pages 备用
 
 ---
 

@@ -97,7 +97,7 @@ begin
         <blockquote style="border-left: 3px solid #E1E6EF; margin: 16px 0; padding: 8px 16px; color: #6B7280;">
           %s
         </blockquote>
-        <a href="https://hfeng620-cmd.github.io/timin_api_test_and_forum/community" style="display: inline-block; background: #2563EB; color: white; padding: 12px 24px; border-radius: 999px; text-decoration: none; font-weight: bold;">
+        <a href="http://www.1bex.com/community" style="display: inline-block; background: #2563EB; color: white; padding: 12px 24px; border-radius: 999px; text-decoration: none; font-weight: bold;">
           查看回复
         </a>
         <p style="margin-top: 24px; font-size: 12px; color: #9CA3AF;">
