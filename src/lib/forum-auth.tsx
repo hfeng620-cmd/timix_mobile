@@ -266,7 +266,7 @@ export function ForumAuthProvider({ children }: { children: React.ReactNode }) {
       const { error } = await getSupabaseClient().auth.verifyOtp({
         email: normalizedEmail,
         token,
-        type: "email",
+        type: "signup",
       });
 
       return error
