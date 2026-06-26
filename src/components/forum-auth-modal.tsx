@@ -11,7 +11,7 @@ type ForumAuthModalProps = {
   onClose: () => void;
 };
 
-type AuthMode = "code" | "password";
+type AuthMode = "login" | "register";
 
 export function ForumAuthModal({ open, onClose }: ForumAuthModalProps) {
   const {
@@ -30,7 +30,7 @@ export function ForumAuthModal({ open, onClose }: ForumAuthModalProps) {
     verifyOtp,
   } = useForumAuth();
 
-  const [mode, setMode] = useState<AuthMode>("password");
+  const [mode, setMode] = useState<AuthMode>("login");
   const [email, setEmail] = useState("");
   const [displayNameInput, setDisplayNameInput] = useState(displayName ?? "");
   const [password, setPasswordValue] = useState("");
@@ -112,7 +112,6 @@ export function ForumAuthModal({ open, onClose }: ForumAuthModalProps) {
     }, 0);
 
     document.addEventListener("keydown", handleKeyDown);
-    // Lock body scroll
     document.body.style.overflow = "hidden";
     return () => {
       clearTimeout(timer);
@@ -121,9 +120,7 @@ export function ForumAuthModal({ open, onClose }: ForumAuthModalProps) {
     };
   }, [open, onClose]);
 
-
   // Pre-fill display name when setting password for the first time.
-  // Priority: name from registration tab (sessionStorage) > email username fallback.
   useEffect(() => {
     if (isConnected && needsPassword && !displayName) {
       let restored = "";
@@ -135,7 +132,6 @@ export function ForumAuthModal({ open, onClose }: ForumAuthModalProps) {
 
       if (restored) {
         setDisplayNameInput(restored);
-        // Auto-save the display name so it persists even if they skip password setup
         setDisplayName(restored).catch(() => {});
         try {
           sessionStorage.removeItem("forum-reg-display-name");
@@ -153,18 +149,39 @@ export function ForumAuthModal({ open, onClose }: ForumAuthModalProps) {
 
   if (!open) return null;
 
+  // ---- 注册流程：发送验证码 ----
   async function handleSendCode() {
+    if (!displayNameInput.trim()) {
+      setError("请输入昵称。");
+      return;
+    }
+    if (password.length < 8) {
+      setError("密码至少需要 8 位。");
+      return;
+    }
+    if (!/[A-Z]/.test(password)) {
+      setError("密码需包含至少一个大写字母。");
+      return;
+    }
+    if (!/[0-9]/.test(password)) {
+      setError("密码需包含至少一个数字。");
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError("两次输入的密码不一致。");
+      return;
+    }
+
     setLoading(true);
     setError("");
     setNotice("");
 
-    // Persist display name across the email verification round-trip
-    if (displayNameInput.trim()) {
-      try {
-        sessionStorage.setItem("forum-reg-display-name", displayNameInput.trim());
-      } catch {
-        /* sessionStorage may be unavailable */
-      }
+    // Persist display name and password for after OTP verification
+    try {
+      sessionStorage.setItem("forum-reg-display-name", displayNameInput.trim());
+      sessionStorage.setItem("forum-reg-password", password);
+    } catch {
+      /* sessionStorage may be unavailable */
     }
 
     const result = await sendEmailCode(normalizedEmail);
@@ -176,27 +193,59 @@ export function ForumAuthModal({ open, onClose }: ForumAuthModalProps) {
     }
 
     setOtpSent(true);
-    setNotice("验证码已发送！请查收邮箱（别忘了检查垃圾邮件箱），输入邮件中的 6 位验证码。");
+    setNotice("验证码已发送！请查收邮箱（别忘了检查垃圾邮件箱）。");
   }
 
-  async function handleVerifyOtp() {
+  // ---- 注册流程：验证验证码 + 设置密码 ----
+  async function handleVerifyAndRegister() {
     setLoading(true);
     setError("");
     setNotice("");
 
+    // Step 1: Verify OTP
     const result = await verifyOtp(normalizedEmail, otpCode.trim());
-    setLoading(false);
-
     if (!result.ok) {
+      setLoading(false);
       setError(result.error ?? "验证失败，请检查验证码是否正确。");
       return;
     }
 
+    // Step 2: Get stored password and display name
+    let storedPassword = "";
+    let storedName = "";
+    try {
+      storedPassword = sessionStorage.getItem("forum-reg-password") ?? "";
+      storedName = sessionStorage.getItem("forum-reg-display-name") ?? "";
+      sessionStorage.removeItem("forum-reg-password");
+      sessionStorage.removeItem("forum-reg-display-name");
+    } catch {
+      /* unavailable */
+    }
+
+    // Step 3: Set password and display name
+    if (storedPassword) {
+      const setResult = await setPassword(storedPassword, storedName || undefined);
+      if (!setResult.ok) {
+        setLoading(false);
+        setError(setResult.error ?? "注册成功但设置密码失败，请在个人设置中重新设置。");
+        return;
+      }
+    }
+
+    if (storedName) {
+      await setDisplayName(storedName).catch(() => {});
+    }
+
+    setLoading(false);
     setOtpSent(false);
     setOtpCode("");
-    setNotice("✓ 邮箱验证成功！请设置密码完成注册。");
+    setPasswordValue("");
+    setConfirmPassword("");
+    setDisplayNameInput("");
+    setNotice("✓ 注册成功！欢迎来到 Timix观察站。");
   }
 
+  // ---- 登录流程 ----
   async function handlePasswordLogin() {
     setLoading(true);
     setError("");
@@ -262,6 +311,28 @@ export function ForumAuthModal({ open, onClose }: ForumAuthModalProps) {
     }
   }
 
+  // ---- 切换模式时重置状态 ----
+  function switchToLogin() {
+    setMode("login");
+    setError("");
+    setNotice("");
+    setOtpSent(false);
+    setOtpCode("");
+    setDisplayNameInput("");
+    setPasswordValue("");
+    setConfirmPassword("");
+  }
+
+  function switchToRegister() {
+    setMode("register");
+    setError("");
+    setNotice("");
+    setOtpSent(false);
+    setOtpCode("");
+    setPasswordValue("");
+    setConfirmPassword("");
+  }
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm"
@@ -293,6 +364,9 @@ export function ForumAuthModal({ open, onClose }: ForumAuthModalProps) {
             正在读取登录状态...
           </p>
         ) : isConnected ? (
+          /* ============================================
+             已登录状态：个人资料 + 修改昵称 + 头像
+             ============================================ */
           <div className="space-y-5">
             <div>
               <h2 className="text-lg font-bold text-[var(--color-ink)]">
@@ -385,45 +459,15 @@ export function ForumAuthModal({ open, onClose }: ForumAuthModalProps) {
                     type="button"
                   >
                     {avatarUploading ? (
-                      <svg
-                        className="h-5 w-5 animate-spin text-[var(--color-muted)]"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        />
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                        />
+                      <svg className="h-5 w-5 animate-spin text-[var(--color-muted)]" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                       </svg>
                     ) : avatarUrl ? (
-                      <img
-                        alt="头像"
-                        className="h-full w-full object-cover"
-                        src={avatarUrl}
-                      />
+                      <img alt="头像" className="h-full w-full object-cover" src={avatarUrl} />
                     ) : (
-                      <svg
-                        aria-hidden="true"
-                        className="h-5 w-5 text-[var(--color-muted)]"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14c-5.333 0-8 2.667-8 4v2h16v-2c0-1.333-2.667-4-8-4z"
-                          stroke="currentColor"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="1.8"
-                        />
+                      <svg aria-hidden="true" className="h-5 w-5 text-[var(--color-muted)]" fill="none" viewBox="0 0 24 24">
+                        <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14c-5.333 0-8 2.667-8 4v2h16v-2c0-1.333-2.667-4-8-4z" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" />
                       </svg>
                     )}
                   </button>
@@ -490,68 +534,65 @@ export function ForumAuthModal({ open, onClose }: ForumAuthModalProps) {
             )}
           </div>
         ) : (
+          /* ============================================
+             未登录状态：登录 / 注册
+             ============================================ */
           <div className="space-y-5">
             <div>
               <h2 className="text-lg font-bold text-[var(--color-ink)]">
-                论坛登录
+                {mode === "login" ? "登录" : "注册"}
               </h2>
-              {mode === "password" ? (
-                <p className="mt-1.5 text-xs text-[var(--color-muted)]">
-                  已设置密码？直接登录
-                </p>
-              ) : (
-                <p className="mt-1.5 text-xs text-[var(--color-muted)]">
-                  首次使用？输入邮箱获取验证链接
-                </p>
-              )}
+              <p className="mt-1.5 text-xs text-[var(--color-muted)]">
+                {mode === "login"
+                  ? "已设置密码？直接登录"
+                  : otpSent
+                    ? "验证码已发送，请查收邮箱"
+                    : "首次使用？填写信息注册账号"
+                }
+              </p>
             </div>
 
+            {/* 登录 / 注册 标签切换 */}
             <div className="grid grid-cols-2 rounded-full bg-[var(--color-soft)] p-1">
               <button
                 className={`rounded-full px-4 py-2 text-sm font-bold transition ${
-                  mode === "password"
+                  mode === "login"
                     ? "bg-[var(--color-panel)] text-[var(--color-ink)] shadow-sm"
                     : "text-[var(--color-muted)] hover:text-[var(--color-ink)]"
                 }`}
-                onClick={() => {
-                  setMode("password");
-                  setError("");
-                  setNotice("");
-                }}
+                onClick={switchToLogin}
                 type="button"
               >
-                密码登录
+                登录
               </button>
               <button
                 className={`rounded-full px-4 py-2 text-sm font-bold transition ${
-                  mode === "code"
+                  mode === "register"
                     ? "bg-[var(--color-panel)] text-[var(--color-ink)] shadow-sm"
                     : "text-[var(--color-muted)] hover:text-[var(--color-ink)]"
                 }`}
-                onClick={() => {
-                  setMode("code");
-                  setError("");
-                  setNotice("");
-                }}
+                onClick={switchToRegister}
                 type="button"
               >
-                邮箱验证
+                注册
               </button>
             </div>
 
             <div className="space-y-3">
+              {/* 邮箱 */}
               <input
                 className="w-full rounded-[12px] border border-[var(--color-line)] bg-[var(--color-input)] px-4 py-3 text-sm outline-none transition focus:border-[var(--color-brand)]"
                 onChange={(event) => {
                   setEmail(event.target.value);
                   setError("");
                 }}
-                placeholder="you@example.com"
+                placeholder="邮箱地址"
                 type="email"
                 value={email}
               />
 
-              {mode === "password" ? (
+              {mode === "login" ? (
+                /* ---- 登录模式 ---- */
                 <>
                   <input
                     className="w-full rounded-[12px] border border-[var(--color-line)] bg-[var(--color-input)] px-4 py-3 text-sm outline-none transition focus:border-[var(--color-brand)]"
@@ -564,29 +605,74 @@ export function ForumAuthModal({ open, onClose }: ForumAuthModalProps) {
                     value={password}
                   />
                   <p className="text-xs text-[var(--color-muted)]">
-                    首次使用？当前需要先走{" "}
+                    首次使用？{" "}
                     <button
                       className="text-[var(--color-brand)] underline"
-                      onClick={() => {
-                        setMode("code");
-                        setError("");
-                        setNotice("");
-                        setOtpSent(false);
-                        setOtpCode("");
-                      }}
+                      onClick={switchToRegister}
                       type="button"
                     >
-                      邮箱验证注册
-                    </button>{" "}
-                    ，完成邮箱验证后再回来设置密码
+                      点击注册
+                    </button>
                   </p>
                 </>
               ) : (
+                /* ---- 注册模式 ---- */
                 <>
-                  {otpSent ? (
+                  {!otpSent ? (
+                    /* 第一步：填写注册信息 */
                     <>
                       <input
                         className="w-full rounded-[12px] border border-[var(--color-line)] bg-[var(--color-input)] px-4 py-3 text-sm outline-none transition focus:border-[var(--color-brand)]"
+                        onChange={(event) => {
+                          setDisplayNameInput(event.target.value);
+                          setError("");
+                        }}
+                        placeholder="你的昵称（会显示在帖子旁边）"
+                        type="text"
+                        value={displayNameInput}
+                        maxLength={80}
+                      />
+                      <input
+                        className="w-full rounded-[12px] border border-[var(--color-line)] bg-[var(--color-input)] px-4 py-3 text-sm outline-none transition focus:border-[var(--color-brand)]"
+                        onChange={(event) => {
+                          setPasswordValue(event.target.value);
+                          setError("");
+                        }}
+                        placeholder="设置密码，8位以上，含大写字母和数字"
+                        type="password"
+                        value={password}
+                      />
+                      <input
+                        className="w-full rounded-[12px] border border-[var(--color-line)] bg-[var(--color-input)] px-4 py-3 text-sm outline-none transition focus:border-[var(--color-brand)]"
+                        onChange={(event) => {
+                          setConfirmPassword(event.target.value);
+                          setError("");
+                        }}
+                        placeholder="再次输入密码"
+                        type="password"
+                        value={confirmPassword}
+                      />
+                      <p className="text-xs text-[var(--color-muted)]">
+                        已有账号？{" "}
+                        <button
+                          className="text-[var(--color-brand)] underline"
+                          onClick={switchToLogin}
+                          type="button"
+                        >
+                          直接登录
+                        </button>
+                      </p>
+                    </>
+                  ) : (
+                    /* 第二步：输入验证码 */
+                    <>
+                      <div className="rounded-[12px] border border-[var(--color-line)] bg-[var(--color-soft)] px-4 py-3">
+                        <p className="text-xs text-[var(--color-muted)]">注册信息</p>
+                        <p className="text-sm font-medium text-[var(--color-ink)]">{normalizedEmail}</p>
+                        <p className="text-xs text-[var(--color-muted)]">昵称：{displayNameInput || "未填写"}</p>
+                      </div>
+                      <input
+                        className="w-full rounded-[12px] border border-[var(--color-line)] bg-[var(--color-input)] px-4 py-3 text-center text-lg tracking-[0.5em] outline-none transition focus:border-[var(--color-brand)]"
                         onChange={(event) => {
                           setOtpCode(event.target.value.replace(/\D/g, "").slice(0, 6));
                           setError("");
@@ -596,6 +682,7 @@ export function ForumAuthModal({ open, onClose }: ForumAuthModalProps) {
                         inputMode="numeric"
                         maxLength={6}
                         value={otpCode}
+                        autoFocus
                       />
                       <div className="flex items-center justify-between">
                         <button
@@ -608,7 +695,7 @@ export function ForumAuthModal({ open, onClose }: ForumAuthModalProps) {
                           }}
                           type="button"
                         >
-                          ← 重新输入邮箱
+                          ← 返回修改信息
                         </button>
                         <button
                           className="text-xs text-[var(--color-brand)] hover:underline"
@@ -620,22 +707,6 @@ export function ForumAuthModal({ open, onClose }: ForumAuthModalProps) {
                         </button>
                       </div>
                     </>
-                  ) : (
-                    <p className="text-xs text-[var(--color-muted)]">
-                      已注册过？点击{" "}
-                      <button
-                        className="text-[var(--color-brand)] underline"
-                        onClick={() => {
-                          setMode("password");
-                          setError("");
-                          setNotice("");
-                        }}
-                        type="button"
-                      >
-                        密码登录
-                      </button>{" "}
-                      直接登录
-                    </p>
                   )}
                 </>
               )}
@@ -656,11 +727,17 @@ export function ForumAuthModal({ open, onClose }: ForumAuthModalProps) {
               </button>
               <button
                 className="rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-bold text-[var(--color-on-brand)] transition hover:bg-[var(--color-brand-deep)] disabled:opacity-60"
-                disabled={loading || !normalizedEmail || (mode === "password" && !password) || (mode === "code" && otpSent && otpCode.length < 6)}
-                onClick={mode === "password" ? handlePasswordLogin : otpSent ? handleVerifyOtp : handleSendCode}
+                disabled={
+                  loading ||
+                  !normalizedEmail ||
+                  (mode === "login" && !password) ||
+                  (mode === "register" && !otpSent && (!displayNameInput.trim() || password.length < 8 || !confirmPassword)) ||
+                  (mode === "register" && otpSent && otpCode.length < 6)
+                }
+                onClick={mode === "login" ? handlePasswordLogin : otpSent ? handleVerifyAndRegister : handleSendCode}
                 type="button"
               >
-                {loading ? "处理中..." : mode === "password" ? "登录" : otpSent ? "验证" : "发送验证码"}
+                {loading ? "处理中..." : mode === "login" ? "登录" : otpSent ? "验证并注册" : "发送验证码"}
               </button>
             </div>
           </div>
