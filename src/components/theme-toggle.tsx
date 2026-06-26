@@ -69,5 +69,4 @@ export function ThemeToggleInline() {
   );
 }
 
-/** @deprecated Use ThemeToggleInline instead */
 export const ThemeToggle = ThemeToggleInline;

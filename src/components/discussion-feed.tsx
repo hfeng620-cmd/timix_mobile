@@ -798,6 +798,31 @@ export function DiscussionFeed({
             <textarea
               className="min-h-28 w-full resize-none bg-transparent text-base leading-7 outline-none"
               onChange={(event) => setBody(event.target.value)}
+              onPaste={async (e) => {
+                const items = e.clipboardData?.items;
+                if (!items) return;
+                for (const item of items) {
+                  if (item.type.startsWith("image/")) {
+                    e.preventDefault();
+                    const file = item.getAsFile();
+                    if (!file) return;
+                    if (file.size > 5 * 1024 * 1024) { setStatus("图片不能超过 5MB。"); return; }
+                    setUploadingImage(true);
+                    setStatus("图片上传中...");
+                    try {
+                      const url = await uploadForumImage(file);
+                      const textarea = e.currentTarget;
+                      const start = textarea.selectionStart ?? body.length;
+                      const before = body.slice(0, start);
+                      const after = body.slice(start);
+                      setBody((before + `\n![图片](${url})\n` + after).trim());
+                      setStatus("图片已插入。");
+                    } catch { setStatus("图片上传失败。"); }
+                    finally { setUploadingImage(false); }
+                    return;
+                  }
+                }
+              }}
               placeholder="例如：虎虎这两天试用额度还在吗？Aether 高峰期稳不稳？杂货铺 Plus / Pro 的口径最近有没有变化？"
               value={body}
             />
@@ -837,6 +862,7 @@ export function DiscussionFeed({
                 >
                   {uploadingImage ? "上传中..." : "📷 插图"}
                 </button>
+                <span className="text-[11px] text-[var(--color-muted)]">支持粘贴图片 (Ctrl+V)</span>
                 <span aria-live="polite" className="text-xs text-[var(--color-muted)]">{status}</span>
               </div>
               <button
