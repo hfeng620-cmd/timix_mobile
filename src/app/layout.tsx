@@ -57,6 +57,7 @@ export default function RootLayout({
     <html
       lang="zh-CN"
       data-theme="blue"
+      data-theme-mode="signal"
       data-scroll-behavior="smooth"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >

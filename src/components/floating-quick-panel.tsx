@@ -44,7 +44,7 @@ export function FloatingQuickPanel() {
           <div className="border-b border-[var(--color-line)] pb-3">
             <p className="text-sm font-bold text-[var(--color-ink)]">观察站导航台</p>
             <p className="mt-1 text-xs leading-5 text-[var(--color-muted)]">
-              常用页面、外部协作入口和主题切换都放在这里。
+              常用页面、外部协作入口、主题和配色都放在这里。
             </p>
           </div>
 
