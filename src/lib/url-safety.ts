@@ -1,4 +1,5 @@
 const SAFE_EXTERNAL_PROTOCOLS = new Set(["http:", "https:"]);
+const SAFE_IMAGE_PROTOCOLS = new Set(["http:", "https:"]);
 
 export function getSafeExternalHref(value: string | null | undefined): string | null {
   const trimmed = value?.trim();
@@ -25,4 +26,21 @@ export function normalizeEditableExternalHref(value: string | null | undefined):
   }
 
   return safeHref;
+}
+
+export function getSafeImageSrc(value: string | null | undefined): string | null {
+  const trimmed = value?.trim();
+  if (!trimmed) return null;
+
+  try {
+    const parsed = new URL(trimmed);
+    if (!SAFE_IMAGE_PROTOCOLS.has(parsed.protocol)) {
+      return null;
+    }
+    parsed.username = "";
+    parsed.password = "";
+    return parsed.toString();
+  } catch {
+    return null;
+  }
 }

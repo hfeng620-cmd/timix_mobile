@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 
 import {
   createDiscussionPost,
@@ -20,6 +20,7 @@ import {
   type SearchResult,
 } from "@/lib/discussion-storage";
 import { useForumAuth } from "@/lib/forum-auth";
+import { getSafeImageSrc } from "@/lib/url-safety";
 import { UserProfileCard } from "@/components/user-profile-card";
 
 type DiscussionFeedProps = {
@@ -100,13 +101,19 @@ function renderBodyContent(text: string, highlightAuthor?: string) {
     const imageMatch = part.match(/^!\[([^\]]*)\]\(([^)]+)\)$/);
     if (imageMatch) {
       const [, alt, src] = imageMatch;
+      const safeSrc = getSafeImageSrc(src);
+      if (!safeSrc) {
+        return part;
+      }
+
       return (
         <img
           key={i}
           alt={alt || "帖子图片"}
           className="my-3 max-h-96 w-auto max-w-full rounded-xl border border-[var(--color-line)] object-cover"
           loading="lazy"
-          src={src}
+          referrerPolicy="no-referrer"
+          src={safeSrc}
         />
       );
     }
@@ -223,6 +230,12 @@ function ActionButton({
   );
 }
 
+function createFeedItemStyle(index: number): CSSProperties {
+  return {
+    animationDelay: `${Math.min(index, 8) * 45}ms`,
+  };
+}
+
 export function DiscussionFeed({
   compact = false,
   title = "讨论",
@@ -264,7 +277,7 @@ export function DiscussionFeed({
   const [pinSaving, setPinSaving] = useState(false);
   const [activeProfileCard, setActiveProfileCard] = useState<{ userId: string; position: { x: number; y: number } } | null>(null);
   const sectionRef = useRef<HTMLElement | null>(null);
-  const [isSectionRevealed, setIsSectionRevealed] = useState(true);
+  const [isSectionRevealed, setIsSectionRevealed] = useState(false);
 
   // ── Server-side search + pagination state ──
   const [searchResult, setSearchResult] = useState<SearchResult | null>(null);
@@ -537,8 +550,6 @@ export function DiscussionFeed({
 
     const node = sectionRef.current;
     if (!node) {
-      // No ref yet, reveal immediately
-      setIsSectionRevealed(true);
       return;
     }
 
@@ -564,7 +575,7 @@ export function DiscussionFeed({
       observer.disconnect();
       clearTimeout(fallbackTimer);
     };
-  }, []);
+  }, [loading]);
 
   async function handleSubmitPost() {
     if (!isConnected) {
@@ -777,10 +788,15 @@ export function DiscussionFeed({
 
   function handleAvatarClick(userId: string | undefined, event: React.MouseEvent) {
     if (!userId) return;
+    event.preventDefault();
+    event.stopPropagation();
     const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+    const isContextMenu = event.type === "contextmenu";
     setActiveProfileCard({
       userId,
-      position: { x: rect.left, y: rect.bottom + 8 },
+      position: isContextMenu
+        ? { x: event.clientX, y: event.clientY }
+        : { x: rect.left, y: rect.bottom + 8 },
     });
   }
 
@@ -1074,7 +1090,10 @@ export function DiscussionFeed({
 
       <div className="grid gap-4 bg-[var(--color-soft)]/35 p-3 sm:p-5 xl:grid-cols-2">
         {visiblePosts.length === 0 ? (
-          <div className="rounded-[22px] border border-[var(--color-line)] bg-[var(--color-panel)] px-5 py-10 text-center sm:px-6 xl:col-span-2">
+          <div
+            className="surface-in overflow-hidden rounded-[24px] border border-[var(--color-line)] bg-[linear-gradient(135deg,var(--color-panel),var(--color-brand-soft)_62%,var(--color-panel))] px-5 py-8 text-center shadow-[0_18px_54px_rgba(15,23,42,0.08)] sm:px-6 sm:py-10 xl:col-span-2"
+            style={createFeedItemStyle(0)}
+          >
             {bookmarksOnly ? (
               <>
                 <p className="text-base font-bold text-[var(--color-ink)]">还没有收藏过帖子。</p>
@@ -1091,6 +1110,21 @@ export function DiscussionFeed({
               <>
                 <p className="text-base font-bold text-[var(--color-ink)]">没有匹配的讨论。</p>
                 <p className="mt-2 text-sm text-[var(--color-muted)]">换个关键词，或者清空筛选后查看全部工作流。</p>
+                <div className="mt-4 flex flex-wrap justify-center gap-2">
+                  <button
+                    className="rounded-full bg-[var(--color-brand)] px-4 py-2 text-sm font-bold text-[var(--color-on-brand)] transition hover:bg-[var(--color-brand-deep)]"
+                    onClick={() => setSearchQuery("")}
+                    type="button"
+                  >
+                    清空搜索
+                  </button>
+                  <a
+                    className="rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] px-4 py-2 text-sm font-bold text-[var(--color-ink)] transition hover:border-[var(--color-brand)] hover:text-[var(--color-brand-deep)]"
+                    href={stationFilter ? "/community#community-composer" : "#community-composer"}
+                  >
+                    发起新讨论
+                  </a>
+                </div>
               </>
             ) : selectedTag ? (
               <>
@@ -1105,14 +1139,45 @@ export function DiscussionFeed({
               </>
             ) : (
               <>
-                <p className="text-base font-bold text-[var(--color-ink)]">还没有讨论。</p>
-                <p className="mt-2 text-sm text-[var(--color-muted)]">第一条短反馈发出后，这里就会开始形成可跟进的讨论流。</p>
+                <span className="inline-flex rounded-full bg-[var(--color-panel)] px-3 py-1 text-xs font-black uppercase tracking-[0.18em] text-[var(--color-brand-deep)] ring-1 ring-[var(--color-line)]">
+                  Discussion Ready
+                </span>
+                <p className="mt-4 text-xl font-black tracking-tight text-[var(--color-ink)]">讨论区已经准备好，先从第一条反馈开始。</p>
+                <p className="mx-auto mt-2 max-w-xl text-sm leading-7 text-[var(--color-muted)]">
+                  可以发价格变化、试用线索、模型口径或避坑记录；内容会直接进入下面的讨论流，方便后续回复和收藏。
+                </p>
+                <div className="mt-5 grid gap-2 sm:grid-cols-3">
+                  {["短反馈", "可评论", "可收藏"].map((item) => (
+                    <div
+                      key={item}
+                      className="rounded-[18px] border border-[var(--color-line)] bg-[color-mix(in_srgb,var(--color-panel)_76%,transparent)] px-3 py-3 text-sm font-bold text-[var(--color-ink)]"
+                    >
+                      {item}
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-5 flex flex-wrap justify-center gap-2">
+                  <a
+                    className="rounded-full bg-[var(--color-brand)] px-5 py-2.5 text-sm font-bold text-[var(--color-on-brand)] shadow-[0_12px_24px_var(--color-panel-glow)] transition hover:bg-[var(--color-brand-deep)]"
+                    href={stationFilter ? "/community#community-composer" : "#community-composer"}
+                  >
+                    去发第一条
+                  </a>
+                  <a
+                    className="rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] px-5 py-2.5 text-sm font-bold text-[var(--color-ink)] transition hover:border-[var(--color-brand)] hover:text-[var(--color-brand-deep)]"
+                    href="https://github.com/hfeng620-cmd/timin_api_test_and_forum/discussions"
+                    rel="noopener noreferrer"
+                    target="_blank"
+                  >
+                    去 GitHub Discussions
+                  </a>
+                </div>
               </>
             )}
           </div>
         ) : null}
 
-        {visiblePosts.map((post) => {
+        {visiblePosts.map((post, index) => {
           const expanded = expandedPostId === post.issueNumber;
           const comments = commentsMap[post.issueNumber];
           const isBookmarked = bookmarkedIds.has(post.issueNumber);
@@ -1120,9 +1185,11 @@ export function DiscussionFeed({
           const replyQuote = replyQuotes[post.issueNumber];
 
           return (
-            <article id={post.issueNumber} key={post.issueNumber} className={`card-lift rounded-[24px] border border-[var(--color-line)] bg-[var(--color-panel)] px-4 py-4 transition duration-200 hover:border-[var(--color-brand)] hover:bg-[linear-gradient(180deg,var(--color-panel),var(--color-soft))] sm:px-5 ${
+            <article id={post.issueNumber} key={post.issueNumber} className={`surface-in card-lift rounded-[24px] border border-[var(--color-line)] bg-[var(--color-panel)] px-4 py-4 transition duration-200 hover:border-[var(--color-brand)] hover:bg-[linear-gradient(180deg,var(--color-panel),var(--color-soft))] sm:px-5 ${
                 post.is_pinned ? "bg-[linear-gradient(180deg,var(--color-brand-soft),var(--color-panel))] shadow-[0_16px_44px_var(--color-panel-glow)]" : ""
-              } ${expanded || stationFilter ? "xl:col-span-2" : ""}`}>
+              } ${expanded || stationFilter ? "xl:col-span-2" : ""}`}
+              style={createFeedItemStyle(index)}
+            >
               <div className="flex items-start gap-3 sm:gap-4">
                 {post.authorAvatarUrl ? (
                   <img

@@ -22,6 +22,7 @@ type AtmosphereParticle = {
 };
 
 type RelayNetworkCanvasProps = {
+  active?: boolean;
   className?: string;
 };
 
@@ -171,7 +172,7 @@ function createParticles(width: number, height: number, profile: SceneProfile): 
   }));
 }
 
-export function RelayNetworkCanvas({ className }: RelayNetworkCanvasProps) {
+export function RelayNetworkCanvas({ active = true, className }: RelayNetworkCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
@@ -520,7 +521,7 @@ export function RelayNetworkCanvas({ className }: RelayNetworkCanvasProps) {
       context.restore();
     };
 
-    const shouldAnimate = () => !reduceMotion && isVisible && isInViewport;
+    const shouldAnimate = () => active && !reduceMotion && isVisible && isInViewport;
 
     const stopAnimation = () => {
       if (frameId) {
@@ -639,7 +640,7 @@ export function RelayNetworkCanvas({ className }: RelayNetworkCanvasProps) {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       mediaQuery.removeEventListener("change", handleMotionChange);
     };
-  }, []);
+  }, [active]);
 
   return (
     <div className={`relay-network-canvas pointer-events-none absolute inset-0 overflow-hidden ${className ?? ""}`}>

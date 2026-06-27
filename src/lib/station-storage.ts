@@ -243,14 +243,27 @@ export async function createStation(input: {
 }
 
 /**
- * Update a station. Compares each incoming field against the current row;
- * for every changed field a station_edits record is inserted.
+ * Check if current user is admin or site owner.
+ */
+async function isCurrentUserAdmin(): Promise<boolean> {
+  const supabase = getSupabaseClient();
+  const { data: userData } = await supabase.auth.getUser();
+  if (!userData.user) return false;
+
+  const { data } = await supabase.rpc("is_forum_admin", {
+    check_user_id: userData.user.id,
+  });
+  return Boolean(data);
+}
+
+/**
+ * Update a station. Admins update directly, regular users submit for review.
  */
 export async function updateStation(
   id: string,
   updates: Partial<Station>,
   editorName: string,
-): Promise<void> {
+): Promise<{ needsReview: boolean }> {
   if (!isSupabaseConfigured()) {
     throw new Error("Supabase 未配置，无法更新站点。请先配置 Supabase 环境变量。");
   }
@@ -283,21 +296,10 @@ export async function updateStation(
     }
     const editorId = userData.user.id;
 
-    // Write the update row
-    const updateRow = stationToUpdate(normalizedUpdates);
-    if (Object.keys(updateRow).length > 0) {
-      const { error: updateError } = await supabase
-        .from("stations")
-        .update(updateRow)
-        .eq("id", id);
+    // Check if user is admin
+    const isAdmin = await isCurrentUserAdmin();
 
-      if (updateError) {
-        console.error("[updateStation] Update error:", updateError);
-        throw new Error(`更新站点失败: ${updateError.message}`);
-      }
-    }
-
-    // Record edits for each changed field
+    // Build edit records for each changed field
     const editInserts: Array<{
       station_id: string;
       editor_id: string;
@@ -308,19 +310,13 @@ export async function updateStation(
     }> = [];
 
     for (const [camelKey, newVal] of Object.entries(normalizedUpdates)) {
-      if (camelKey === "id") continue; // never edit id
+      if (camelKey === "id") continue;
 
       const snakeKey = toSnakeCase(camelKey);
       const oldVal = currentRow[snakeKey];
 
-      const oldStr =
-        oldVal === null || oldVal === undefined
-          ? ""
-          : String(oldVal);
-      const newStr =
-        newVal === null || newVal === undefined
-          ? ""
-          : String(newVal);
+      const oldStr = oldVal === null || oldVal === undefined ? "" : String(oldVal);
+      const newStr = newVal === null || newVal === undefined ? "" : String(newVal);
 
       if (oldStr !== newStr) {
         editInserts.push({
@@ -334,20 +330,176 @@ export async function updateStation(
       }
     }
 
-    if (editInserts.length > 0) {
+    if (editInserts.length === 0) {
+      return { needsReview: false }; // No changes
+    }
+
+    if (isAdmin) {
+      // Admin: update directly
+      const updateRow = stationToUpdate(normalizedUpdates);
+      if (Object.keys(updateRow).length > 0) {
+        const { error: updateError } = await supabase
+          .from("stations")
+          .update(updateRow)
+          .eq("id", id);
+
+        if (updateError) {
+          console.error("[updateStation] Update error:", updateError);
+          throw new Error(`更新站点失败: ${updateError.message}`);
+        }
+      }
+
+      // Record edits
       const { error: editError } = await supabase
         .from("station_edits")
         .insert(editInserts);
 
       if (editError) {
         console.error("[updateStation] Edit insert error:", editError);
-        throw new Error(`记录编辑历史失败: ${editError.message}`);
       }
+
+      return { needsReview: false };
+    } else {
+      // Regular user: submit for review
+      const pendingInserts = editInserts.map((edit) => ({
+        ...edit,
+        status: "pending",
+      }));
+
+      const { error: pendingError } = await supabase
+        .from("station_pending_edits")
+        .insert(pendingInserts);
+
+      if (pendingError) {
+        console.error("[updateStation] Pending insert error:", pendingError);
+        throw new Error(`提交审核失败: ${pendingError.message}`);
+      }
+
+      return { needsReview: true };
     }
   } catch (e) {
     console.error("[updateStation] Exception:", e);
     throw e instanceof Error ? e : new Error("更新站点失败，请稍后重试。");
   }
+}
+
+/**
+ * Load pending edits for admin review.
+ */
+export async function loadPendingEdits(): Promise<Array<{
+  id: string;
+  stationId: string;
+  stationName: string;
+  editorName: string;
+  fieldName: string;
+  oldValue: string;
+  newValue: string;
+  createdAt: string;
+}>> {
+  if (!isSupabaseConfigured()) return [];
+
+  try {
+    const { data, error } = await getSupabaseClient()
+      .from("station_pending_edits")
+      .select(`
+        id, station_id, editor_name, field_name, old_value, new_value, created_at,
+        stations(name)
+      `)
+      .eq("status", "pending")
+      .order("created_at", { ascending: false })
+      .limit(100);
+
+    if (error) throw error;
+
+    return (data ?? []).map((row: Record<string, unknown>) => {
+      const station = row.stations as { name?: string } | null;
+      return {
+        id: row.id as string,
+        stationId: row.station_id as string,
+        stationName: station?.name ?? "未知站点",
+        editorName: row.editor_name as string,
+        fieldName: row.field_name as string,
+        oldValue: row.old_value as string,
+        newValue: row.new_value as string,
+        createdAt: row.created_at as string,
+      };
+    });
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Approve a pending edit - apply it to the station.
+ */
+export async function approvePendingEdit(editId: string): Promise<void> {
+  const supabase = getSupabaseClient();
+
+  // Get the pending edit
+  const { data: edit, error: fetchError } = await supabase
+    .from("station_pending_edits")
+    .select("*")
+    .eq("id", editId)
+    .single();
+
+  if (fetchError || !edit) {
+    throw new Error("找不到待审核的编辑记录。");
+  }
+
+  const editRow = edit as Record<string, unknown>;
+
+  // Apply the update to the station
+  const fieldName = editRow.field_name as string;
+  const newValue = editRow.new_value as string;
+  const stationId = editRow.station_id as string;
+
+  const { error: updateError } = await supabase
+    .from("stations")
+    .update({ [fieldName]: newValue })
+    .eq("id", stationId);
+
+  if (updateError) {
+    throw new Error(`应用编辑失败: ${updateError.message}`);
+  }
+
+  // Record in station_edits
+  await supabase.from("station_edits").insert({
+    station_id: stationId,
+    editor_id: editRow.editor_id,
+    editor_name: editRow.editor_name,
+    field_name: fieldName,
+    old_value: editRow.old_value,
+    new_value: newValue,
+  });
+
+  // Update pending edit status
+  const { data: userData } = await supabase.auth.getUser();
+  await supabase
+    .from("station_pending_edits")
+    .update({
+      status: "approved",
+      reviewed_by: userData?.user?.id,
+      reviewed_at: new Date().toISOString(),
+    })
+    .eq("id", editId);
+}
+
+/**
+ * Reject a pending edit.
+ */
+export async function rejectPendingEdit(editId: string, note: string = ""): Promise<void> {
+  const supabase = getSupabaseClient();
+  const { data: userData } = await supabase.auth.getUser();
+
+  await supabase
+    .from("station_pending_edits")
+    .update({
+      status: "rejected",
+      admin_note: note,
+      reviewed_by: userData?.user?.id,
+      reviewed_at: new Date().toISOString(),
+    })
+    .eq("id", editId);
 }
 
 /** Delete a station by id. */

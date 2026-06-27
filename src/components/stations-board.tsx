@@ -450,8 +450,12 @@ export function StationsBoard() {
     const editorName = displayName || "匿名用户";
     setSaving(true);
     try {
-      await updateStation(editingId, editForm, editorName);
-      await refreshStations();
+      const result = await updateStation(editingId, editForm, editorName);
+      if (result.needsReview) {
+        alert("已提交审核，管理员审核通过后会生效。");
+      } else {
+        await refreshStations();
+      }
       setEditingId(null);
       setEditForm({});
     } catch (err) {

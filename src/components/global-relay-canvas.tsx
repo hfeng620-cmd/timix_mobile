@@ -4,21 +4,33 @@ import { usePathname } from "next/navigation";
 
 import { RelayNetworkCanvas } from "@/components/relay-network-canvas";
 
-const CANVAS_ROUTES = new Set(["/stations", "/community", "/models", "/guides", "/profile"]);
+const CANVAS_ROUTE_PREFIXES = [
+  ["stations", "/stations"],
+  ["community", "/community"],
+  ["models", "/models"],
+  ["guides", "/guides"],
+  ["profile", "/profile"],
+] as const;
+
+function getCanvasRoute(pathname: string) {
+  return (
+    CANVAS_ROUTE_PREFIXES.find(([, route]) => pathname === route || pathname.startsWith(`${route}/`))?.[0] ?? null
+  );
+}
 
 export function GlobalRelayCanvas() {
   const pathname = usePathname();
-  const enabled = CANVAS_ROUTES.has(pathname);
-
-  if (!enabled) return null;
+  const canvasRoute = getCanvasRoute(pathname);
+  const enabled = canvasRoute !== null;
 
   return (
     <div
       aria-hidden="true"
-      className="pointer-events-none fixed inset-0 z-[1] overflow-hidden"
+      className={`global-relay-canvas ${enabled ? "global-relay-canvas--active" : ""}`}
       data-selection-comments="off"
+      data-relay-route={canvasRoute ?? "idle"}
     >
-      <RelayNetworkCanvas className="opacity-45" />
+      <RelayNetworkCanvas active={enabled} className="global-relay-canvas__scene" />
     </div>
   );
 }

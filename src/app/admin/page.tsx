@@ -24,6 +24,11 @@ import {
   getForumStats,
   type ForumStats,
 } from "@/lib/discussion-storage";
+import {
+  loadPendingEdits,
+  approvePendingEdit,
+  rejectPendingEdit,
+} from "@/lib/station-storage";
 
 type AdminTab = "posts" | "stations" | "import" | "news" | "admins" | "users";
 
@@ -146,6 +151,14 @@ export default function AdminPage() {
   const [newAdminEmail, setNewAdminEmail] = useState("");
   const [addAdminLoading, setAddAdminLoading] = useState(false);
   const [addAdminStatus, setAddAdminStatus] = useState("");
+
+  // ---- Pending station edits state ----
+  const [pendingEdits, setPendingEdits] = useState<
+    { id: string; stationId: string; stationName: string; editorName: string; fieldName: string; oldValue: string; newValue: string; createdAt: string }[]
+  >([]);
+  const [pendingEditsLoading, setPendingEditsLoading] = useState(false);
+  const [pendingEditsStatus, setPendingEditsStatus] = useState("");
+  const [processingEditId, setProcessingEditId] = useState<string | null>(null);
 
   // ---- User management state ----
   const [userList, setUserList] = useState<
@@ -437,6 +450,53 @@ export default function AdminPage() {
     if (!adminOk) return;
     void refreshApprovedNews();
   }, [adminOk, refreshApprovedNews]);
+
+  // ---- Load pending station edits ----
+  const refreshPendingEdits = useCallback(async () => {
+    if (!adminOk) return;
+    setPendingEditsLoading(true);
+    try {
+      const edits = await loadPendingEdits();
+      setPendingEdits(edits);
+    } catch (error) {
+      setPendingEditsStatus(`加载待审核编辑失败: ${getErrorMessage(error, "请稍后重试。")}`);
+    } finally {
+      setPendingEditsLoading(false);
+    }
+  }, [adminOk]);
+
+  useEffect(() => {
+    if (!adminOk) return;
+    void refreshPendingEdits();
+  }, [adminOk, refreshPendingEdits]);
+
+  async function handleApproveEdit(editId: string) {
+    setProcessingEditId(editId);
+    try {
+      await approvePendingEdit(editId);
+      setPendingEdits((prev) => prev.filter((e) => e.id !== editId));
+      setPendingEditsStatus("已通过审核。");
+      addAudit("通过站点编辑", editId);
+    } catch (error) {
+      setPendingEditsStatus(`审核失败: ${getErrorMessage(error, "请稍后重试。")}`);
+    } finally {
+      setProcessingEditId(null);
+    }
+  }
+
+  async function handleRejectEdit(editId: string) {
+    setProcessingEditId(editId);
+    try {
+      await rejectPendingEdit(editId);
+      setPendingEdits((prev) => prev.filter((e) => e.id !== editId));
+      setPendingEditsStatus("已拒绝该编辑。");
+      addAudit("拒绝站点编辑", editId);
+    } catch (error) {
+      setPendingEditsStatus(`拒绝失败: ${getErrorMessage(error, "请稍后重试。")}`);
+    } finally {
+      setProcessingEditId(null);
+    }
+  }
 
   function addAudit(action: string, target: string) {
     setAuditLog((prev) => [
@@ -1591,6 +1651,74 @@ export default function AdminPage() {
                           <button
                             className="rounded-full bg-[#fff1f2] px-5 py-3 text-sm font-bold text-[#be123c] transition hover:bg-[#ffe4e6]"
                             onClick={() => reviewSubmission(item.id, "rejected")}
+                            type="button"
+                          >
+                            驳回
+                          </button>
+                        </div>
+                      </article>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              {/* Pending station edits */}
+              <div className="rounded-[34px] border border-[var(--color-line)] bg-white p-6 shadow-[0_18px_60px_rgba(13,25,48,0.07)]">
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  <div>
+                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
+                      待审核站点编辑
+                    </p>
+                    <h2 className="mt-2 text-2xl font-black">用户修改站点信息需要审核</h2>
+                  </div>
+                  <span className="rounded-full bg-[var(--color-brand-soft)] px-3 py-1 text-xs font-bold text-[var(--color-brand-deep)]">
+                    {pendingEdits.length} 条待处理
+                  </span>
+                </div>
+                {pendingEditsStatus && (
+                  <p className="mt-2 text-sm text-[var(--color-muted)]">{pendingEditsStatus}</p>
+                )}
+                <div className="mt-5 space-y-4">
+                  {pendingEditsLoading ? (
+                    <p className="text-sm text-[var(--color-muted)]">加载中...</p>
+                  ) : pendingEdits.length === 0 ? (
+                    <div className="rounded-[24px] bg-[var(--color-soft)] px-4 py-5 text-sm leading-7 text-[var(--color-muted)]">
+                      暂无待审核的站点编辑。普通用户编辑站点后会进入这里。
+                    </div>
+                  ) : (
+                    pendingEdits.map((edit) => (
+                      <article
+                        key={edit.id}
+                        className="rounded-[24px] bg-[var(--color-soft)] px-5 py-4"
+                      >
+                        <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--color-muted)]">
+                          <span className="font-bold text-[var(--color-ink)]">{edit.stationName}</span>
+                          <span>·</span>
+                          <span>{edit.editorName} 提交</span>
+                          <span>·</span>
+                          <span>{new Date(edit.createdAt).toLocaleString("zh-CN")}</span>
+                        </div>
+                        <div className="mt-3 rounded-[18px] border border-[var(--color-line)] bg-white px-4 py-3">
+                          <p className="text-xs font-semibold text-[var(--color-muted)]">{edit.fieldName}</p>
+                          <div className="mt-2 flex items-center gap-3 text-sm">
+                            <span className="text-red-500 line-through">{edit.oldValue || "(空)"}</span>
+                            <span>→</span>
+                            <span className="text-green-600 font-semibold">{edit.newValue || "(空)"}</span>
+                          </div>
+                        </div>
+                        <div className="mt-4 flex flex-wrap gap-3">
+                          <button
+                            className="rounded-full bg-[var(--color-brand)] px-4 py-2 text-sm font-bold text-[var(--color-on-brand)] transition hover:bg-[var(--color-brand-deep)] disabled:opacity-50"
+                            disabled={processingEditId === edit.id}
+                            onClick={() => handleApproveEdit(edit.id)}
+                            type="button"
+                          >
+                            {processingEditId === edit.id ? "处理中..." : "通过"}
+                          </button>
+                          <button
+                            className="rounded-full bg-[#fff1f2] px-4 py-2 text-sm font-bold text-[#be123c] transition hover:bg-[#ffe4e6] disabled:opacity-50"
+                            disabled={processingEditId === edit.id}
+                            onClick={() => handleRejectEdit(edit.id)}
                             type="button"
                           >
                             驳回
