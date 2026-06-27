@@ -18,15 +18,26 @@ export function PageTransitionShell({ children }: PageTransitionShellProps) {
     const root = document.documentElement;
     const previousScrollBehavior = root.style.scrollBehavior;
     const previousScrollRestoration = window.history.scrollRestoration;
-    const scrollTop = () => window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    const shouldRestoreTop = !window.location.hash;
+    const scrollTop = () => {
+      if (!shouldRestoreTop) return;
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    };
 
     root.dataset.routeHydrating = "true";
     root.style.scrollBehavior = "auto";
     window.history.scrollRestoration = "manual";
     scrollTop();
 
-    const scrollFrame = window.requestAnimationFrame(scrollTop);
-    const scrollSettleTimer = window.setTimeout(scrollTop, 120);
+    const scrollFrame = window.requestAnimationFrame(() => {
+      scrollTop();
+      window.requestAnimationFrame(scrollTop);
+    });
+    const scrollSettleTimers = [60, 160, 320, 640].map((delay) =>
+      window.setTimeout(scrollTop, delay),
+    );
 
     const clearHydrationFlag = window.setTimeout(() => {
       delete root.dataset.routeHydrating;
@@ -36,7 +47,7 @@ export function PageTransitionShell({ children }: PageTransitionShellProps) {
 
     return () => {
       window.cancelAnimationFrame(scrollFrame);
-      window.clearTimeout(scrollSettleTimer);
+      scrollSettleTimers.forEach((timer) => window.clearTimeout(timer));
       window.clearTimeout(clearHydrationFlag);
       delete root.dataset.routeHydrating;
       root.style.scrollBehavior = previousScrollBehavior;

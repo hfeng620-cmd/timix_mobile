@@ -1172,16 +1172,16 @@ main#main-content .route-stage > main.theme-stage::after {
     radial-gradient(circle at 50% 48%, rgba(var(--theme-glow-rgb), 0.08), transparent 22%);
 }
 
-main#main-content > section,
-main#main-content > .theme-stage > section,
-main#main-content .route-stage > main.theme-stage > section {
+main#main-content > section:not(.absolute):not(.fixed):not(.sticky):not([aria-hidden="true"]),
+main#main-content > .theme-stage > section:not(.absolute):not(.fixed):not(.sticky):not([aria-hidden="true"]),
+main#main-content .route-stage > main.theme-stage > section:not(.absolute):not(.fixed):not(.sticky):not([aria-hidden="true"]) {
   position: relative;
   isolation: isolate;
 }
 
-main#main-content > section::before,
-main#main-content > .theme-stage > section::before,
-main#main-content .route-stage > main.theme-stage > section::before {
+main#main-content > section:not(.absolute):not(.fixed):not(.sticky):not([aria-hidden="true"])::before,
+main#main-content > .theme-stage > section:not(.absolute):not(.fixed):not(.sticky):not([aria-hidden="true"])::before,
+main#main-content .route-stage > main.theme-stage > section:not(.absolute):not(.fixed):not(.sticky):not([aria-hidden="true"])::before {
   content: "";
   position: absolute;
   inset: 0;
@@ -1194,8 +1194,8 @@ main#main-content .route-stage > main.theme-stage > section::before {
     linear-gradient(180deg, rgba(var(--theme-secondary-rgb), 0.03), rgba(var(--theme-secondary-rgb), 0) 42%);
 }
 
-main#main-content > .theme-stage > section::after,
-main#main-content .route-stage > main.theme-stage > section::after {
+main#main-content > .theme-stage > section:not(.absolute):not(.fixed):not(.sticky):not([aria-hidden="true"])::after,
+main#main-content .route-stage > main.theme-stage > section:not(.absolute):not(.fixed):not(.sticky):not([aria-hidden="true"])::after {
   content: "";
   position: absolute;
   inset: auto 8% -42px;
@@ -1207,22 +1207,22 @@ main#main-content .route-stage > main.theme-stage > section::after {
   filter: blur(24px);
 }
 
-main#main-content > .theme-stage > div,
-main#main-content > .theme-stage > article,
-main#main-content > .theme-stage > aside,
-main#main-content .route-stage > main.theme-stage > div,
-main#main-content .route-stage > main.theme-stage > article,
-main#main-content .route-stage > main.theme-stage > aside {
+main#main-content > .theme-stage > div:not(.absolute):not(.fixed):not(.sticky):not([aria-hidden="true"]),
+main#main-content > .theme-stage > article:not(.absolute):not(.fixed):not(.sticky):not([aria-hidden="true"]),
+main#main-content > .theme-stage > aside:not(.absolute):not(.fixed):not(.sticky):not([aria-hidden="true"]),
+main#main-content .route-stage > main.theme-stage > div:not(.absolute):not(.fixed):not(.sticky):not([aria-hidden="true"]),
+main#main-content .route-stage > main.theme-stage > article:not(.absolute):not(.fixed):not(.sticky):not([aria-hidden="true"]),
+main#main-content .route-stage > main.theme-stage > aside:not(.absolute):not(.fixed):not(.sticky):not([aria-hidden="true"]) {
   position: relative;
   isolation: isolate;
 }
 
-main#main-content > .theme-stage > div::before,
-main#main-content > .theme-stage > article::before,
-main#main-content > .theme-stage > aside::before,
-main#main-content .route-stage > main.theme-stage > div::before,
-main#main-content .route-stage > main.theme-stage > article::before,
-main#main-content .route-stage > main.theme-stage > aside::before {
+main#main-content > .theme-stage > div:not(.absolute):not(.fixed):not(.sticky):not([aria-hidden="true"])::before,
+main#main-content > .theme-stage > article:not(.absolute):not(.fixed):not(.sticky):not([aria-hidden="true"])::before,
+main#main-content > .theme-stage > aside:not(.absolute):not(.fixed):not(.sticky):not([aria-hidden="true"])::before,
+main#main-content .route-stage > main.theme-stage > div:not(.absolute):not(.fixed):not(.sticky):not([aria-hidden="true"])::before,
+main#main-content .route-stage > main.theme-stage > article:not(.absolute):not(.fixed):not(.sticky):not([aria-hidden="true"])::before,
+main#main-content .route-stage > main.theme-stage > aside:not(.absolute):not(.fixed):not(.sticky):not([aria-hidden="true"])::before {
   content: "";
   position: absolute;
   inset: 0;
@@ -1378,6 +1378,18 @@ button[aria-label="Open Next.js Dev Tools"] {
   transform: none !important;
   filter: none !important;
   transition: none !important;
+}
+
+.route-stage--enter > [data-route-reveal="off"],
+[data-route-reveal="off"] .surface-in,
+[data-route-reveal="off"] .stagger-in,
+[data-route-reveal="off"] .reveal-ready,
+[data-route-reveal="off"] .reveal-hidden,
+[data-route-reveal="off"] .reveal-visible {
+  animation: none !important;
+  opacity: 1 !important;
+  transform: none !important;
+  filter: none !important;
 }
 
 .stagger-in {

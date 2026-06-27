@@ -1660,7 +1660,8 @@ export function StationsBoard() {
             <div className="flex-1 overflow-y-auto">
               <div className="p-4">
                 <DiscussionFeed
-                  hideComposer={false}
+                  hideComposer={true}
+                  hideHeader={true}
                   title={`${discussionStation.name} 讨论`}
                   stationFilter={discussionStation.name}
                   showSyncButton={true}

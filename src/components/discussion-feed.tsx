@@ -26,6 +26,7 @@ type DiscussionFeedProps = {
   compact?: boolean;
   title?: string;
   hideComposer?: boolean;
+  hideHeader?: boolean;
   limit?: number;
   stationFilter?: string;
   showSyncButton?: boolean;
@@ -226,6 +227,7 @@ export function DiscussionFeed({
   compact = false,
   title = "讨论",
   hideComposer = false,
+  hideHeader = false,
   limit,
   stationFilter,
   showSyncButton = false,
@@ -817,6 +819,7 @@ export function DiscussionFeed({
       }`}
       data-selection-comments="off"
     >
+      {!hideHeader && (
       <div className="border-b border-[var(--color-line)] bg-[linear-gradient(145deg,var(--color-header),var(--color-panel)_58%,var(--color-brand-soft))] px-4 py-5 sm:px-6">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
@@ -917,6 +920,7 @@ export function DiscussionFeed({
           )}
         </div>
       </div>
+      )}
 
       {!hideComposer ? (
         <div className="border-b border-[var(--color-line)] bg-[var(--color-soft)]/40 px-4 py-5 sm:px-6">

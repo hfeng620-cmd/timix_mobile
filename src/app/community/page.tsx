@@ -88,7 +88,10 @@ export default function CommunityPage() {
   }, []);
 
   return (
-    <main className="theme-stage relative min-h-screen overflow-hidden bg-transparent text-[var(--color-ink)]">
+    <main
+      className="theme-stage relative min-h-screen overflow-hidden bg-transparent text-[var(--color-ink)]"
+      data-route-reveal="off"
+    >
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-x-0 top-0 h-[920px] bg-[radial-gradient(circle_at_10%_8%,var(--color-brand-soft),transparent_32%),radial-gradient(circle_at_88%_14%,var(--color-panel-glow),transparent_30%),linear-gradient(180deg,var(--color-header),transparent_76%)] opacity-80"

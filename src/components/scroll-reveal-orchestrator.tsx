@@ -60,7 +60,9 @@ export function ScrollRevealOrchestrator() {
 
     const collectTargets = () =>
       Array.from(document.querySelectorAll<HTMLElement>(REVEAL_SELECTOR)).filter(
-        (element, index, array) => array.indexOf(element) === index,
+        (element, index, array) =>
+          array.indexOf(element) === index &&
+          !element.closest('[data-route-reveal="off"]'),
       );
 
     const isInInitialViewport = (element: HTMLElement) => {

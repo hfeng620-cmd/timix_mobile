@@ -7,7 +7,10 @@ import { StationsBoard } from "@/components/stations-board";
 
 export default function StationsPage() {
   return (
-    <main className="theme-stage relative min-h-screen overflow-hidden bg-transparent text-[var(--color-ink)]">
+    <main
+      className="theme-stage relative min-h-screen overflow-hidden bg-transparent text-[var(--color-ink)]"
+      data-route-reveal="off"
+    >
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-x-0 top-0 h-[920px] bg-[radial-gradient(circle_at_8%_10%,var(--color-brand-soft),transparent_31%),radial-gradient(circle_at_88%_16%,var(--color-panel-glow),transparent_29%),linear-gradient(180deg,var(--color-header),transparent_76%)] opacity-80"
