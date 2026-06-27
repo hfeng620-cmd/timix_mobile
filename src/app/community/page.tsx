@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { AuthButton } from "@/components/auth-button";
@@ -20,7 +21,7 @@ const collaborationCards = [
     title: "站内快反馈",
     summary: "补一句、报跳价、留试用。",
     actionLabel: "进入站内区",
-    href: "#community-composer",
+    href: "#community-composer" as string,
     external: false,
     accent:
       "border-[var(--color-brand)] bg-[linear-gradient(135deg,var(--color-brand),var(--color-brand-deep))] text-[var(--color-on-brand)] shadow-[0_20px_50px_var(--color-panel-glow)]",
@@ -31,7 +32,7 @@ const collaborationCards = [
     title: "GitHub Discussions",
     summary: "专题归档、经验整理、长期追踪。",
     actionLabel: "进入 Discussions",
-    href: siteLinks.discussions,
+    href: siteLinks.discussions as string,
     external: true,
     accent:
       "border border-[var(--color-line)] bg-[var(--color-panel)] text-[var(--color-ink)] shadow-[var(--shadow-card)]",
@@ -43,7 +44,7 @@ const collaborationCards = [
     title: "QQ 群 602190132",
     summary: "急线索先同步，再回流站内。",
     actionLabel: "查看加群方式",
-    href: "#qq-group-entry",
+    href: "#qq-group-entry" as string,
     external: false,
     accent:
       "border border-[var(--color-line)] bg-[linear-gradient(180deg,var(--color-panel),var(--color-brand-soft))] text-[var(--color-ink)] shadow-[var(--shadow-card)]",
@@ -68,6 +69,7 @@ export default function CommunityPage() {
   const { isAdmin } = useForumAuth();
   const [feedRefreshKey, setFeedRefreshKey] = useState(0);
   const [mobilePanel, setMobilePanel] = useState<"hot" | "rank" | null>(null);
+  const [qqModalOpen, setQqModalOpen] = useState(false);
   const [feedbackCard, discussionsCard, qqCard] = collaborationCards;
   const heroRef = useRef<HTMLDivElement | null>(null);
   const deskRef = useRef<HTMLDivElement | null>(null);
@@ -131,6 +133,19 @@ export default function CommunityPage() {
       clearTimeout(fallbackTimer);
     };
   }, []);
+
+  useEffect(() => {
+    if (!qqModalOpen) return;
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setQqModalOpen(false);
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [qqModalOpen]);
 
   const handleTopicClick = useCallback((postId: string) => {
     const el = document.getElementById(postId);
@@ -204,9 +219,7 @@ export default function CommunityPage() {
       <section className="relative mx-auto max-w-6xl px-3 py-4 sm:px-6 lg:px-10">
         <div
           ref={heroRef}
-          className={`relative mb-5 overflow-hidden rounded-[36px] border border-[var(--color-line)] bg-[linear-gradient(145deg,var(--color-panel),var(--color-brand-soft)_54%,var(--color-panel))] shadow-[0_28px_90px_rgba(15,23,42,0.1)] transition-[opacity,transform] duration-700 ease-out motion-reduce:translate-y-0 motion-reduce:opacity-100 ${
-            revealedSections.hero ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
-          }`}
+          className="relative mb-5 overflow-hidden rounded-[36px] border border-[var(--color-line)] bg-[linear-gradient(145deg,var(--color-panel),var(--color-brand-soft)_54%,var(--color-panel))] shadow-[0_28px_90px_rgba(15,23,42,0.1)]"
         >
           <div
             aria-hidden="true"
@@ -216,8 +229,8 @@ export default function CommunityPage() {
             aria-hidden="true"
             className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,var(--color-panel),transparent)]"
           />
-          <div className="relative grid gap-5 px-5 py-6 sm:px-6 lg:grid-cols-[0.82fr_1.18fr] lg:items-stretch lg:px-8 lg:py-9">
-            <div className="flex min-h-[420px] flex-col justify-between rounded-[28px] border border-[var(--color-line)] bg-[color-mix(in_srgb,var(--color-panel)_82%,transparent)] p-5 shadow-[0_18px_44px_rgba(15,23,42,0.07)] backdrop-blur">
+          <div className="relative grid gap-4 px-5 py-5 sm:px-6 lg:grid-cols-[0.82fr_1.18fr] lg:items-stretch lg:px-7 lg:py-6">
+            <div className="flex min-h-[260px] flex-col justify-between rounded-[28px] border border-[var(--color-line)] bg-[color-mix(in_srgb,var(--color-panel)_82%,transparent)] p-5 shadow-[0_18px_44px_rgba(15,23,42,0.07)] backdrop-blur lg:min-h-[300px]">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] px-3 py-1 text-[11px] font-black uppercase tracking-[0.24em] text-[var(--color-brand-deep)] shadow-[0_10px_24px_rgba(15,23,42,0.06)]">
                   Forum Gate
@@ -226,7 +239,7 @@ export default function CommunityPage() {
                   3 个入口
                 </span>
               </div>
-              <div className="py-7">
+              <div className="py-4">
                 <h1 className="max-w-xl text-3xl font-black tracking-tight sm:text-4xl lg:text-[3.6rem] lg:leading-[1.02]">
                   先选入口，再开始讨论。
                 </h1>
@@ -249,7 +262,7 @@ export default function CommunityPage() {
 
             <div className="grid gap-3 sm:grid-cols-2">
               <Link
-                className={`group flex min-h-[210px] flex-col justify-between rounded-[26px] border px-5 py-5 transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_44px_rgba(15,23,42,0.12)] motion-reduce:hover:translate-y-0 sm:col-span-2 lg:min-h-0 ${feedbackCard.accent}`}
+                className={`group flex min-h-[150px] flex-col justify-between rounded-[26px] border px-4 py-4 transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_44px_rgba(15,23,42,0.12)] motion-reduce:hover:translate-y-0 sm:col-span-2 lg:min-h-0 ${feedbackCard.accent}`}
                 href={feedbackCard.href}
               >
                 <div className="max-w-xl">
@@ -261,13 +274,13 @@ export default function CommunityPage() {
                   <p className="mt-4 text-2xl font-black">{feedbackCard.title}</p>
                   <p className="mt-2 text-sm leading-6 opacity-90">{feedbackCard.summary}</p>
                 </div>
-                <p className="mt-6 text-sm font-black">
+                <p className="mt-4 text-sm font-black">
                   {feedbackCard.actionLabel} <span aria-hidden>→</span>
                 </p>
               </Link>
 
               <a
-                className={`group flex min-h-[188px] flex-col justify-between rounded-[26px] border px-5 py-5 transition duration-300 hover:-translate-y-1 hover:border-[var(--color-brand)] hover:shadow-[0_18px_44px_rgba(15,23,42,0.12)] motion-reduce:hover:translate-y-0 ${discussionsCard.accent}`}
+                className={`group flex min-h-[136px] flex-col justify-between rounded-[26px] border px-4 py-4 transition duration-300 hover:-translate-y-1 hover:border-[var(--color-brand)] hover:shadow-[0_18px_44px_rgba(15,23,42,0.12)] motion-reduce:hover:translate-y-0 ${discussionsCard.accent}`}
                 href={discussionsCard.href}
                 rel="noopener noreferrer"
                 target="_blank"
@@ -281,15 +294,16 @@ export default function CommunityPage() {
                   <p className="mt-4 text-xl font-black">{discussionsCard.title}</p>
                   <p className="mt-2 text-sm leading-6 opacity-85">{discussionsCard.summary}</p>
                 </div>
-                <p className="mt-6 text-sm font-black">
+                <p className="mt-4 text-sm font-black">
                   {discussionsCard.actionLabel} <span aria-hidden>→</span>
                 </p>
               </a>
 
-              <Link
+              <button
                 id="qq-group-entry"
-                className={`group flex min-h-[188px] flex-col justify-between rounded-[26px] border px-5 py-5 transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_44px_rgba(15,23,42,0.12)] motion-reduce:hover:translate-y-0 ${qqCard.accent}`}
-                href={qqCard.href}
+                className={`group flex min-h-[136px] flex-col justify-between rounded-[26px] border px-4 py-4 text-left transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_44px_rgba(15,23,42,0.12)] motion-reduce:hover:translate-y-0 ${qqCard.accent}`}
+                onClick={() => setQqModalOpen(true)}
+                type="button"
               >
                 <div>
                   <span
@@ -300,19 +314,17 @@ export default function CommunityPage() {
                   <p className="mt-4 text-xl font-black">{qqCard.title}</p>
                   <p className="mt-2 text-sm leading-6 opacity-90">{qqCard.summary}</p>
                 </div>
-                <p className="mt-6 text-sm font-black">
+                <p className="mt-4 text-sm font-black">
                   {qqCard.actionLabel} <span aria-hidden>→</span>
                 </p>
-              </Link>
+              </button>
             </div>
           </div>
         </div>
 
         <div
           ref={deskRef}
-          className={`mb-4 rounded-[28px] border border-[var(--color-line)] bg-[linear-gradient(180deg,var(--color-panel),var(--color-soft))] px-4 py-4 shadow-[0_18px_44px_rgba(15,23,42,0.06)] transition-[opacity,transform] duration-700 ease-out delay-75 motion-reduce:translate-y-0 motion-reduce:opacity-100 ${
-            revealedSections.desk ? "translate-y-0 opacity-100" : "translate-y-3 opacity-0"
-          }`}
+          className="mb-4 rounded-[28px] border border-[var(--color-line)] bg-[linear-gradient(180deg,var(--color-panel),var(--color-soft))] px-4 py-4 shadow-[0_18px_44px_rgba(15,23,42,0.06)]"
         >
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
@@ -379,9 +391,7 @@ export default function CommunityPage() {
 
         <div
           ref={contentRef}
-          className={`xl:flex xl:gap-6 transition-[opacity,transform] duration-700 ease-out delay-100 motion-reduce:translate-y-0 motion-reduce:opacity-100 ${
-            revealedSections.content ? "translate-y-0 opacity-100" : "translate-y-3 opacity-0"
-          }`}
+          className="xl:flex xl:gap-6"
         >
           <div className="min-w-0 flex-1 space-y-5">
             <div id="community-composer" className="scroll-mt-24">
@@ -414,6 +424,64 @@ export default function CommunityPage() {
           </div>
         )}
       </section>
+
+      {qqModalOpen ? (
+        <div
+          aria-labelledby="qq-group-modal-title"
+          aria-modal="true"
+          className="fixed inset-0 z-50 grid place-items-center bg-slate-950/35 px-4 py-8 backdrop-blur-sm"
+          role="dialog"
+        >
+          <button
+            aria-label="关闭 QQ 群加入方式"
+            className="absolute inset-0 cursor-default"
+            onClick={() => setQqModalOpen(false)}
+            type="button"
+          />
+          <div className="surface-in relative w-full max-w-sm overflow-hidden rounded-[28px] border border-[var(--color-line)] bg-[var(--surface-gradient)] p-5 shadow-[0_28px_90px_rgba(15,23,42,0.18)]">
+            <div className="flex items-start justify-between gap-4 border-b border-[var(--color-line)] pb-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-brand-deep)]">
+                  加入 QQ 群
+                </p>
+                <h2
+                  id="qq-group-modal-title"
+                  className="mt-2 text-xl font-black tracking-tight text-[var(--color-ink)]"
+                >
+                  群号 602190132
+                </h2>
+              </div>
+              <button
+                className="rounded-full px-2 py-1 text-xs font-semibold text-[var(--color-muted)] transition hover:bg-[var(--color-soft)] hover:text-[var(--color-ink)]"
+                onClick={() => setQqModalOpen(false)}
+                type="button"
+              >
+                关闭
+              </button>
+            </div>
+
+            <div className="mt-5 rounded-[20px] bg-[var(--color-soft)] p-4">
+              <div className="flex justify-center rounded-[16px] bg-[var(--color-panel-strong)] p-3 shadow-[inset_0_0_0_1px_var(--color-line)]">
+                <Image
+                  src="/qq-group-qrcode.jpg"
+                  alt="Timix观察站 QQ群二维码"
+                  width={248}
+                  height={248}
+                  className="h-auto w-[248px] rounded-[18px]"
+                  unoptimized
+                  priority
+                />
+              </div>
+              <div className="mt-4 grid gap-2 text-center">
+                <p className="text-sm font-bold text-[var(--color-ink)]">扫码加入 QQ 群</p>
+                <p className="text-xs font-semibold text-[var(--color-muted)]">
+                  也可以在 QQ 搜索群号 602190132
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </main>
   );
 }

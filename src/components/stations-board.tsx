@@ -1040,7 +1040,7 @@ export function StationsBoard() {
 
       {/* ---- Table ---- */}
       <section className="mx-auto max-w-[1680px] px-5 pb-12 lg:px-8">
-        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_280px] 2xl:grid-cols-[minmax(0,1fr)_300px] xl:items-start">
+        <div className="grid gap-4 2xl:grid-cols-[minmax(0,1fr)_280px] 2xl:items-start">
           <div className="surface-in overflow-hidden rounded-[26px] border border-[var(--color-line)] bg-[var(--color-panel)] shadow-[var(--shadow-card)]">
           {/* Table header */}
           <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[var(--color-line)] px-5 py-4">
@@ -1481,7 +1481,7 @@ export function StationsBoard() {
 
           </div>
 
-          <aside className="hidden xl:block">
+          <aside className="hidden 2xl:block">
             <div className="surface-in sticky top-24 rounded-[24px] border border-[var(--color-line)] bg-[var(--color-panel)] p-4 shadow-[var(--shadow-card)]">
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">右侧协作栏</p>
               <p className="mt-3 text-sm leading-6 text-[var(--color-muted)]">
@@ -1566,7 +1566,59 @@ export function StationsBoard() {
 
       {/* ---- Submission ---- */}
       <section className="mx-auto max-w-[1680px] px-5 pb-16 lg:px-8">
-        <SubmissionPanel />
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,1.08fr)_minmax(320px,0.52fr)] xl:items-start">
+          <SubmissionPanel />
+
+          <aside className="surface-in rounded-[26px] border border-[var(--color-line)] bg-[var(--color-panel)] p-5 shadow-[var(--shadow-card)]">
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
+              投稿前确认
+            </p>
+            <h2 className="mt-2 text-2xl font-black text-[var(--color-ink)]">补站点，也补上下文</h2>
+            <p className="mt-2 text-sm leading-7 text-[var(--color-muted)]">
+              投稿不需要一次写完所有字段，优先给入口、倍率、套餐门槛和你看到的变化，后续可以继续在讨论区补证据。
+            </p>
+
+            <div className="mt-5 grid gap-3">
+              <div className="rounded-[20px] bg-[var(--color-soft)] px-4 py-3.5">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--color-muted)]">
+                  短规则
+                </p>
+                <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">
+                  不贴敏感密钥；入口尽量用官网或公开注册链接；不确定的数据可以标为待补测。
+                </p>
+              </div>
+
+              <div className="rounded-[20px] bg-[var(--color-soft)] px-4 py-3.5">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--color-muted)]">
+                  社区入口
+                </p>
+                <div className="mt-3 grid gap-2">
+                  <Link
+                    href="/community"
+                    className="rounded-full bg-[var(--color-brand)] px-4 py-2.5 text-center text-sm font-bold text-[var(--color-on-brand)] transition hover:bg-[var(--color-brand-deep)]"
+                  >
+                    进入站内讨论区
+                  </Link>
+                  <a
+                    href="https://github.com/hfeng620-cmd/timin_api_test_and_forum/discussions"
+                    rel="noopener noreferrer"
+                    target="_blank"
+                    className="rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] px-4 py-2.5 text-center text-sm font-bold text-[var(--color-ink)] transition hover:border-[var(--color-brand)] hover:text-[var(--color-brand-deep)]"
+                  >
+                    GitHub Discussions
+                  </a>
+                </div>
+              </div>
+
+              <div className="rounded-[20px] bg-[var(--color-brand-soft)] px-4 py-3.5 text-sm leading-7 text-[var(--color-muted)]">
+                <p className="font-black text-[var(--color-ink)]">QQ群 602190132</p>
+                <p className="mt-1">
+                  群内适合同步临时变化、补充截图来源，稳定信息再沉淀回榜单。
+                </p>
+              </div>
+            </div>
+          </aside>
+        </div>
       </section>
 
       {/* ---- Station Detail Modal ---- */}

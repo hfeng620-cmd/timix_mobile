@@ -61,24 +61,24 @@ export default function StationsPage() {
               </p>
             </div>
 
-            <div className="grid gap-2.5 sm:grid-cols-3">
-              <div className="rounded-[18px] border border-white/70 bg-white/78 px-4 py-3 shadow-[0_16px_34px_rgba(15,23,42,0.06)] backdrop-blur">
+            <div className="grid gap-2 sm:grid-cols-3">
+              <div className="rounded-[18px] border border-[var(--color-line)] bg-[var(--color-panel)] px-3.5 py-2.5 shadow-[var(--shadow-card)] backdrop-blur">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
                   先看
                 </p>
-                <p className="mt-1 text-sm font-black text-[var(--color-ink)]">倍率和试用门槛</p>
+                <p className="mt-1 text-sm font-black text-[var(--color-ink)]">倍率 / 门槛</p>
               </div>
-              <div className="rounded-[18px] border border-white/70 bg-white/78 px-4 py-3 shadow-[0_16px_34px_rgba(15,23,42,0.06)] backdrop-blur">
+              <div className="rounded-[18px] border border-[var(--color-line)] bg-[var(--color-panel)] px-3.5 py-2.5 shadow-[var(--shadow-card)] backdrop-blur">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
                   再做
                 </p>
-                <p className="mt-1 text-sm font-black text-[var(--color-ink)]">把候选压到 2 到 3 个</p>
+                <p className="mt-1 text-sm font-black text-[var(--color-ink)]">缩到 2-3 个</p>
               </div>
-              <div className="rounded-[18px] border border-white/70 bg-white/78 px-4 py-3 shadow-[0_16px_34px_rgba(15,23,42,0.06)] backdrop-blur">
+              <div className="rounded-[18px] border border-[var(--color-line)] bg-[var(--color-panel)] px-3.5 py-2.5 shadow-[var(--shadow-card)] backdrop-blur">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
                   最后
                 </p>
-                <p className="mt-1 text-sm font-black text-[var(--color-ink)]">去论坛补反馈和风险</p>
+                <p className="mt-1 text-sm font-black text-[var(--color-ink)]">论坛补风险</p>
               </div>
             </div>
           </div>

@@ -228,7 +228,7 @@ export function FloatingQuickPanel() {
       ) : null}
 
       <button
-        aria-label="打开导航与外观面板"
+        aria-label="打开导航与主题面板"
         aria-controls="quick-panel-menu"
         aria-expanded={open}
         className={`relative flex h-11 min-w-11 items-center justify-center rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] px-4 text-sm font-bold text-[var(--color-brand-deep)] shadow-[0_12px_34px_rgba(15,23,42,0.14)] transition hover:border-[var(--color-brand)] hover:bg-[var(--color-brand-soft)] ${showHint ? "theme-hint-pulse" : ""}`}
@@ -239,7 +239,7 @@ export function FloatingQuickPanel() {
         type="button"
       >
         <span className="mr-1.5 text-base leading-none" aria-hidden="true">✦</span>
-        导航 / 外观
+        导航 / 主题
       </button>
     </div>
     {appearancePanel ? (
@@ -262,7 +262,7 @@ export function FloatingQuickPanel() {
           <div className="flex items-start justify-between gap-4 border-b border-[var(--color-line)] px-5 py-4">
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
-                外观快捷
+                主题面板
               </p>
               <h2 id="appearance-dialog-title" className="mt-1 text-xl font-black text-[var(--color-ink)]">
                 {appearancePanel === "theme" ? "主题" : "配色"}

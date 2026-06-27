@@ -27,6 +27,8 @@ function formatDate(iso: string) {
 }
 
 const ENABLED_PATHS = new Set(["/", "/stations"]);
+const MAX_QUOTE_LENGTH = 300;
+const MAX_BODY_LENGTH = 1000;
 
 const BLOCKED_SELECTOR = [
   "a",
@@ -49,6 +51,12 @@ export function SelectionCommentLayer() {
   const [draft, setDraft] = useState<DraftSelection | null>(null);
   const [commentText, setCommentText] = useState("");
   const [scrollY, setScrollY] = useState(0);
+
+  function closeDraft() {
+    setDraft(null);
+    setCommentText("");
+    window.getSelection()?.removeAllRanges();
+  }
 
   useEffect(() => {
     function handleScroll() {
@@ -75,6 +83,7 @@ export function SelectionCommentLayer() {
       if (!text || text.length < 2) {
         return;
       }
+      const quote = text.slice(0, MAX_QUOTE_LENGTH);
 
       const range = selection.getRangeAt(0);
       const rect = range.getBoundingClientRect();
@@ -122,7 +131,7 @@ export function SelectionCommentLayer() {
 
       setCommentText("");
       setDraft({
-        quote: text,
+        quote,
         top,
         left,
         side,
@@ -133,6 +142,21 @@ export function SelectionCommentLayer() {
     document.addEventListener("mouseup", handleMouseUp);
     return () => document.removeEventListener("mouseup", handleMouseUp);
   }, [commentsEnabled]);
+
+  useEffect(() => {
+    if (!commentsEnabled || !draft) {
+      return;
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        closeDraft();
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [commentsEnabled, draft]);
 
   const pageComments = useMemo(
     () =>
@@ -146,22 +170,21 @@ export function SelectionCommentLayer() {
   const rightComments = pageComments.filter((item) => item.side === "right");
 
   function handleSaveComment() {
-    if (!draft || !commentText.trim()) {
+    const body = commentText.trim().slice(0, MAX_BODY_LENGTH);
+    if (!draft || !body) {
       return;
     }
 
     const created = createSelectionComment({
       pathname,
-      quote: draft.quote,
-      body: commentText.trim(),
+      quote: draft.quote.slice(0, MAX_QUOTE_LENGTH),
+      body,
       side: draft.side,
       anchorTop: draft.anchorTop,
     });
 
     setComments((current) => [...current, created]);
-    setCommentText("");
-    setDraft(null);
-    window.getSelection()?.removeAllRanges();
+    closeDraft();
   }
 
   function handleDeleteComment(id: string) {
@@ -176,7 +199,7 @@ export function SelectionCommentLayer() {
           {leftComments.map((item) => (
             <article
               key={item.id}
-              className="pointer-events-auto absolute left-4 w-[240px] rounded-[20px] border border-[var(--color-line)] bg-white/95 p-4 shadow-[0_18px_50px_rgba(15,23,42,0.12)] backdrop-blur"
+              className="pointer-events-auto absolute left-4 w-[240px] rounded-[20px] border border-[var(--color-line)] bg-[var(--color-panel-strong)] p-4 shadow-[0_18px_50px_rgba(15,23,42,0.12)] backdrop-blur"
               style={{ top: Math.max(120, item.anchorTop - scrollY) }}
             >
               <div className="flex items-center justify-between gap-3">
@@ -184,6 +207,7 @@ export function SelectionCommentLayer() {
                   评论
                 </span>
                 <button
+                  aria-label="删除这条划词评论"
                   className="text-xs font-semibold text-[var(--color-muted)] transition hover:text-[var(--color-ink)]"
                   onClick={() => handleDeleteComment(item.id)}
                   type="button"
@@ -204,7 +228,7 @@ export function SelectionCommentLayer() {
           {rightComments.map((item) => (
             <article
               key={item.id}
-              className="pointer-events-auto absolute right-4 w-[240px] rounded-[20px] border border-[var(--color-line)] bg-white/95 p-4 shadow-[0_18px_50px_rgba(15,23,42,0.12)] backdrop-blur"
+              className="pointer-events-auto absolute right-4 w-[240px] rounded-[20px] border border-[var(--color-line)] bg-[var(--color-panel-strong)] p-4 shadow-[0_18px_50px_rgba(15,23,42,0.12)] backdrop-blur"
               style={{ top: Math.max(120, item.anchorTop - scrollY) }}
             >
               <div className="flex items-center justify-between gap-3">
@@ -212,6 +236,7 @@ export function SelectionCommentLayer() {
                   评论
                 </span>
                 <button
+                  aria-label="删除这条划词评论"
                   className="text-xs font-semibold text-[var(--color-muted)] transition hover:text-[var(--color-ink)]"
                   onClick={() => handleDeleteComment(item.id)}
                   type="button"
@@ -229,7 +254,7 @@ export function SelectionCommentLayer() {
 
       {commentsEnabled && draft ? (
         <div
-          className="selection-comment-pop pointer-events-auto fixed z-50 w-[320px] rounded-[24px] border border-[var(--color-line)] bg-white/96 p-4 shadow-[0_24px_70px_rgba(15,23,42,0.18)] backdrop-blur"
+          className="selection-comment-pop pointer-events-auto fixed z-50 w-[320px] rounded-[24px] border border-[var(--color-line)] bg-[var(--color-panel-strong)] p-4 shadow-[0_24px_70px_rgba(15,23,42,0.18)] backdrop-blur"
           style={{ top: draft.top, left: draft.left }}
         >
           <div className="flex items-center justify-between gap-4">
@@ -237,12 +262,9 @@ export function SelectionCommentLayer() {
               划词评论
             </span>
             <button
+              aria-label="关闭划词评论草稿"
               className="text-xs font-semibold text-[var(--color-muted)] transition hover:text-[var(--color-ink)]"
-              onClick={() => {
-                setDraft(null);
-                setCommentText("");
-                window.getSelection()?.removeAllRanges();
-              }}
+              onClick={closeDraft}
               type="button"
             >
               关闭
@@ -252,17 +274,19 @@ export function SelectionCommentLayer() {
             “{draft.quote}”
           </p>
           <textarea
-            className="mt-3 min-h-24 w-full rounded-2xl border border-[var(--color-line)] bg-white px-3 py-3 text-sm leading-6 outline-none transition focus:border-[var(--color-brand)]"
-            onChange={(event) => setCommentText(event.target.value)}
+            className="mt-3 min-h-24 w-full rounded-2xl border border-[var(--color-line)] bg-[var(--color-input)] px-3 py-3 text-sm leading-6 text-[var(--color-ink)] outline-none transition focus:border-[var(--color-brand)]"
+            maxLength={MAX_BODY_LENGTH}
+            onChange={(event) => setCommentText(event.target.value.slice(0, MAX_BODY_LENGTH))}
             placeholder="像 Notion 那样，给这段话单独留个评论。"
             value={commentText}
           />
           <div className="mt-3 flex items-center justify-between gap-4">
             <span className="text-xs text-[var(--color-muted)]">
-              保存后会自动挂到{draft.side === "left" ? "左侧" : "右侧"}评论栏
+              {commentText.length}/{MAX_BODY_LENGTH} · 保存后会自动挂到
+              {draft.side === "left" ? "左侧" : "右侧"}评论栏
             </span>
             <button
-              className="rounded-full bg-[var(--color-brand)] px-4 py-2 text-sm font-bold text-white transition hover:bg-[var(--color-brand-deep)]"
+              className="rounded-full bg-[var(--color-brand)] px-4 py-2 text-sm font-bold text-[var(--color-on-brand)] transition hover:bg-[var(--color-brand-deep)]"
               onClick={handleSaveComment}
               type="button"
             >
@@ -274,7 +298,7 @@ export function SelectionCommentLayer() {
 
       {commentsEnabled && pageComments.length > 0 ? (
         <div className="fixed right-4 bottom-4 z-30 xl:hidden">
-          <div className="rounded-full border border-[var(--color-line)] bg-white/95 px-4 py-2 text-sm font-semibold shadow-[0_10px_30px_rgba(15,23,42,0.12)] backdrop-blur">
+          <div className="rounded-full border border-[var(--color-line)] bg-[var(--color-panel-strong)] px-4 py-2 text-sm font-semibold shadow-[0_10px_30px_rgba(15,23,42,0.12)] backdrop-blur">
             本页评论 {pageComments.length}
           </div>
         </div>

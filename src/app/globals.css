@@ -369,6 +369,109 @@
   --shadow-card: 0 0 0 0.5px rgba(0,0,0,0.03), 0 1px 2px rgba(0,0,0,0.025), 0 4px 18px rgba(0,0,0,0.045), 0 10px 42px rgba(0,0,0,0.055);
 }
 
+:root[data-theme="ink"] {
+  color-scheme: dark;
+  --background: #071013;
+  --foreground: #f4fbfb;
+  --color-bg: #071013;
+  --color-ink: #f4fbfb;
+  --color-muted: #9bb0b0;
+  --color-line: #203235;
+  --color-soft: #102024;
+  --color-brand: #2dd4bf;
+  --color-brand-deep: #5eead4;
+  --color-brand-strong: #99f6e4;
+  --color-on-brand: #03110f;
+  --color-brand-soft: rgba(45, 212, 191, 0.13);
+  --color-panel-glow: rgba(45, 212, 191, 0.09);
+  --color-panel: rgba(15, 29, 33, 0.9);
+  --color-panel-strong: rgba(17, 35, 39, 0.97);
+  --color-header: rgba(7, 16, 19, 0.88);
+  --color-hover: rgba(255, 255, 255, 0.045);
+  --color-row-alt: rgba(255, 255, 255, 0.024);
+  --color-input: rgba(16, 32, 36, 0.92);
+  --surface-gradient: linear-gradient(180deg, rgba(17,35,39,0.95), rgba(9,22,25,0.97));
+  --theme-glow-rgb: 45, 212, 191;
+  --theme-secondary-rgb: 125, 211, 252;
+  --theme-surface-rgb: 244, 251, 251;
+  --page-background:
+    radial-gradient(circle at 16% 0%, rgba(45,212,191,0.1), transparent 32%),
+    radial-gradient(circle at 86% 100%, rgba(125,211,252,0.07), transparent 28%),
+    linear-gradient(180deg, #071013 0%, #0c171c 100%);
+  --ambient-background:
+    radial-gradient(circle at 22% 8%, rgba(45,212,191,0.08), transparent 24%),
+    radial-gradient(circle at 80% 0%, rgba(125,211,252,0.06), transparent 28%);
+  --shadow-card: 0 1px 2px rgba(0,0,0,0.32), 0 10px 34px rgba(0,0,0,0.42), 0 0 0 0.5px rgba(94,234,212,0.06);
+}
+
+:root[data-theme="ceramic"] {
+  --background: #f7f5ef;
+  --foreground: #17222f;
+  --color-bg: #f7f5ef;
+  --color-ink: #17222f;
+  --color-muted: #687381;
+  --color-line: #dedbd2;
+  --color-soft: #efede5;
+  --color-brand: #315f8c;
+  --color-brand-deep: #244a72;
+  --color-brand-strong: #183956;
+  --color-on-brand: #ffffff;
+  --color-brand-soft: rgba(49, 95, 140, 0.1);
+  --color-panel-glow: rgba(49, 95, 140, 0.065);
+  --color-panel: rgba(255, 255, 255, 0.93);
+  --color-panel-strong: rgba(255, 255, 255, 0.985);
+  --color-header: rgba(255, 255, 255, 0.88);
+  --color-hover: rgba(23, 34, 47, 0.032);
+  --color-row-alt: #fbfaf6;
+  --color-input: #fffefa;
+  --surface-gradient: linear-gradient(180deg, rgba(255,255,255,0.97), rgba(247,245,239,0.96));
+  --theme-glow-rgb: 49, 95, 140;
+  --theme-secondary-rgb: 167, 190, 205;
+  --theme-surface-rgb: 255, 254, 250;
+  --page-background:
+    radial-gradient(circle at 14% 0%, rgba(49,95,140,0.055), transparent 30%),
+    radial-gradient(circle at 84% 96%, rgba(167,190,205,0.1), transparent 26%),
+    linear-gradient(180deg, #fbfaf6 0%, #f7f5ef 100%);
+  --ambient-background:
+    radial-gradient(circle at 18% 8%, rgba(255,255,255,0.7), transparent 18%),
+    radial-gradient(circle at 74% 0%, var(--color-panel-glow), transparent 30%);
+  --shadow-card: 0 0 0 0.5px rgba(17,24,39,0.032), 0 1px 2px rgba(17,24,39,0.026), 0 4px 18px rgba(17,24,39,0.045), 0 10px 42px rgba(17,24,39,0.055);
+}
+
+:root[data-theme="lime"] {
+  --background: #f7fbec;
+  --foreground: #1c2414;
+  --color-bg: #f7fbec;
+  --color-ink: #1c2414;
+  --color-muted: #677457;
+  --color-line: #dfeaca;
+  --color-soft: #eef7d8;
+  --color-brand: #84cc16;
+  --color-brand-deep: #65a30d;
+  --color-brand-strong: #4d7c0f;
+  --color-on-brand: #102006;
+  --color-brand-soft: rgba(132, 204, 22, 0.12);
+  --color-panel-glow: rgba(132, 204, 22, 0.08);
+  --color-panel: rgba(255, 255, 255, 0.92);
+  --color-panel-strong: rgba(255, 255, 255, 0.98);
+  --color-header: rgba(255, 255, 255, 0.86);
+  --color-hover: rgba(28, 36, 20, 0.032);
+  --color-row-alt: #fbfff2;
+  --color-input: #fffffb;
+  --surface-gradient: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(247,251,236,0.96));
+  --theme-glow-rgb: 132, 204, 22;
+  --theme-secondary-rgb: 190, 242, 100;
+  --theme-surface-rgb: 255, 255, 251;
+  --page-background:
+    radial-gradient(circle at 14% 0%, rgba(132,204,22,0.08), transparent 30%),
+    radial-gradient(circle at 86% 100%, rgba(190,242,100,0.12), transparent 24%),
+    linear-gradient(180deg, #fbfff2 0%, #f7fbec 100%);
+  --ambient-background:
+    radial-gradient(circle at 18% 8%, rgba(255,255,255,0.66), transparent 18%),
+    radial-gradient(circle at 74% 0%, var(--color-panel-glow), transparent 28%);
+  --shadow-card: 0 0 0 0.5px rgba(38,54,18,0.03), 0 1px 2px rgba(38,54,18,0.025), 0 4px 18px rgba(38,54,18,0.048), 0 10px 42px rgba(38,54,18,0.058);
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

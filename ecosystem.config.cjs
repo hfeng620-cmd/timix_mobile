@@ -10,15 +10,15 @@ module.exports = {
       // Display name in PM2 process list
       name: "timin",
 
-      // Next.js CLI entry point (relative to this file's directory)
-      script: "node_modules/.bin/next",
+      // Next.js CLI entry point (Windows compatible)
+      script: "node_modules/next/dist/bin/next",
 
       // CLI arguments passed to the script
-      args: "start -p 3000",
+      args: "dev -p 3000",
 
-      // Run 2 instances in cluster mode for concurrency and rolling reloads
-      instances: 2,
-      exec_mode: "cluster",
+      // Run single instance in fork mode
+      instances: 1,
+      exec_mode: "fork",
 
       // Load environment variables from .env.local
       env_file: ".env.local",

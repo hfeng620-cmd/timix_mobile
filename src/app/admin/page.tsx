@@ -27,6 +27,19 @@ import {
 
 type AdminTab = "posts" | "stations" | "import" | "news" | "admins" | "users";
 
+const ANNOUNCEMENT_LIMITS = {
+  station: 120,
+  body: 2000,
+} as const;
+
+const NEWS_LIMITS = {
+  title: 200,
+  summary: 1000,
+  source: 100,
+  author: 100,
+  body: 6000,
+} as const;
+
 async function isForumAdmin(): Promise<boolean> {
   try {
     const supabase = getSupabaseClient();
@@ -520,6 +533,17 @@ export default function AdminPage() {
   // ---- New: publish announcement ----
   function handleAnnouncementClick() {
     const body = announceBody.trim();
+    const station = announceStation.trim();
+    setAnnounceBody(body);
+    setAnnounceStation(station);
+    if (station.length > ANNOUNCEMENT_LIMITS.station) {
+      setAnnounceStatus(`关联站点不能超过 ${ANNOUNCEMENT_LIMITS.station} 个字符。`);
+      return;
+    }
+    if (body.length > ANNOUNCEMENT_LIMITS.body) {
+      setAnnounceStatus(`公告内容不能超过 ${ANNOUNCEMENT_LIMITS.body} 个字符。`);
+      return;
+    }
     if (!body) {
       setAnnounceStatus("公告内容不能为空。");
       return;
@@ -533,6 +557,24 @@ export default function AdminPage() {
     const body = announceBody.trim();
     const station = announceStation.trim();
     const withPopup = announcePopupChecked;
+    setAnnounceBody(body);
+    setAnnounceStation(station);
+
+    if (station.length > ANNOUNCEMENT_LIMITS.station) {
+      setAnnounceStatus(`关联站点不能超过 ${ANNOUNCEMENT_LIMITS.station} 个字符。`);
+      setAnnounceConfirmOpen(false);
+      return;
+    }
+    if (!body) {
+      setAnnounceStatus("公告内容不能为空。");
+      setAnnounceConfirmOpen(false);
+      return;
+    }
+    if (body.length > ANNOUNCEMENT_LIMITS.body) {
+      setAnnounceStatus(`公告内容不能超过 ${ANNOUNCEMENT_LIMITS.body} 个字符。`);
+      setAnnounceConfirmOpen(false);
+      return;
+    }
 
     setAnnounceConfirmOpen(false);
     setAnnounceSending(true);
@@ -665,8 +707,29 @@ export default function AdminPage() {
     const source = newsForm.source.trim();
     const author = newsForm.author.trim();
     const body = newsForm.body.trim();
+    setNewsForm({ title, summary, source, author, body });
     if (!title || !summary) {
       setNewsFormStatus("标题和摘要不能为空。");
+      return;
+    }
+    if (title.length > NEWS_LIMITS.title) {
+      setNewsFormStatus(`标题不能超过 ${NEWS_LIMITS.title} 个字符。`);
+      return;
+    }
+    if (summary.length > NEWS_LIMITS.summary) {
+      setNewsFormStatus(`摘要不能超过 ${NEWS_LIMITS.summary} 个字符。`);
+      return;
+    }
+    if (source.length > NEWS_LIMITS.source) {
+      setNewsFormStatus(`来源不能超过 ${NEWS_LIMITS.source} 个字符。`);
+      return;
+    }
+    if (author.length > NEWS_LIMITS.author) {
+      setNewsFormStatus(`作者不能超过 ${NEWS_LIMITS.author} 个字符。`);
+      return;
+    }
+    if (body.length > NEWS_LIMITS.body) {
+      setNewsFormStatus(`正文不能超过 ${NEWS_LIMITS.body} 个字符。`);
       return;
     }
     setNewsFormSending(true);

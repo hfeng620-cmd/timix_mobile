@@ -66,6 +66,27 @@ export const THEME_MODES = [
     response: "会随配色微调边缘压暗与聚光柔顺度。",
     accent: "radial-gradient(circle at 50% 40%, rgba(255,255,255,0.62) 0 22%, transparent 44%), linear-gradient(135deg, rgba(15,23,42,0.16), rgba(255,255,255,0.12), rgba(15,23,42,0.36))",
   },
+  {
+    id: "prism",
+    label: "棱镜层",
+    description: "折射、光片、晶面高级感。",
+    response: "会随配色微调折射光带与晶面透明度。",
+    accent: "linear-gradient(135deg, rgba(255,255,255,0.92), rgba(255,255,255,0.16)), conic-gradient(from 120deg at 64% 34%, rgba(255,255,255,0.82), rgba(37,99,235,0.22), rgba(16,185,129,0.18), rgba(255,255,255,0.54))",
+  },
+  {
+    id: "mesh",
+    label: "网格云",
+    description: "软网、流体、空间坐标感。",
+    response: "会随配色微调网格密度与云雾边缘。",
+    accent: "radial-gradient(circle at 24% 28%, rgba(255,255,255,0.86), transparent 22%), radial-gradient(circle at 78% 66%, rgba(37,99,235,0.2), transparent 26%), linear-gradient(135deg, rgba(255,255,255,0.82), rgba(148,163,184,0.18))",
+  },
+  {
+    id: "rain",
+    label: "雨幕",
+    description: "细雨、玻璃、纵向流动。",
+    response: "会随配色微调雨线亮度与玻璃湿润感。",
+    accent: "linear-gradient(115deg, rgba(255,255,255,0.84), rgba(255,255,255,0.12)), repeating-linear-gradient(100deg, rgba(37,99,235,0.2) 0 1px, transparent 1px 9px)",
+  },
 ] as const;
 
 export const PALETTES = [
@@ -80,6 +101,9 @@ export const PALETTES = [
   { id: "sage", label: "雾松绿", note: "柔和产品感", mood: "有机柔静", swatch: "linear-gradient(135deg, #f3f7f2, #567c6d)" },
   { id: "ember", label: "余烬橙", note: "暖调品牌感", mood: "暖光展厅", swatch: "linear-gradient(135deg, #fbf4ee, #c96a3d)" },
   { id: "pearl", label: "珍珠灰粉", note: "轻奢柔亮", mood: "柔雾轻奢", swatch: "linear-gradient(135deg, #fbf7fa, #b7797f)" },
+  { id: "ink", label: "墨黑青", note: "深墨冷青", mood: "深墨锐利", swatch: "linear-gradient(135deg, #071013, #2dd4bf)" },
+  { id: "ceramic", label: "陶瓷白", note: "瓷白钴蓝", mood: "瓷面清雅", swatch: "linear-gradient(135deg, #fbfaf6, #315f8c)" },
+  { id: "lime", label: "酸橙光", note: "亮绿高能", mood: "清醒高能", swatch: "linear-gradient(135deg, #f8ffe8, #a3e635)" },
 ] as const;
 
 const APPEARANCE_PRESETS = [
@@ -138,6 +162,20 @@ const APPEARANCE_PRESETS = [
     description: "更强的聚焦感，适合做展示型页面。",
     mode: "velvet",
     palette: "pearl",
+  },
+  {
+    id: "prismatic",
+    label: "棱镜新品",
+    description: "更精致的折射光片，适合首页和精选内容。",
+    mode: "prism",
+    palette: "ceramic",
+  },
+  {
+    id: "rainlab",
+    label: "雨夜实验",
+    description: "更深的玻璃雨幕，适合沉浸式观察和技术页。",
+    mode: "rain",
+    palette: "ink",
   },
 ] as const satisfies ReadonlyArray<{
   id: string;

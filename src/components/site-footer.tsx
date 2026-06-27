@@ -47,11 +47,6 @@ const collaborationLinks = [
     href: siteLinks.repo,
     external: true,
   },
-  {
-    label: "打开线上站点",
-    href: siteLinks.pages,
-    external: true,
-  },
 ] as const;
 
 const utilityLinks = [
@@ -112,7 +107,7 @@ export function SiteFooter() {
         <div className="relative grid gap-6">
           <div className="rounded-[28px] border border-[var(--color-line)] bg-[var(--color-panel-strong)] p-6 shadow-[0_18px_44px_var(--color-panel-glow)]">
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
-              推荐路径
+              下一步
             </p>
             <div className="mt-4 space-y-4 text-sm text-[var(--color-muted)]">
               <div className="rounded-2xl border border-[var(--color-line)] bg-[var(--color-brand-soft)] px-4 py-3">
@@ -129,8 +124,8 @@ export function SiteFooter() {
               </div>
             </div>
             <div className="mt-5 rounded-2xl border border-[var(--color-line)] bg-[var(--color-panel)] px-4 py-3 text-sm leading-7 text-[var(--color-muted)]">
-              <p className="font-semibold text-[var(--color-ink)]">统一主路径</p>
-              <p className="mt-1">榜单 -&gt; 模型 -&gt; 指南 -&gt; 社区。</p>
+              <p className="font-semibold text-[var(--color-ink)]">维护提示</p>
+              <p className="mt-1">有新样本或异常提醒时，优先回社区补充上下文。</p>
             </div>
           </div>
 
@@ -186,7 +181,7 @@ export function SiteFooter() {
             </div>
             <div className="mt-5 space-y-2 text-sm leading-7 text-[var(--color-muted)]">
               <p>QQ群：602190132</p>
-              <p>推荐路径：榜单 -&gt; 模型 -&gt; 指南 -&gt; 社区。</p>
+              <p>维护提示：发现变化时，欢迎补充样本和提醒。</p>
             </div>
           </div>
         </div>
