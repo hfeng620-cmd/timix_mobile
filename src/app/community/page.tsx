@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { AuthButton } from "@/components/auth-button";
 import { NotificationBell } from "@/components/notification-bell";
@@ -71,68 +71,6 @@ export default function CommunityPage() {
   const [mobilePanel, setMobilePanel] = useState<"hot" | "rank" | null>(null);
   const [qqModalOpen, setQqModalOpen] = useState(false);
   const [feedbackCard, discussionsCard, qqCard] = collaborationCards;
-  const heroRef = useRef<HTMLDivElement | null>(null);
-  const deskRef = useRef<HTMLDivElement | null>(null);
-  const contentRef = useRef<HTMLDivElement | null>(null);
-  const [revealedSections, setRevealedSections] = useState<Record<string, boolean>>({
-    hero: false,
-    desk: false,
-    content: false,
-  });
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
-    if (mediaQuery.matches || !("IntersectionObserver" in window)) {
-      setRevealedSections({ hero: true, desk: true, content: true });
-      return;
-    }
-
-    const entries = [
-      { key: "hero", node: heroRef.current },
-      { key: "desk", node: deskRef.current },
-      { key: "content", node: contentRef.current },
-    ].filter((entry): entry is { key: "hero" | "desk" | "content"; node: HTMLDivElement } => Boolean(entry.node));
-
-    // Immediately reveal elements that are already in viewport
-    entries.forEach(({ key, node }) => {
-      const bounds = node.getBoundingClientRect();
-      if (bounds.top < window.innerHeight && bounds.bottom > 0) {
-        setRevealedSections((current) => ({ ...current, [key]: true }));
-      }
-    });
-
-    const observer = new IntersectionObserver(
-      (items) => {
-        items.forEach((item) => {
-          if (!item.isIntersecting) return;
-          const key = item.target.getAttribute("data-reveal-key");
-          if (!key) return;
-          setRevealedSections((current) =>
-            current[key] ? current : { ...current, [key]: true },
-          );
-          observer.unobserve(item.target);
-        });
-      },
-      { threshold: 0.05, rootMargin: "0px 0px" },
-    );
-
-    entries.forEach(({ key, node }) => {
-      node.setAttribute("data-reveal-key", key);
-      observer.observe(node);
-    });
-
-    // Safety fallback: reveal all sections after 500ms
-    const fallbackTimer = setTimeout(() => {
-      setRevealedSections({ hero: true, desk: true, content: true });
-    }, 500);
-
-    return () => {
-      observer.disconnect();
-      clearTimeout(fallbackTimer);
-    };
-  }, []);
 
   useEffect(() => {
     if (!qqModalOpen) return;
@@ -218,7 +156,6 @@ export default function CommunityPage() {
 
       <section className="relative mx-auto max-w-6xl px-3 py-4 sm:px-6 lg:px-10">
         <div
-          ref={heroRef}
           className="relative mb-5 overflow-hidden rounded-[36px] border border-[var(--color-line)] bg-[linear-gradient(145deg,var(--color-panel),var(--color-brand-soft)_54%,var(--color-panel))] shadow-[0_28px_90px_rgba(15,23,42,0.1)]"
         >
           <div
@@ -323,7 +260,6 @@ export default function CommunityPage() {
         </div>
 
         <div
-          ref={deskRef}
           className="mb-4 rounded-[28px] border border-[var(--color-line)] bg-[linear-gradient(180deg,var(--color-panel),var(--color-soft))] px-4 py-4 shadow-[0_18px_44px_rgba(15,23,42,0.06)]"
         >
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -390,7 +326,6 @@ export default function CommunityPage() {
         </div>
 
         <div
-          ref={contentRef}
           className="xl:flex xl:gap-6"
         >
           <div className="min-w-0 flex-1 space-y-5">

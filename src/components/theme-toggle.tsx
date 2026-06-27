@@ -256,7 +256,7 @@ export function ThemeToggleInline({ view = "all", compact = false }: ThemeToggle
   const [palette, setPalette] = useState<PaletteId>(DEFAULT_PALETTE);
   const activeMode = THEME_MODES.find((item) => item.id === mode) ?? THEME_MODES[0];
   const activePalette = PALETTES.find((item) => item.id === palette) ?? PALETTES[0];
-  const darkPalette = palette === "midnight" || palette === "cyber";
+  const darkPalette = palette === "midnight" || palette === "cyber" || palette === "ink";
   const showAll = view === "all";
   const showTheme = showAll || view === "theme";
   const showPalette = showAll || view === "palette";
@@ -291,7 +291,7 @@ export function ThemeToggleInline({ view = "all", compact = false }: ThemeToggle
       className={
         compact
           ? ""
-          : "rounded-[18px] border border-[var(--color-line)] bg-[color:color-mix(in_srgb,var(--color-panel)_82%,white)] p-3.5"
+          : "rounded-[18px] border border-[var(--color-line)] bg-[var(--color-panel)] p-3.5"
       }
     >
       {showAll ? (

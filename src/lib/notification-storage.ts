@@ -120,7 +120,6 @@ export async function deleteNotification(id: string): Promise<void> {
 
 // Module-level channel tracking to prevent duplicate subscriptions
 let activeChannel: RealtimeChannel | null = null;
-let activeUserId: string | null = null;
 
 /**
  * Subscribe to real-time notification inserts for the given user.
@@ -136,15 +135,14 @@ export function subscribeNotifications(
 
   const supabase = getSupabaseClient();
 
-  // If there's an active channel for a different user or same user, remove it first
+  // Remove any existing channel first - this is synchronous
   if (activeChannel) {
     supabase.removeChannel(activeChannel);
     activeChannel = null;
-    activeUserId = null;
   }
 
-  const channelName = `notifications:${userId}`;
-  activeUserId = userId;
+  // Use unique channel name to avoid conflicts with stale channels
+  const channelName = `notifications:${userId}:${Date.now()}`;
 
   const channel: RealtimeChannel = supabase
     .channel(channelName)
@@ -168,10 +166,9 @@ export function subscribeNotifications(
   activeChannel = channel;
 
   return () => {
+    supabase.removeChannel(channel);
     if (activeChannel === channel) {
-      supabase.removeChannel(activeChannel);
       activeChannel = null;
-      activeUserId = null;
     }
   };
 }
