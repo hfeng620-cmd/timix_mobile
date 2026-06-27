@@ -3,13 +3,19 @@
 import { useEffect, useState } from "react";
 import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase";
 
-const DISMISS_KEY = "timin-announce-dismissed";
+const DISMISS_PERMANENT_KEY = "timin-announce-dismissed-permanent";
+const DISMISS_TODAY_KEY = "timin-announce-dismissed-today";
 
 interface Announcement {
   id: string;
   title: string;
   body: string;
   created_at: string;
+}
+
+function getTodayKey(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
 }
 
 export function AnnouncementModal() {
@@ -48,12 +54,26 @@ export function AnnouncementModal() {
 
       if (data.length > 0) {
         const latest = data[0] as unknown as Announcement;
-        // Check if this specific announcement was already dismissed
+
+        // Check permanently dismissed
         try {
-          const dismissed = localStorage.getItem(DISMISS_KEY);
+          const dismissed = localStorage.getItem(DISMISS_PERMANENT_KEY);
           if (dismissed) {
             const ids = JSON.parse(dismissed) as string[];
             if (ids.includes(latest.id)) {
+              setAnnouncement(null);
+              setVisible(false);
+              return;
+            }
+          }
+        } catch { /* ignore */ }
+
+        // Check today dismissed
+        try {
+          const todayData = localStorage.getItem(DISMISS_TODAY_KEY);
+          if (todayData) {
+            const parsed = JSON.parse(todayData) as { date: string; ids: string[] };
+            if (parsed.date === getTodayKey() && parsed.ids.includes(latest.id)) {
               setAnnouncement(null);
               setVisible(false);
               return;
@@ -74,17 +94,37 @@ export function AnnouncementModal() {
     return () => { cancelled = true; };
   }, []);
 
-  function handleDismiss() {
+  function handleDismissPermanent() {
     setVisible(false);
     if (announcement) {
       try {
-        const raw = localStorage.getItem(DISMISS_KEY);
+        const raw = localStorage.getItem(DISMISS_PERMANENT_KEY);
         const ids = raw ? (JSON.parse(raw) as string[]) : [];
         if (!ids.includes(announcement.id)) {
           ids.push(announcement.id);
         }
-        // Keep only last 20 to avoid localStorage bloat
-        localStorage.setItem(DISMISS_KEY, JSON.stringify(ids.slice(-20)));
+        localStorage.setItem(DISMISS_PERMANENT_KEY, JSON.stringify(ids.slice(-20)));
+      } catch { /* ignore */ }
+    }
+  }
+
+  function handleDismissToday() {
+    setVisible(false);
+    if (announcement) {
+      try {
+        const todayKey = getTodayKey();
+        const raw = localStorage.getItem(DISMISS_TODAY_KEY);
+        let parsed: { date: string; ids: string[] } = { date: todayKey, ids: [] };
+        if (raw) {
+          const existing = JSON.parse(raw) as { date: string; ids: string[] };
+          if (existing.date === todayKey) {
+            parsed = existing;
+          }
+        }
+        if (!parsed.ids.includes(announcement.id)) {
+          parsed.ids.push(announcement.id);
+        }
+        localStorage.setItem(DISMISS_TODAY_KEY, JSON.stringify(parsed));
       } catch { /* ignore */ }
     }
   }
@@ -114,13 +154,20 @@ export function AnnouncementModal() {
         </div>
 
         {/* Footer */}
-        <div className="border-t border-[var(--color-line)] px-6 py-4 flex justify-end">
+        <div className="border-t border-[var(--color-line)] px-6 py-4 flex flex-wrap justify-end gap-3">
           <button
-            className="rounded-full bg-[var(--color-brand)] px-6 py-3 text-sm font-bold text-[var(--color-on-brand)] transition hover:bg-[var(--color-brand-deep)]"
-            onClick={handleDismiss}
+            className="rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] px-5 py-2.5 text-sm font-semibold text-[var(--color-muted)] transition hover:bg-[var(--color-soft)] hover:text-[var(--color-ink)]"
+            onClick={handleDismissToday}
             type="button"
           >
-            我知道了
+            今日不再显示
+          </button>
+          <button
+            className="rounded-full bg-[var(--color-brand)] px-5 py-2.5 text-sm font-bold text-[var(--color-on-brand)] transition hover:bg-[var(--color-brand-deep)]"
+            onClick={handleDismissPermanent}
+            type="button"
+          >
+            不再显示
           </button>
         </div>
       </div>
