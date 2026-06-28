@@ -123,7 +123,7 @@ export async function createSharePost(title: string, summary: string, body: stri
   if (!b) throw new Error("内容不能为空。");
   const { data, error } = await getSupabaseClient()
     .from("shared_posts")
-    .insert({ title: t, summary: s, body: b, url: link || null, folder_id: folderId, author_id: userData.user.id, likes_count: 0, comments_count: 0 })
+    .insert({ title: t, summary: s, body: b, url: link || "", folder_id: folderId, author_id: userData.user.id, likes_count: 0, comments_count: 0 })
     .select("id, title, summary, body, folder_id, author_id, likes_count, comments_count, created_at").single();
   if (error) throw new Error(`发布失败: ${error.message}`);
   const row = data as Record<string, unknown>;
@@ -168,7 +168,7 @@ export async function updateFolder(id: string, name: string, desc: string): Prom
 
 export async function updateSharePost(id: string, title: string, summary: string, body: string, link: string): Promise<void> {
   if (!isSupabaseConfigured()) throw new Error("Supabase 未配置。");
-  const { error } = await getSupabaseClient().from("shared_posts").update({ title: title.trim(), summary: summary.trim(), body: body.trim(), url: link.trim() || null }).eq("id", id);
+  const { error } = await getSupabaseClient().from("shared_posts").update({ title: title.trim(), summary: summary.trim(), body: body.trim(), url: link.trim() || "" }).eq("id", id);
   if (error) throw new Error(`更新帖子失败: ${error.message}`);
   await logEdit("post", id, "更新了帖子内容");
 }
