@@ -6,7 +6,7 @@ import type { NextConfig } from "next";
 const isServerDeploy = process.env.DEPLOY_TARGET === "server";
 const isGithubPages =
   !isServerDeploy && process.env.GITHUB_ACTIONS === "true";
-const repoName = "timin_api_test_and_forum";
+const repoName = "timix_share";
 
 const nextConfig: NextConfig = {
   devIndicators: false,
