@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Archive, Settings, Sparkles, X } from "lucide-react";
 import { usePreferenceStore } from "@/lib/preference-store";
@@ -18,10 +18,20 @@ export function VersionSwitcher() {
   const modalRef = useRef<HTMLDivElement | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const router = useRouter();
+  const pathname = usePathname();
   const uiVersion = usePreferenceStore((s) => s.uiVersion);
   const setUiVersion = usePreferenceStore((s) => s.setUiVersion);
 
   useEffect(() => { setHintDismissed(localStorage.getItem("vs-hint") === "1"); }, []);
+
+  // First-time visitors always see new UI
+  useEffect(() => {
+    const raw = localStorage.getItem("timix-preferences-v1");
+    if (!raw) {
+      setUiVersion("new");
+      if (pathname === "/legacy") router.replace("/");
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!open) return;
@@ -55,7 +65,7 @@ export function VersionSwitcher() {
       <button
         ref={triggerRef}
         aria-label="切换 UI 版本"
-        className={`fixed bottom-6 right-6 z-40 flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/10 text-white/80 shadow-lg backdrop-blur transition hover:bg-white/20 hover:text-white ${!hintDismissed ? "animate-pulse" : ""}`}
+        className={`fixed bottom-24 right-6 z-[9999] flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/10 text-white/80 shadow-lg backdrop-blur transition hover:bg-white/20 hover:text-white ${!hintDismissed ? "animate-pulse" : ""}`}
         onClick={handleTrigger}
         type="button"
       >

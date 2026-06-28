@@ -5,6 +5,7 @@ import { ErrorBoundary } from "@/components/error-boundary";
 import { FloatingQuickPanel } from "@/components/floating-quick-panel";
 import { ToastContainer } from "@/components/toast-container";
 import { VersionSwitcher } from "@/components/version-switcher";
+import { VpsFallbackBanner } from "@/components/vps-fallback-banner";
 import { ForumAuthProvider } from "@/lib/forum-auth";
 import { ToastProvider } from "@/lib/toast-context";
 
@@ -68,6 +69,7 @@ export default function RootLayout({
         </ForumAuthProvider>
         <FloatingQuickPanel />
         <VersionSwitcher />
+        <VpsFallbackBanner />
       </body>
     </html>
   );
