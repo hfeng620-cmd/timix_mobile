@@ -320,7 +320,10 @@ export async function updateStation(
 
   try {
     if (!isOfficialStationId(id)) {
-      throw new Error("这条站点还没有进入正式榜单，请先保存为正式站点后再修改。");
+      if (isTemporaryStationId(id)) {
+        throw new Error("这条站点还是本地兜底数据（static-前缀），请用"保存为正式站点"按钮提交。");
+      }
+      throw new Error("站点ID格式不正确，无法更新。");
     }
 
     const normalizedUpdates: Partial<Station> = { ...updates };
