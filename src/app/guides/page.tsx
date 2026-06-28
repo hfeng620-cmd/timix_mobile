@@ -36,7 +36,38 @@ type PostNode = {
   bookmarks: number;
 };
 
-const rootTree: FolderNode = {
+const emptyRoot: FolderNode = { type: "folder", name: "root", children: [] };
+
+function buildTreeFromDb(dbFolders: ShareFolder[], dbPosts: SharePost[]): FolderNode {
+  const childrenMap = new Map<string | null, ShareFolder[]>();
+  for (const f of dbFolders) {
+    const key = f.parentId;
+    if (!childrenMap.has(key)) childrenMap.set(key, []);
+    childrenMap.get(key)!.push(f);
+  }
+  const postsByFolder = new Map<string | null, SharePost[]>();
+  for (const p of dbPosts) {
+    const key = p.folderId ?? "__root__";
+    if (!postsByFolder.has(key)) postsByFolder.set(key, []);
+    postsByFolder.get(key)!.push(p);
+  }
+  function convertFolder(f: ShareFolder): FolderNode {
+    const childFolders = (childrenMap.get(f.id) ?? []).map(convertFolder);
+    const childPosts: PostNode[] = (postsByFolder.get(f.id) ?? []).map((p) => ({
+      type: "post", id: p.id, title: p.title, summary: p.summary,
+      tag: f.name, likes: p.likesCount, comments: p.commentsCount, bookmarks: 0,
+    }));
+    return { type: "folder", name: f.name, desc: f.description || undefined, children: [...childFolders, ...childPosts] };
+  }
+  const rootFolders = (childrenMap.get(null) ?? []).map(convertFolder);
+  const rootPosts: PostNode[] = (postsByFolder.get("__root__") ?? []).map((p) => ({
+    type: "post", id: p.id, title: p.title, summary: p.summary,
+    tag: "root", likes: p.likesCount, comments: p.commentsCount, bookmarks: 0,
+  }));
+  return { type: "folder", name: "root", children: [...rootFolders, ...rootPosts] };
+}
+
+const OLD_MOCK: FolderNode = {
   type: "folder", name: "root", children: [
     {
       type: "folder", name: "基础部分", desc: "Codex，ClaudeCode使用教程",
@@ -403,6 +434,7 @@ export default function GuidesPage() {
     await deleteSharePost(id); triggerRefresh();
   }, []);
 
+  const rootTree = hasRealData ? buildTreeFromDb(dbFolders!, dbPosts!) : emptyRoot;
   const currentFolder = resolvePath(rootTree, path) ?? rootTree;
   const isRoot = path.length === 0;
   const breadcrumb = getBreadcrumb(rootTree, path);
@@ -554,8 +586,15 @@ export default function GuidesPage() {
               </div>
             )}
 
-            {/* Root view: two big folder cards */}
-            {isRoot && (
+            {/* Root view: folders or empty state */}
+            {isRoot && subFolders.length === 0 && !hasRealData && (
+              <div className="rounded-2xl border border-dashed border-white/10 p-12 text-center">
+                <Folder className="h-10 w-10 text-white/20 mx-auto mb-4" />
+                <h3 className="text-lg font-heading italic text-white/60">还没有板块</h3>
+                <p className="mt-2 text-sm text-white/30 font-body">点击上方「建立板块」创建第一个分类目录，然后「Share 项目」发布内容。</p>
+              </div>
+            )}
+            {isRoot && subFolders.length > 0 && (
               <div className="grid gap-4 sm:grid-cols-2">
                 {subFolders.map((folder, i) => (
                   <button

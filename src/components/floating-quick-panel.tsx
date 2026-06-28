@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import { ThemeToggleInline, type ThemeToggleView } from "@/components/theme-toggle";
+import { VersionSwitcherModal } from "@/components/version-switcher";
 import { useForumAuth } from "@/lib/forum-auth";
 import { siteLinks } from "@/lib/site-links";
 
@@ -51,6 +52,7 @@ export function FloatingQuickPanel() {
   const [open, setOpen] = useState(false);
   const [showHint, setShowHint] = useState(false);
   const [appearancePanel, setAppearancePanel] = useState<AppearancePanel | null>(null);
+  const [vsOpen, setVsOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -142,6 +144,18 @@ export function FloatingQuickPanel() {
                 <span className="rounded-full bg-[var(--color-panel)] px-2 py-1 text-[10px] font-bold text-[var(--color-brand-deep)]">
                   打开
                 </span>
+              </button>
+
+              <button
+                className="group mt-2 flex w-full items-center justify-between gap-3 rounded-[16px] border border-[var(--color-line)] bg-[var(--color-soft)] px-3 py-2.5 text-left transition hover:border-[var(--color-brand)] hover:bg-[var(--color-brand-soft)]"
+                onClick={() => { setVsOpen(true); setOpen(false); }}
+                type="button"
+              >
+                <span className="min-w-0">
+                  <span className="block text-sm font-black text-[var(--color-ink)] group-hover:text-[var(--color-brand-deep)]">切换UI</span>
+                  <span className="mt-0.5 block text-[11px] leading-4 text-[var(--color-muted)]">新UI / Legacy 经典版</span>
+                </span>
+                <span className="rounded-full bg-[var(--color-panel)] px-2 py-1 text-[10px] font-bold text-[var(--color-brand-deep)]">切换</span>
               </button>
             </div>
           </div>
@@ -345,6 +359,7 @@ export function FloatingQuickPanel() {
         </div>
       </div>
     ) : null}
+    <VersionSwitcherModal open={vsOpen} onClose={() => setVsOpen(false)} />
     </>
   );
 }
