@@ -48,7 +48,9 @@ export function VersionSwitcherModal({ open, onClose }: Props) {
   }, [open, onClose]);
 
   const handleSelect = useCallback((v: UiVersion, href: string) => {
-    setUiVersion(v); onClose(); router.push(href);
+    setUiVersion(v); onClose();
+    if (v === "legacy") window.location.href = "/legacy";
+    else router.push(href);
   }, [router, setUiVersion, onClose]);
 
   if (!open) return null;
