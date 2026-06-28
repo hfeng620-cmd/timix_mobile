@@ -282,16 +282,19 @@ export function StationsBoard() {
     setError(null);
     try {
       const data = await loadStations();
-      setStations(data.length === 0 ? STATIC_STATIONS : data);
+      // Merge Supabase data with static fallback, deduplicating by name
+      const dbNames = new Set(data.map((s) => s.name));
+      const merged = [...data, ...STATIC_STATIONS.filter((s) => !dbNames.has(s.name))];
+      setStations(merged);
       setDetailStation((current) =>
-        current ? data.find((station) => station.id === current.id) ?? current : current,
+        current ? merged.find((station) => station.id === current.id) ?? current : current,
       );
       setDiscussionStation((current) =>
-        current ? data.find((station) => station.id === current.id) ?? current : current,
+        current ? merged.find((station) => station.id === current.id) ?? current : current,
       );
     } catch (err) {
       setError(err instanceof Error ? err.message : "加载站点数据失败");
-      setStations([]);
+      setStations(STATIC_STATIONS);
     } finally {
       setLoading(false);
     }
@@ -313,7 +316,9 @@ export function StationsBoard() {
         clearTimeout(timeout);
         if (!cancelled) {
           resolved = true;
-          setStations(data.length === 0 ? STATIC_STATIONS : data);
+          const dbNames = new Set(data.map((s) => s.name));
+          const merged = [...data, ...STATIC_STATIONS.filter((s) => !dbNames.has(s.name))];
+          setStations(merged);
           setError(null);
           setLoading(false);
         }
@@ -323,7 +328,7 @@ export function StationsBoard() {
         resolved = true;
         if (!cancelled) {
           setError("数据暂时加载失败，请稍后刷新重试。");
-          setStations([]);
+          setStations(STATIC_STATIONS);
           setLoading(false);
         }
       });
