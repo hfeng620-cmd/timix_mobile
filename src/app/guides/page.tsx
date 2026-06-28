@@ -478,18 +478,33 @@ export default function GuidesPage() {
     finally { setEditSaving(false); }
   }
 
+  const reloadData = useCallback(async () => {
+    const [folders, posts] = await Promise.all([loadFolders(), loadAllPosts()]);
+    setDbFolders(folders); setDbPosts(posts);
+  }, []);
+
   const handleCreateFolder = useCallback(async (name: string, desc: string, parentId: string | null) => {
-    await createFolder(name, desc, parentId); triggerRefresh();
+    await createFolder(name, desc, parentId);
+    const [folders, posts] = await Promise.all([loadFolders(), loadAllPosts()]);
+    setDbFolders(folders); setDbPosts(posts);
   }, []);
   const handleCreatePost = useCallback(async (title: string, summary: string, body: string, link: string, folderId: string | null) => {
-    await createSharePost(title, summary, body, link, folderId); triggerRefresh();
+    await createSharePost(title, summary, body, link, folderId);
+    const [folders, posts] = await Promise.all([loadFolders(), loadAllPosts()]);
+    setDbFolders(folders); setDbPosts(posts);
   }, []);
   const handleDeletePost = useCallback(async (id: string) => {
-    await deleteSharePost(id); triggerRefresh();
+    await deleteSharePost(id);
+    const [folders, posts] = await Promise.all([loadFolders(), loadAllPosts()]);
+    setDbFolders(folders); setDbPosts(posts);
   }, []);
   const handleDeleteFolder = useCallback(async (id: string, name: string) => {
     if (!window.confirm(`确认删除板块「${name}」？\n\n板块必须为空才能删除（无帖子和子板块）。`)) return;
-    try { await deleteFolder(id); triggerRefresh(); }
+    try {
+      await deleteFolder(id);
+      const [folders, posts] = await Promise.all([loadFolders(), loadAllPosts()]);
+      setDbFolders(folders); setDbPosts(posts);
+    }
     catch (e: any) { alert(e?.message || "删除失败"); }
   }, []);
 
