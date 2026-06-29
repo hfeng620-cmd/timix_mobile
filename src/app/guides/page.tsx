@@ -158,6 +158,8 @@ function getBreadcrumb(tree: FolderNode, indices: number[]): Breadcrumb {
 /* ── Post card ── */
 
 function PostCard({ post, onClick, onEdit, onDelete }: { post: PostNode; onClick: () => void; onEdit?: () => void; onDelete?: () => void }) {
+  const { user, isAdmin, isOwner } = useForumAuth();
+  const canEdit = !!(user && (isAdmin || isOwner || user.id === post.authorId));
   return (
     <div
       onClick={onClick}
@@ -168,7 +170,7 @@ function PostCard({ post, onClick, onEdit, onDelete }: { post: PostNode; onClick
           <h3 className="text-base font-heading italic text-white truncate">{post.title}</h3>
           <p className="mt-1.5 text-sm leading-relaxed text-white/45 font-body line-clamp-2">{post.summary}</p>
         </div>
-        {(onEdit || onDelete) && (
+        {canEdit && (onEdit || onDelete) && (
           <div className="relative shrink-0 opacity-0 group-hover:opacity-100 transition" onClick={(e) => e.stopPropagation()}>
             <button className="rounded-lg p-1.5 text-white/30 hover:text-white hover:bg-white/10 transition" title="更多操作" type="button"
               onClick={(e) => { e.stopPropagation(); const menu = (e.currentTarget as HTMLElement).nextElementSibling as HTMLElement; if (menu) menu.classList.toggle('hidden'); }}>
@@ -208,8 +210,9 @@ function PostModal({ post, onClose, onEdit }: { post: PostNode; onClose: () => v
   const [liked, setLiked] = useState(false);
   const [saved, setSaved] = useState(false);
   const [commentText, setCommentText] = useState("");
-  const [replyingTo, setReplyingTo] = useState<number | null>(null);
-  const [replyText, setReplyText] = useState("");
+  const [likedCommentIds, setLikedCommentIds] = useState<Set<number>>(new Set());
+  const [replyModalComment, setReplyModalComment] = useState<{ id: number; username: string; content: string } | null>(null);
+  const [replyModalText, setReplyModalText] = useState("");
   const [editLogs, setEditLogs] = useState<EditLogEntry[]>([]);
   const [logsLoading, setLogsLoading] = useState(true);
   const [rightTab, setRightTab] = useState<"comments" | "logs">("comments");
@@ -232,10 +235,9 @@ function PostModal({ post, onClose, onEdit }: { post: PostNode; onClose: () => v
     { id: 3, username: "AI探索者", timestamp: "1 天前", content: "有没有人遇到过 OOM 的问题？" },
   ];
 
-  function handleReplyClick(commentId: number, username: string) { setReplyingTo(commentId); setReplyText(`@${username} `); }
   function rt(d: string) { const m = Math.floor((Date.now() - new Date(d).getTime()) / 60000); if (isNaN(m)) return d; if (m < 1) return "刚刚"; if (m < 60) return `${m}分钟前`; const h = Math.floor(m / 60); if (h < 24) return `${h}小时前`; return `${Math.floor(h / 24)}天前`; }
 
-  return (
+  return (<>
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-xl px-4" onClick={onClose}>
       <div className="relative w-full max-w-6xl h-[85vh] flex overflow-hidden rounded-2xl border border-white/10 bg-zinc-950/90 shadow-2xl" onClick={(e) => e.stopPropagation()}>
         <button onClick={onClose} className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white/50 hover:bg-white/20 hover:text-white transition z-20" type="button"><X className="h-4 w-4" /></button>
@@ -295,30 +297,32 @@ function PostModal({ post, onClose, onEdit }: { post: PostNode; onClose: () => v
           {rightTab === "comments" && (
             <>
               <div className="flex-1 overflow-y-auto p-4 space-y-5">
-                {mockComments.map((c) => (
+                {mockComments.map((c) => {
+                  const isLiked = likedCommentIds.has(c.id);
+                  return (
                   <div key={c.id} className="group">
                     <div className="flex gap-3">
                       <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/10 text-[10px] text-white/50 mt-0.5">{c.username.charAt(0)}</span>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2"><span className="text-sm font-medium text-white/70 font-body">{c.username}</span><span className="text-[11px] text-gray-500 font-body">{c.timestamp}</span></div>
                         <p className="mt-1 text-sm leading-relaxed text-white/45 font-body">{c.content}</p>
-                        <button onClick={() => handleReplyClick(c.id, c.username)} className="mt-1.5 text-xs text-gray-500 hover:text-white/50 transition font-body" type="button">回复</button>
-                        {replyingTo === c.id && (
-                          <div className="mt-2 flex items-start gap-2">
-                            <textarea className="flex-1 min-h-[32px] resize-none rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-xs text-white font-body outline-none focus:border-white/30" value={replyText} onChange={(e) => setReplyText(e.target.value)} autoFocus placeholder={`回复 @${c.username}...`} />
-                            <button className="shrink-0 rounded-full bg-white/10 px-2.5 py-1.5 text-xs text-white/50 hover:bg-white/20 transition font-body" onClick={() => { setReplyingTo(null); setReplyText(""); }} type="button">取消</button>
-                            <button className="shrink-0 rounded-full bg-white/15 p-1.5 text-white/50 hover:bg-white/25 transition disabled:opacity-30" onClick={() => { setReplyingTo(null); setReplyText(""); }} type="button" disabled={!replyText.trim()}><Send className="h-3 w-3" /></button>
-                          </div>
-                        )}
+                        <div className="mt-1.5 flex items-center gap-3">
+                          <button onClick={() => setLikedCommentIds(p => { const n = new Set(p); if (n.has(c.id)) n.delete(c.id); else n.add(c.id); return n; })}
+                            className={`inline-flex items-center gap-1 text-xs transition font-body ${isLiked ? "text-rose-400" : "text-gray-500 hover:text-rose-300"}`} type="button">
+                            <Heart className={`h-3 w-3 ${isLiked ? "fill-current" : ""}`} />{isLiked ? "已赞" : "点赞"}
+                          </button>
+                          <button onClick={() => { setReplyModalComment(c); setReplyModalText(`@${c.username} `); }}
+                            className="text-xs text-gray-500 hover:text-white/50 transition font-body" type="button">回复</button>
+                        </div>
                       </div>
                     </div>
                   </div>
-                ))}
+                )})}
               </div>
               {/* Comment input — fixed at bottom */}
               <div className="shrink-0 p-4 border-t border-white/10 bg-zinc-900/50">
                 <div className="relative">
-                  <textarea className="w-full min-h-[44px] resize-none rounded-xl bg-white/5 border border-white/10 px-4 py-3 pr-12 text-sm text-white placeholder:text-white/25 font-body outline-none focus:border-white/30 transition" placeholder="说点什么..." value={commentText} onChange={(e) => setCommentText(e.target.value)} rows={2} />
+                  <textarea className="w-full min-h-[44px] resize-none rounded-xl bg-white/5 border border-white/10 px-4 py-3 pr-12 text-sm text-white placeholder:text-white/25 font-body outline-none focus:border-white/30 transition" placeholder="说点什么... (Enter 发送, Shift+Enter 换行)" onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); setCommentText(""); } }} value={commentText} onChange={(e) => setCommentText(e.target.value)} rows={2} />
                   <button className="absolute right-2 bottom-2 rounded-full bg-white/15 p-1.5 text-white/50 hover:bg-white/25 hover:text-white transition disabled:opacity-30" type="button" onClick={() => setCommentText("")} disabled={!commentText.trim()}><Send className="h-3.5 w-3.5" /></button>
                 </div>
               </div>
@@ -353,7 +357,25 @@ function PostModal({ post, onClose, onEdit }: { post: PostNode; onClose: () => v
         </div>
       </div>
     </div>
-  );
+    {/* Nested reply modal */}
+    {replyModalComment && (
+      <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 backdrop-blur-md" onClick={() => { setReplyModalComment(null); setReplyModalText(""); }}>
+        <div className="w-full max-w-xl bg-zinc-900 border border-white/10 rounded-xl p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+          <p className="text-xs text-gray-500 font-body mb-2">引用</p>
+          <div className="border-l-2 border-gray-500 pl-3 text-gray-400 italic text-sm font-body mb-4">{replyModalComment.content}</div>
+          <p className="text-sm text-white/60 font-body mb-3">回复 @{replyModalComment.username}</p>
+          <textarea className="w-full min-h-[80px] resize-none rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-sm text-white placeholder:text-white/25 font-body outline-none focus:border-white/30 transition mb-4"
+            placeholder={`回复 @${replyModalComment.username}... (Enter 发送, Shift+Enter 换行)`}
+            value={replyModalText} onChange={(e) => setReplyModalText(e.target.value)} autoFocus
+            onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); setReplyModalComment(null); setReplyModalText(""); } }} />
+          <div className="flex items-center justify-end gap-3">
+            <button className="rounded-full bg-white/10 px-4 py-2 text-xs text-white/50 hover:bg-white/20 transition font-body" onClick={() => { setReplyModalComment(null); setReplyModalText(""); }} type="button">取消</button>
+            <button className="rounded-full bg-white/15 px-4 py-2 text-xs text-white/50 hover:bg-white/25 transition disabled:opacity-30 font-body inline-flex items-center gap-1.5" onClick={() => { setReplyModalComment(null); setReplyModalText(""); }} type="button" disabled={!replyModalText.trim()}><Send className="h-3 w-3" />发送</button>
+          </div>
+        </div>
+      </div>
+    )}
+  </>);
 }
 
 /* ── Hot sidebar ── */
@@ -764,7 +786,7 @@ export default function GuidesPage() {
                   )}
                   <div className="space-y-2.5">
                     {posts.map((p) => (
-                      <PostCard key={p.id} post={p} onClick={() => setModalPost(p)} onEdit={hasRealData ? () => openEditPost(p) : undefined} onDelete={hasRealData ? () => handleDeletePost(p.id) : undefined} />
+                      <PostCard key={p.id} post={p} onClick={() => setModalPost(p)} onEdit={() => openEditPost(p)} onDelete={() => handleDeletePost(p.id)} />
                     ))}
                     {posts.length === 0 && subFolders.length === 0 && (
                       <div className="rounded-2xl bg-white/[0.02] border border-dashed border-white/10 p-10 text-center">
@@ -781,7 +803,7 @@ export default function GuidesPage() {
             {isRoot && posts.length > 0 && (
               <div className="space-y-2.5">
                 {posts.map((p) => (
-                  <PostCard key={p.id} post={p} onClick={() => setModalPost(p)} />
+                  <PostCard key={p.id} post={p} onClick={() => setModalPost(p)} onEdit={() => openEditPost(p)} onDelete={() => handleDeletePost(p.id)} />
                 ))}
               </div>
             )}

@@ -113,22 +113,14 @@ export function CommunityPostPanel({ onPostCreated }: CommunityPostPanelProps) {
 
   // Keyboard navigation for mention popup
   function handleTextareaKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
-    if (!mentionState.active || mentionSuggestions.length === 0) return;
-
-    if (e.key === "ArrowDown") {
-      e.preventDefault();
-      setMentionIndex((prev) => (prev + 1) % mentionSuggestions.length);
-    } else if (e.key === "ArrowUp") {
-      e.preventDefault();
-      setMentionIndex((prev) => (prev - 1 + mentionSuggestions.length) % mentionSuggestions.length);
-    } else if (e.key === "Enter" || e.key === "Tab") {
-      e.preventDefault();
-      handleSelectMention(mentionSuggestions[mentionIndex]);
-    } else if (e.key === "Escape") {
-      // Close popup by blurring; the mention state will naturally clear
-      e.preventDefault();
-      textareaRef.current?.blur();
+    if (mentionState.active && mentionSuggestions.length > 0) {
+      if (e.key === "ArrowDown") { e.preventDefault(); setMentionIndex((prev) => (prev + 1) % mentionSuggestions.length); }
+      else if (e.key === "ArrowUp") { e.preventDefault(); setMentionIndex((prev) => (prev - 1 + mentionSuggestions.length) % mentionSuggestions.length); }
+      else if (e.key === "Enter" || e.key === "Tab") { e.preventDefault(); handleSelectMention(mentionSuggestions[mentionIndex]); }
+      else if (e.key === "Escape") { e.preventDefault(); textareaRef.current?.blur(); }
+      return;
     }
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSubmit(); }
   }
 
   function handleSelectSuggestion(tag: string) {

@@ -1006,7 +1006,8 @@ export function DiscussionFeed({
                   }
                 }
               }}
-              placeholder="一句反馈、一个价格变化、一次试用观察，都可以先发在这里。"
+              onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSubmitPost(); } }}
+              placeholder="一句反馈、一个价格变化、一次试用观察，都可以先发在这里。 (Enter 发送, Shift+Enter 换行)"
               value={body}
             />
             <div className="mt-4 flex flex-wrap items-center justify-between gap-4 border-t border-[var(--color-line)] pt-4">
@@ -1647,7 +1648,8 @@ export function DiscussionFeed({
                           }
                         }
                       }}
-                      placeholder={`回复 ${replyTarget ?? "楼主"}（支持粘贴图片）`}
+                      onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleReply(post.issueNumber); } }}
+                      placeholder={`回复 ${replyTarget ?? "楼主"}（支持粘贴图片, Enter 发送, Shift+Enter 换行）`}
                       value={replyDrafts[post.issueNumber] ?? ""}
                     />
                     <button
