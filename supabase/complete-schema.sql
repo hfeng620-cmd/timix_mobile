@@ -1424,18 +1424,14 @@ create policy "Admins can update submissions" on public.station_submissions
   with check (public.is_forum_admin());
 
 -- ── 6.8 station_favorites 策略 ──
--- 注意：此表使用 create policy 而非 drop if exists（原文件样式），两者等效
-create policy if not exists "Users can view own favorites"
-  on public.station_favorites for select
-  using (auth.uid() = user_id);
+drop policy if exists "Users can view own favorites" on public.station_favorites;
+create policy "Users can view own favorites" on public.station_favorites for select using (auth.uid() = user_id);
 
-create policy if not exists "Users can insert own favorites"
-  on public.station_favorites for insert
-  with check (auth.uid() = user_id);
+drop policy if exists "Users can insert own favorites" on public.station_favorites;
+create policy "Users can insert own favorites" on public.station_favorites for insert with check (auth.uid() = user_id);
 
-create policy if not exists "Users can delete own favorites"
-  on public.station_favorites for delete
-  using (auth.uid() = user_id);
+drop policy if exists "Users can delete own favorites" on public.station_favorites;
+create policy "Users can delete own favorites" on public.station_favorites for delete using (auth.uid() = user_id);
 
 -- ── 6.9 station_reviews 策略 ──
 drop policy if exists "Approved reviews are public" on public.station_reviews;
@@ -1674,11 +1670,11 @@ create policy "System inserts edit logs" on public.edit_logs
   for insert with check (true);
 
 -- ── 6.21 forum_audit_log 策略 ──
-create policy if not exists "Admins can read audit log" on public.forum_audit_log
-  for select using (public.is_forum_admin());
+drop policy if exists "Admins can read audit log" on public.forum_audit_log;
+create policy "Admins can read audit log" on public.forum_audit_log for select using (public.is_forum_admin());
 
-create policy if not exists "Admins can insert audit log" on public.forum_audit_log
-  for insert with check (public.is_forum_admin());
+drop policy if exists "Admins can insert audit log" on public.forum_audit_log;
+create policy "Admins can insert audit log" on public.forum_audit_log for insert with check (public.is_forum_admin());
 
 -- ── 6.22 user_guides 策略 ──
 drop policy if exists "Anyone can view approved guides" on public.user_guides;
