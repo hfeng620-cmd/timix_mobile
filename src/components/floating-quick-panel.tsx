@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
-import { ThemeToggleInline, type ThemeToggleView } from "@/components/theme-toggle";
+import { AppearanceModal } from "@/components/appearance-modal";
 import { VersionSwitcherModal } from "@/components/version-switcher";
 import { useForumAuth } from "@/lib/forum-auth";
 import { siteLinks } from "@/lib/site-links";
@@ -45,24 +45,19 @@ function isRouteActive(pathname: string, href: string) {
   return href === "/" ? pathname === "/" : pathname.startsWith(href);
 }
 
-type AppearanceCollection = Extract<ThemeToggleView, "theme" | "palette">;
-type AppearancePanel = "home" | AppearanceCollection;
 
 export function FloatingQuickPanel() {
   const [open, setOpen] = useState(false);
   const [showHint, setShowHint] = useState(false);
-  const [appearancePanel, setAppearancePanel] = useState<AppearancePanel | null>(null);
+  const [appearanceOpen, setAppearanceOpen] = useState(false);
   const [vsOpen, setVsOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
-  const panelRef = useRef<HTMLDivElement | null>(null);
-  const closeButtonRef = useRef<HTMLButtonElement | null>(null);
   const pathname = usePathname();
   const { isAdmin, isOwner } = useForumAuth();
   const canOpenAdmin = isAdmin || isOwner;
 
   useEffect(() => {
     function handlePointerDown(event: MouseEvent) {
-      if (appearancePanel) return;
       if (!wrapperRef.current?.contains(event.target as Node)) {
         setOpen(false);
       }
@@ -70,7 +65,7 @@ export function FloatingQuickPanel() {
 
     document.addEventListener("mousedown", handlePointerDown);
     return () => document.removeEventListener("mousedown", handlePointerDown);
-  }, [appearancePanel]);
+  }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -80,34 +75,13 @@ export function FloatingQuickPanel() {
 
   useEffect(() => {
     setOpen(false);
-    setAppearancePanel(null);
   }, [pathname]);
-
-  useEffect(() => {
-    if (!appearancePanel) return;
-    closeButtonRef.current?.focus();
-
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        setAppearancePanel(null);
-      }
-    }
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [appearancePanel]);
 
   function dismissHint() {
     setShowHint(false);
     if (typeof window !== "undefined") {
       window.localStorage.setItem(HINT_DISMISSED_KEY, "1");
     }
-  }
-
-  function openAppearanceCenter() {
-    setOpen(false);
-    setAppearancePanel("home");
-    dismissHint();
   }
 
   return (
@@ -130,7 +104,7 @@ export function FloatingQuickPanel() {
             <div className="mt-2">
               <button
                 className="group flex w-full items-center justify-between gap-3 rounded-[16px] border border-[var(--color-line)] bg-[var(--color-soft)] px-3 py-2.5 text-left transition hover:border-[var(--color-brand)] hover:bg-[var(--color-brand-soft)]"
-                onClick={openAppearanceCenter}
+                onClick={() => { setAppearanceOpen(true); setOpen(false); }}
                 type="button"
               >
                 <span className="min-w-0">
@@ -268,97 +242,7 @@ export function FloatingQuickPanel() {
         快捷菜单
       </button>
     </div>
-    {appearancePanel ? (
-      <div
-        aria-labelledby="appearance-dialog-title"
-        aria-modal="true"
-        className="fixed inset-0 z-[90] flex items-center justify-center bg-[rgba(15,23,42,0.34)] p-4 backdrop-blur-md"
-        data-selection-comments="off"
-        onMouseDown={(event) => {
-          if (event.target === event.currentTarget) {
-            setAppearancePanel(null);
-          }
-        }}
-        role="dialog"
-      >
-        <div
-          className="surface-in max-h-[82vh] w-full max-w-2xl overflow-hidden rounded-[28px] border border-[var(--color-line)] bg-[var(--surface-gradient)] shadow-[0_28px_90px_rgba(15,23,42,0.26)]"
-          ref={panelRef}
-        >
-          <div className="flex items-start justify-between gap-4 border-b border-[var(--color-line)] px-5 py-4">
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
-                外观中心
-              </p>
-              <h2 id="appearance-dialog-title" className="mt-1 text-xl font-black text-[var(--color-ink)]">
-                {appearancePanel === "home" ? "外观入口" : appearancePanel === "theme" ? "主题" : "配色"}
-              </h2>
-              <p className="mt-1 text-xs leading-5 text-[var(--color-muted)]">
-                {appearancePanel === "home"
-                  ? "先选集合：主题负责背景板与动效，配色负责整站色彩系统。"
-                  : appearancePanel === "theme"
-                    ? "更换星幕、气泡、轨道等背景板氛围，不改变主色。"
-                    : "更换按钮、描边、面板和强调色，不改变背景动效。"}
-              </p>
-            </div>
-            <div className="flex shrink-0 items-center gap-2">
-              {appearancePanel !== "home" ? (
-                <button
-                  className="rounded-full border border-[var(--color-line)] bg-[var(--color-soft)] px-3 py-2 text-xs font-bold text-[var(--color-muted)] transition hover:border-[var(--color-brand)] hover:text-[var(--color-ink)]"
-                  onClick={() => setAppearancePanel("home")}
-                  type="button"
-                >
-                  返回
-                </button>
-              ) : null}
-              <button
-                aria-label="关闭外观弹窗"
-                className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--color-line)] bg-[var(--color-soft)] text-lg leading-none text-[var(--color-muted)] transition hover:border-[var(--color-brand)] hover:text-[var(--color-ink)]"
-                onClick={() => setAppearancePanel(null)}
-                ref={closeButtonRef}
-                type="button"
-              >
-                x
-              </button>
-            </div>
-          </div>
-          <div className="max-h-[calc(82vh-118px)] overflow-y-auto px-5 py-5">
-            {appearancePanel === "home" ? (
-              <div className="grid gap-3 sm:grid-cols-2">
-                <button
-                  className="rounded-[22px] border border-[var(--color-line)] bg-[var(--color-panel-strong)] p-4 text-left transition hover:border-[var(--color-brand)] hover:bg-[var(--color-brand-soft)]"
-                  onClick={() => setAppearancePanel("theme")}
-                  type="button"
-                >
-                  <span className="block text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
-                    Background + Motion
-                  </span>
-                  <span className="mt-2 block text-lg font-black text-[var(--color-ink)]">主题</span>
-                  <span className="mt-2 block text-sm leading-6 text-[var(--color-muted)]">
-                    星幕、气泡、轨道、雨幕等背景板与动效，只改变页面氛围。
-                  </span>
-                </button>
-                <button
-                  className="rounded-[22px] border border-[var(--color-line)] bg-[var(--color-panel-strong)] p-4 text-left transition hover:border-[var(--color-brand)] hover:bg-[var(--color-brand-soft)]"
-                  onClick={() => setAppearancePanel("palette")}
-                  type="button"
-                >
-                  <span className="block text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
-                    Color System
-                  </span>
-                  <span className="mt-2 block text-lg font-black text-[var(--color-ink)]">配色</span>
-                  <span className="mt-2 block text-sm leading-6 text-[var(--color-muted)]">
-                    白蓝、深夜蓝、石墨灰等色彩系统，控制按钮、描边与强调色。
-                  </span>
-                </button>
-              </div>
-            ) : (
-              <ThemeToggleInline compact view={appearancePanel} />
-            )}
-          </div>
-        </div>
-      </div>
-    ) : null}
+    <AppearanceModal open={appearanceOpen} onClose={() => setAppearanceOpen(false)} />
     <VersionSwitcherModal open={vsOpen} onClose={() => setVsOpen(false)} />
     </>
   );
