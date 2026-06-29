@@ -109,11 +109,14 @@ export async function createFolder(name: string, desc: string, parentId: string 
     .from("shared_folders")
     .insert(payload)
     .select("*").single();
+  alert("【Debug·板块】返回: " + JSON.stringify({ hasData: !!data, errorCode: error?.code, errorMsg: error?.message }));
   if (error) {
     console.error("[share-storage] createFolder 失败:", error, "payload:", payload);
+    alert("【插入板块失败】" + error.message + " (code:" + error.code + ")");
     throw new Error(`创建板块失败: ${error.message} (code: ${error.code})`);
   }
-  if (!data) throw new Error("创建板块失败: 服务器未返回数据，请检查RLS策略。");
+  if (!data) { alert("【诡异】板块没报错但data为空！"); throw new Error("创建板块失败: 服务器未返回数据。"); }
+  alert("【板块成功】ID: " + data.id);
   const row = data as Record<string, unknown>;
   return { id: row.id as string, name: row.name as string, description: (row.description as string) ?? "", parentId: (row.parent_id as string) ?? null, creatorId: (row.creator_id as string) ?? null, creatorName: null, creatorAvatar: null, sortOrder: (row.sort_order as number) ?? 0, createdAt: row.created_at as string };
 }
@@ -127,15 +130,22 @@ export async function createSharePost(title: string, summary: string, body: stri
   if (!s) throw new Error("简介不能为空。");
   if (!b) throw new Error("内容不能为空。");
   const payload = { title: t, summary: s, body: b, url: link.trim() || null, folder_id: folderId, author_id: userData.user.id, likes_count: 0, comments_count: 0 };
+  alert("【Debug】准备发送: " + JSON.stringify({ table: "shared_posts", title: t, folder_id: folderId, author_id: userData.user.id }));
   const { data, error } = await getSupabaseClient()
     .from("shared_posts")
     .insert(payload)
     .select("id, title, summary, body, folder_id, author_id, likes_count, comments_count, created_at").single();
+  alert("【Debug】Supabase返回: " + JSON.stringify({ hasData: !!data, errorCode: error?.code, errorMsg: error?.message, dataId: data?.id }));
   if (error) {
     console.error("[share-storage] createSharePost 失败:", error, "payload:", payload);
+    alert("【插入失败】" + error.message + " (code:" + error.code + ")");
     throw new Error(`发布失败: ${error.message} (code: ${error.code})`);
   }
-  if (!data) throw new Error("发布失败: 服务器未返回数据，请检查RLS策略。");
+  if (!data) {
+    alert("【诡异】没报错但data为空！检查RLS是否拦截了INSERT或SELECT！");
+    throw new Error("发布失败: 服务器未返回数据，请检查RLS策略。");
+  }
+  alert("【成功】插入成功! ID: " + data.id);
   const row = data as Record<string, unknown>;
   let authorName = "匿名用户";
   try {
