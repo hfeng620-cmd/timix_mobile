@@ -194,14 +194,16 @@ export async function updateFolder(id: string, name: string, desc: string): Prom
   if (!isSupabaseConfigured()) throw new Error("Supabase 未配置。");
   const { error } = await getSupabaseClient().from("shared_folders").update({ name: name.trim(), description: desc.trim() }).eq("id", id);
   if (error) throw new Error(`更新板块失败: ${error.message}`);
-  await logEdit("folder", id, "更新了板块信息");
+  try { await logEdit("folder", id, "更新了板块信息"); }
+  catch (e) { console.warn("[edit_log] 板块日志写入失败（不影响保存）:", e); }
 }
 
 export async function updateSharePost(id: string, title: string, summary: string, body: string, link: string): Promise<void> {
   if (!isSupabaseConfigured()) throw new Error("Supabase 未配置。");
   const { error } = await getSupabaseClient().from("shared_posts").update({ title: title.trim(), summary: summary.trim(), body: body.trim(), url: link.trim() || null }).eq("id", id);
   if (error) throw new Error(`更新帖子失败: ${error.message}`);
-  await logEdit("post", id, "更新了帖子内容");
+  try { await logEdit("post", id, "更新了帖子内容"); }
+  catch (e) { console.warn("[edit_log] 帖子日志写入失败（不影响保存）:", e); }
 }
 
 export type EditLogEntry = {
