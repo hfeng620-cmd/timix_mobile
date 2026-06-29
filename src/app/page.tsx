@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowUpRight, Play, Zap, Palette, BarChart3, Shield } from "lucide-react";
 
 import { BlurIn, BlurText } from "@/components/blur-text";
+import { CoCreatorsWall } from "@/components/co-creators-wall";
 import { Navbar } from "@/components/navbar";
 import { VideoBackground } from "@/components/video-background";
 import { AiNewsPanel } from "@/components/ai-news-panel";
@@ -315,6 +316,9 @@ export default function Home() {
           </div>
         </section>
 
+        <section className="relative mx-auto max-w-7xl px-6 py-12 lg:px-10">
+          <CoCreatorsWall />
+        </section>
         <section className="relative mx-auto max-w-7xl px-6 py-16 lg:px-10">
           <AiNewsPanel />
         </section>
