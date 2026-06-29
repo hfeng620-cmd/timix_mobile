@@ -104,11 +104,16 @@ export async function createFolder(name: string, desc: string, parentId: string 
   if (!userData.user) throw new Error("请先登录后再创建板块。");
   const trimmed = name.trim();
   if (!trimmed || trimmed.length > 100) throw new Error("板块名称无效。");
+  const payload = { name: trimmed, description: desc, parent_id: parentId, creator_id: userData.user.id, sort_order: 0 };
   const { data, error } = await getSupabaseClient()
     .from("shared_folders")
-    .insert({ name: trimmed, description: desc, parent_id: parentId, creator_id: userData.user.id, sort_order: 0 })
+    .insert(payload)
     .select("*").single();
-  if (error) throw new Error(`创建板块失败: ${error.message}`);
+  if (error) {
+    console.error("[share-storage] createFolder 失败:", error, "payload:", payload);
+    throw new Error(`创建板块失败: ${error.message} (code: ${error.code})`);
+  }
+  if (!data) throw new Error("创建板块失败: 服务器未返回数据，请检查RLS策略。");
   const row = data as Record<string, unknown>;
   return { id: row.id as string, name: row.name as string, description: (row.description as string) ?? "", parentId: (row.parent_id as string) ?? null, creatorId: (row.creator_id as string) ?? null, creatorName: null, creatorAvatar: null, sortOrder: (row.sort_order as number) ?? 0, createdAt: row.created_at as string };
 }
@@ -121,11 +126,16 @@ export async function createSharePost(title: string, summary: string, body: stri
   if (!t || t.length > 200) throw new Error("标题无效。");
   if (!s) throw new Error("简介不能为空。");
   if (!b) throw new Error("内容不能为空。");
+  const payload = { title: t, summary: s, body: b, url: link.trim() || null, folder_id: folderId, author_id: userData.user.id, likes_count: 0, comments_count: 0 };
   const { data, error } = await getSupabaseClient()
     .from("shared_posts")
-    .insert({ title: t, summary: s, body: b, url: link.trim() || null, folder_id: folderId, author_id: userData.user.id, likes_count: 0, comments_count: 0 })
+    .insert(payload)
     .select("id, title, summary, body, folder_id, author_id, likes_count, comments_count, created_at").single();
-  if (error) throw new Error(`发布失败: ${error.message}`);
+  if (error) {
+    console.error("[share-storage] createSharePost 失败:", error, "payload:", payload);
+    throw new Error(`发布失败: ${error.message} (code: ${error.code})`);
+  }
+  if (!data) throw new Error("发布失败: 服务器未返回数据，请检查RLS策略。");
   const row = data as Record<string, unknown>;
   let authorName = "匿名用户";
   try {
