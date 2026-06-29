@@ -175,16 +175,20 @@ export function SelectionCommentLayer() {
       return;
     }
 
-    const created = createSelectionComment({
-      pathname,
-      quote: draft.quote.slice(0, MAX_QUOTE_LENGTH),
-      body,
-      side: draft.side,
-      anchorTop: draft.anchorTop,
-    });
+    try {
+      const created = createSelectionComment({
+        pathname,
+        quote: draft.quote.slice(0, MAX_QUOTE_LENGTH),
+        body,
+        side: draft.side,
+        anchorTop: draft.anchorTop,
+      });
 
-    setComments((current) => [...current, created]);
-    closeDraft();
+      setComments((current) => [...current, created]);
+      closeDraft();
+    } catch (err: unknown) {
+      alert("评论保存失败: " + (err instanceof Error ? err.message : String(err)));
+    }
   }
 
   function handleDeleteComment(id: string) {
@@ -277,6 +281,7 @@ export function SelectionCommentLayer() {
             className="mt-3 min-h-24 w-full rounded-2xl border border-[var(--color-line)] bg-[var(--color-input)] px-3 py-3 text-sm leading-6 text-[var(--color-ink)] outline-none transition focus:border-[var(--color-brand)]"
             maxLength={MAX_BODY_LENGTH}
             onChange={(event) => setCommentText(event.target.value.slice(0, MAX_BODY_LENGTH))}
+            onKeyDown={(e) => { if (e.nativeEvent.isComposing) return; if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSaveComment(); } }}
             placeholder="像 Notion 那样，给这段话单独留个评论。"
             value={commentText}
           />

@@ -113,6 +113,7 @@ export function CommunityPostPanel({ onPostCreated }: CommunityPostPanelProps) {
 
   // Keyboard navigation for mention popup
   function handleTextareaKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (e.nativeEvent.isComposing) return;
     if (mentionState.active && mentionSuggestions.length > 0) {
       if (e.key === "ArrowDown") { e.preventDefault(); setMentionIndex((prev) => (prev + 1) % mentionSuggestions.length); }
       else if (e.key === "ArrowUp") { e.preventDefault(); setMentionIndex((prev) => (prev - 1 + mentionSuggestions.length) % mentionSuggestions.length); }

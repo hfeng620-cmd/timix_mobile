@@ -227,6 +227,56 @@ function PostModal({ post, onClose, onEdit }: { post: PostNode; onClose: () => v
   const { user, isAdmin, isOwner } = useForumAuth();
   const canEdit = !!(user && (isAdmin || isOwner || user.id === post.authorId));
 
+  const [comments, setComments] = useState<{
+    id: number; username: string; timestamp: string; content: string;
+    likedBy: { name: string; avatar: null; role: "owner" | "admin" | "author" }[];
+  }[]>([
+    { id: 1, username: "噜噜", timestamp: "2 小时前", content: "这个项目太棒了！已经在我自己的项目里用上了。",
+      likedBy: [{ name: "站主", avatar: null, role: "owner" as const }, { name: "管理员", avatar: null, role: "admin" as const }] },
+    { id: 2, username: "CodeMaster", timestamp: "5 小时前", content: "Windows 下需要额外配置 PATH 环境变量。",
+      likedBy: [{ name: "帖主", avatar: null, role: "author" as const }] },
+    { id: 3, username: "AI探索者", timestamp: "1 天前", content: "有没有人遇到过 OOM 的问题？",
+      likedBy: [] },
+  ]);
+
+  function handleSendComment() {
+    const body = commentText.trim();
+    if (!body) return;
+    try {
+      const newComment = {
+        id: Date.now(),
+        username: user?.user_metadata?.display_name ?? "匿名",
+        timestamp: "刚刚",
+        content: body,
+        likedBy: [] as { name: string; avatar: null; role: "owner" | "admin" | "author" }[],
+      };
+      setComments((prev) => [...prev, newComment]);
+      setCommentText("");
+    } catch (err: unknown) {
+      alert("评论发送失败: " + (err instanceof Error ? err.message : String(err)));
+    }
+  }
+
+  function handleSendReply() {
+    if (!replyModalComment) return;
+    const body = replyModalText.trim();
+    if (!body) return;
+    try {
+      const newReply = {
+        id: Date.now(),
+        username: user?.user_metadata?.display_name ?? "匿名",
+        timestamp: "刚刚",
+        content: body,
+        likedBy: [] as { name: string; avatar: null; role: "owner" | "admin" | "author" }[],
+      };
+      setComments((prev) => [...prev, newReply]);
+      setReplyModalComment(null);
+      setReplyModalText("");
+    } catch (err: unknown) {
+      alert("回复发送失败: " + (err instanceof Error ? err.message : String(err)));
+    }
+  }
+
   const overlayRef = useRef<HTMLDivElement>(null);
   useEffect(() => { const unlock = lockBodyScroll(); overlayRef.current?.focus(); return unlock; }, []);
   useEffect(() => { const h = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); }; window.addEventListener("keydown", h); return () => window.removeEventListener("keydown", h); }, [onClose]);
@@ -238,15 +288,6 @@ function PostModal({ post, onClose, onEdit }: { post: PostNode; onClose: () => v
       catch { if (!cancelled) setEditLogs([]); } finally { if (!cancelled) setLogsLoading(false); }
     } f(); return () => { cancelled = true; };
   }, [post.id]);
-
-  const mockComments = [
-    { id: 1, username: "噜噜", timestamp: "2 小时前", content: "这个项目太棒了！已经在我自己的项目里用上了。",
-      likedBy: [{ name: "站主", avatar: null, role: "owner" as const }, { name: "管理员", avatar: null, role: "admin" as const }] },
-    { id: 2, username: "CodeMaster", timestamp: "5 小时前", content: "Windows 下需要额外配置 PATH 环境变量。",
-      likedBy: [{ name: "帖主", avatar: null, role: "author" as const }] },
-    { id: 3, username: "AI探索者", timestamp: "1 天前", content: "有没有人遇到过 OOM 的问题？",
-      likedBy: [] },
-  ];
 
   function rt(d: string) { const m = Math.floor((Date.now() - new Date(d).getTime()) / 60000); if (isNaN(m)) return d; if (m < 1) return "刚刚"; if (m < 60) return `${m}分钟前`; const h = Math.floor(m / 60); if (h < 24) return `${h}小时前`; return `${Math.floor(h / 24)}天前`; }
 
@@ -310,7 +351,7 @@ function PostModal({ post, onClose, onEdit }: { post: PostNode; onClose: () => v
           {rightTab === "comments" && (
             <>
               <div className="flex-1 overflow-y-auto p-4 space-y-5">
-                {mockComments.map((c) => {
+                {comments.map((c) => {
                   const isLiked = likedCommentIds.has(c.id);
                   const topLike = c.likedBy[0];
                   const topRoleColor = topLike?.role === "owner" ? "text-amber-400" : topLike?.role === "admin" ? "text-blue-400" : "text-purple-400";
@@ -365,8 +406,8 @@ function PostModal({ post, onClose, onEdit }: { post: PostNode; onClose: () => v
               {/* Comment input — fixed at bottom */}
               <div className="shrink-0 p-4 border-t border-white/10 bg-zinc-900/50">
                 <div className="relative">
-                  <textarea className="w-full min-h-[44px] resize-none rounded-xl bg-white/5 border border-white/10 px-4 py-3 pr-12 text-sm text-white placeholder:text-white/25 font-body outline-none focus:border-white/30 transition" placeholder="说点什么... (Enter 发送, Shift+Enter 换行)" onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); setCommentText(""); } }} value={commentText} onChange={(e) => setCommentText(e.target.value)} rows={2} />
-                  <button className="absolute right-2 bottom-2 rounded-full bg-white/15 p-1.5 text-white/50 hover:bg-white/25 hover:text-white transition disabled:opacity-30" type="button" onClick={() => setCommentText("")} disabled={!commentText.trim()}><Send className="h-3.5 w-3.5" /></button>
+                  <textarea className="w-full min-h-[44px] resize-none rounded-xl bg-white/5 border border-white/10 px-4 py-3 pr-12 text-sm text-white placeholder:text-white/25 font-body outline-none focus:border-white/30 transition" placeholder="说点什么... (Enter 发送, Shift+Enter 换行)" onKeyDown={(e) => { if (e.nativeEvent.isComposing) return; if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSendComment(); } }} value={commentText} onChange={(e) => setCommentText(e.target.value)} rows={2} />
+                  <button className="absolute right-2 bottom-2 rounded-full bg-white/15 p-1.5 text-white/50 hover:bg-white/25 hover:text-white transition disabled:opacity-30" type="button" onClick={handleSendComment} disabled={!commentText.trim()}><Send className="h-3.5 w-3.5" /></button>
                 </div>
               </div>
             </>
@@ -410,10 +451,10 @@ function PostModal({ post, onClose, onEdit }: { post: PostNode; onClose: () => v
           <textarea className="w-full min-h-[80px] resize-none rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-sm text-white placeholder:text-white/25 font-body outline-none focus:border-white/30 transition mb-4"
             placeholder={`回复 @${replyModalComment.username}... (Enter 发送, Shift+Enter 换行)`}
             value={replyModalText} onChange={(e) => setReplyModalText(e.target.value)} autoFocus
-            onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); setReplyModalComment(null); setReplyModalText(""); } }} />
+            onKeyDown={(e) => { if (e.nativeEvent.isComposing) return; if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSendReply(); } }} />
           <div className="flex items-center justify-end gap-3">
             <button className="rounded-full bg-white/10 px-4 py-2 text-xs text-white/50 hover:bg-white/20 transition font-body" onClick={() => { setReplyModalComment(null); setReplyModalText(""); }} type="button">取消</button>
-            <button className="rounded-full bg-white/15 px-4 py-2 text-xs text-white/50 hover:bg-white/25 transition disabled:opacity-30 font-body inline-flex items-center gap-1.5" onClick={() => { setReplyModalComment(null); setReplyModalText(""); }} type="button" disabled={!replyModalText.trim()}><Send className="h-3 w-3" />发送</button>
+            <button className="rounded-full bg-white/15 px-4 py-2 text-xs text-white/50 hover:bg-white/25 transition disabled:opacity-30 font-body inline-flex items-center gap-1.5" onClick={handleSendReply} type="button" disabled={!replyModalText.trim()}><Send className="h-3 w-3" />发送</button>
           </div>
         </div>
       </div>
@@ -546,7 +587,7 @@ export default function GuidesPage() {
     if (!dbFolder) return;
     setEditSaving(true);
     try { await updateFolder(dbFolder.id, editFolderName, editFolderDesc); triggerRefresh(); setEditingFolder(false); }
-    catch {}
+    catch (e: any) { alert(e?.message || "更新板块失败"); }
     finally { setEditSaving(false); }
   }
 
@@ -560,7 +601,7 @@ export default function GuidesPage() {
     if (!editingPost) return;
     setEditSaving(true);
     try { await updateSharePost(editingPost.id, editPostTitle, editPostSummary, editPostBody, ""); triggerRefresh(); setEditingPost(null); }
-    catch {}
+    catch (e: any) { alert(e?.message || "更新帖子失败"); }
     finally { setEditSaving(false); }
   }
 
