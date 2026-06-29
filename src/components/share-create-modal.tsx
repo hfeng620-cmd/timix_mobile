@@ -78,6 +78,7 @@ export function ShareCreateModal({ open, mode, currentFolder, folders, onClose, 
         if (!title.trim()) { setError("请输入项目标题。"); setLoading(false); return; }
         if (!summary.trim()) { setError("请输入项目简介。"); setLoading(false); return; }
         if (!body.trim()) { setError("请输入帖子内容。"); setLoading(false); return; }
+        if (!selectedFolderId) { setError("❌ 必须选择一个所属板块！"); setLoading(false); return; }
         const result = await onCreatePost(title.trim(), summary.trim(), body.trim(), link.trim(), selectedFolderId);
         setSuccess(true);
         setError(`发布成功！ID: ${(result as any)?.id?.slice(0,8) ?? '未知'}`);
@@ -149,19 +150,20 @@ export function ShareCreateModal({ open, mode, currentFolder, folders, onClose, 
                       placeholder="详细介绍该项目的特点、使用体验或教程..." rows={6} maxLength={10000}
                       className={`${inputClass} resize-none`} />
                   </div>
-                  {options.length > 0 && (
-                    <div>
-                      <label className="block text-xs text-white/40 font-body mb-1.5">所属板块</label>
-                      <select value={selectedFolderId ?? ""} onChange={(e) => setSelectedFolderId(e.target.value || null)}
-                        className={`${inputClass} appearance-none cursor-pointer`}
-                        style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.4)' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`, backgroundRepeat: "no-repeat", backgroundPosition: "right 12px center", paddingRight: "2.5rem" }}>
-                        <option value="" className="bg-gray-900">{currentFolder.id ? currentFolder.name + "（当前板块）" : "根目录"}</option>
-                        {options.filter((f) => f.id !== currentFolder.id).map((f) => (
-                          <option key={f.id} value={f.id} className="bg-gray-900">{"  ".repeat(f.depth)}{f.label}</option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
+                  <div>
+                    <label className="block text-xs text-white/40 font-body mb-1.5">所属板块 <span className="text-red-400">*必选</span></label>
+                    <select value={selectedFolderId ?? ""} onChange={(e) => setSelectedFolderId(e.target.value || null)}
+                      className={`${inputClass} appearance-none cursor-pointer`}
+                      style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.4)' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`, backgroundRepeat: "no-repeat", backgroundPosition: "right 12px center", paddingRight: "2.5rem" }}>
+                      <option value="" className="bg-gray-900">-- 请选择板块 --</option>
+                      {options.map((f) => (
+                        <option key={f.id} value={f.id} className="bg-gray-900">{"  ".repeat(f.depth)}{f.label}</option>
+                      ))}
+                    </select>
+                    {options.length === 0 && (
+                      <p className="mt-1 text-[10px] text-amber-400 font-body">还没有板块，请先点击「建立板块」创建</p>
+                    )}
+                  </div>
                 </>
               )}
             </div>
