@@ -240,9 +240,12 @@ function PostModal({ post, onClose, onEdit }: { post: PostNode; onClose: () => v
   }, [post.id]);
 
   const mockComments = [
-    { id: 1, username: "噜噜", timestamp: "2 小时前", content: "这个项目太棒了！已经在我自己的项目里用上了。" },
-    { id: 2, username: "CodeMaster", timestamp: "5 小时前", content: "Windows 下需要额外配置 PATH 环境变量。" },
-    { id: 3, username: "AI探索者", timestamp: "1 天前", content: "有没有人遇到过 OOM 的问题？" },
+    { id: 1, username: "噜噜", timestamp: "2 小时前", content: "这个项目太棒了！已经在我自己的项目里用上了。",
+      likedBy: [{ name: "站主", avatar: null, role: "owner" as const }, { name: "管理员", avatar: null, role: "admin" as const }] },
+    { id: 2, username: "CodeMaster", timestamp: "5 小时前", content: "Windows 下需要额外配置 PATH 环境变量。",
+      likedBy: [{ name: "帖主", avatar: null, role: "author" as const }] },
+    { id: 3, username: "AI探索者", timestamp: "1 天前", content: "有没有人遇到过 OOM 的问题？",
+      likedBy: [] },
   ];
 
   function rt(d: string) { const m = Math.floor((Date.now() - new Date(d).getTime()) / 60000); if (isNaN(m)) return d; if (m < 1) return "刚刚"; if (m < 60) return `${m}分钟前`; const h = Math.floor(m / 60); if (h < 24) return `${h}小时前`; return `${Math.floor(h / 24)}天前`; }
@@ -309,6 +312,9 @@ function PostModal({ post, onClose, onEdit }: { post: PostNode; onClose: () => v
               <div className="flex-1 overflow-y-auto p-4 space-y-5">
                 {mockComments.map((c) => {
                   const isLiked = likedCommentIds.has(c.id);
+                  const topLike = c.likedBy[0];
+                  const topRoleColor = topLike?.role === "owner" ? "text-amber-400" : topLike?.role === "admin" ? "text-blue-400" : "text-purple-400";
+                  const topLabel = topLike?.role === "owner" ? "站主赞过" : topLike?.role === "admin" ? "管理员赞过" : "帖主赞过";
                   return (
                   <div key={c.id} className="group">
                     <div className="flex gap-3">
@@ -316,14 +322,39 @@ function PostModal({ post, onClose, onEdit }: { post: PostNode; onClose: () => v
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2"><span className="text-sm font-medium text-white/70 font-body">{c.username}</span><span className="text-[11px] text-gray-500 font-body">{c.timestamp}</span></div>
                         <p className="mt-1 text-sm leading-relaxed text-white/45 font-body">{c.content}</p>
+                        {/* Privilege like badge */}
+                        {topLike && (
+                          <div className={`mt-1.5 inline-flex items-center gap-1 bg-zinc-800 text-[10px] px-1.5 py-0.5 rounded-full ${topRoleColor} cursor-default`}
+                            title={`${topLike.name}${c.likedBy.length > 1 ? ` 等 ${c.likedBy.length} 人点赞` : " 赞了"}`}>
+                            <span className="flex w-4 h-4 shrink-0 items-center justify-center rounded-full bg-white/10 text-[8px]">{topLike.name.charAt(0)}</span>
+                            {topLabel}{c.likedBy.length > 1 && ` 等${c.likedBy.length}人`}
+                          </div>
+                        )}
                         <div className="mt-1.5 flex items-center gap-4">
-                          <button onClick={() => { setLikedCommentIds(p => { const n = new Set(p); if (n.has(c.id)) n.delete(c.id); else n.add(c.id); return n; }); console.log("[Notify] like_comment", { commentId: c.id, username: c.username }); }}
-                            className={`text-gray-500 hover:text-gray-300 transition ${isLiked ? "!text-rose-400" : ""}`} type="button">
+                          <button onClick={() => { setLikedCommentIds(p => { const n = new Set(p); if (n.has(c.id)) n.delete(c.id); else n.add(c.id); return n; }); }}
+                            className={`text-gray-500 hover:text-gray-300 transition ${isLiked ? "text-rose-400" : ""}`} type="button">
                             <Heart className={`h-3.5 w-3.5 ${isLiked ? "fill-current" : ""}`} />
                           </button>
                           <button onClick={() => { setReplyModalComment(c); setReplyModalText(`@${c.username} `); }}
                             className="text-gray-500 hover:text-gray-300 transition" type="button">
                             <MessageCircle className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                      {/* Three-dot menu */}
+                      <div className="relative shrink-0 opacity-0 group-hover:opacity-100 transition mt-0.5" onClick={(e) => e.stopPropagation()}>
+                        <button className="rounded p-1 text-gray-600 hover:text-gray-300 transition" type="button"
+                          onClick={(e) => { e.stopPropagation(); const m = (e.currentTarget as HTMLElement).nextElementSibling as HTMLElement; if (m) m.classList.toggle('hidden'); }}>
+                          <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+                        </button>
+                        <div className="hidden absolute right-0 top-full mt-1 w-20 rounded-xl border border-white/10 bg-black/90 backdrop-blur py-1 shadow-xl z-30">
+                          <button className="flex w-full items-center gap-1.5 px-3 py-1.5 text-xs text-red-400 hover:bg-red-400/10 transition font-body" type="button"
+                            onClick={(e) => { e.stopPropagation(); if (window.confirm("确定删除此评论？")) { /* TODO: delete comment */ } }}>
+                            <Trash2 className="h-3 w-3" />删除
+                          </button>
+                          <button className="flex w-full items-center gap-1.5 px-3 py-1.5 text-xs text-gray-400 hover:bg-white/10 hover:text-white transition font-body" type="button"
+                            onClick={(e) => { e.stopPropagation(); alert("已举报，管理员将审核此评论。"); }}>
+                            ⚠️ 举报
                           </button>
                         </div>
                       </div>
