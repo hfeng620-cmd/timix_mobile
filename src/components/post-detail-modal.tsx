@@ -347,7 +347,7 @@ export function PostDetailModal({ post, onClose, onEdit }: Props) {
 
     try {
       console.log("[评论] 发送根评论 → Supabase:", { postId: post.id, body, userId: user.id });
-      const saved = await createSharedComment(post.id, user.id, body, null);
+      const saved = await createSharedComment(post.id, body, null);
       const newComment: CommentItem = {
         id: saved.id,
         parentId: saved.parentCommentId,
@@ -385,7 +385,7 @@ export function PostDetailModal({ post, onClose, onEdit }: Props) {
 
       try {
         console.log("[评论] 发送楼中楼回复 → Supabase:", { postId: post.id, parentId, body, userId: user.id });
-        const saved = await createSharedComment(post.id, user.id, body, parentId);
+        const saved = await createSharedComment(post.id, body, parentId);
         const newReply: CommentItem = {
           id: saved.id,
           parentId: saved.parentCommentId,

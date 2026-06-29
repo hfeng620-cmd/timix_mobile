@@ -305,15 +305,21 @@ export async function loadSharedComments(postId: string): Promise<SharedComment[
   } catch { return []; }
 }
 
-/** 创建新评论 */
+/** 创建新评论 (author_id 从服务端 JWT 获取，不信任客户端传入) */
 export async function createSharedComment(
   postId: string,
-  authorId: string,
   body: string,
   parentCommentId: string | null = null,
 ): Promise<SharedComment> {
   if (!isSupabaseConfigured()) throw new Error("Supabase 未配置。");
-  const { data, error } = await getSupabaseClient()
+  const supabase = getSupabaseClient();
+
+  /* 从服务端 JWT 获取真实用户 ID，确保 RLS auth.uid() = author_id */
+  const { data: userData } = await supabase.auth.getUser();
+  if (!userData.user) throw new Error("请先登录后再评论。");
+  const authorId = userData.user.id;
+
+  const { data, error } = await supabase
     .from("shared_post_comments")
     .insert({
       post_id: postId,
@@ -332,17 +338,19 @@ export async function createSharedComment(
 
   const row = data as Record<string, unknown>;
   /* 获取作者名称 */
-  let authorName = "未知用户";
-  let authorAvatar: string | null = null;
+  let authorName = userData.user.user_metadata?.display_name as string ?? "用户";
+  let authorAvatar = userData.user.user_metadata?.avatar_url as string ?? null;
   try {
-    const { data: profile } = await getSupabaseClient()
+    const { data: profile } = await supabase
       .from("forum_profiles")
       .select("display_name, avatar_url")
       .eq("id", authorId)
       .maybeSingle();
-    authorName = (profile as any)?.display_name ?? authorName;
-    authorAvatar = (profile as any)?.avatar_url ?? null;
-  } catch { /* 降级 */ }
+    if (profile) {
+      authorName = (profile as any).display_name ?? authorName;
+      authorAvatar = (profile as any).avatar_url ?? authorAvatar;
+    }
+  } catch { /* 降级到 user_metadata */ }
 
   return {
     id: row.id as string,
