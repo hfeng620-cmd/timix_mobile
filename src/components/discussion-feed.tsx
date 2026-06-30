@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { createPortal } from "react-dom";
 
 import {
   createDiscussionPost,
@@ -24,6 +25,7 @@ import {
 } from "@/lib/discussion-storage";
 import { FORUM_IMAGE_ACCEPT } from "@/lib/forum-image-safety";
 import { useForumAuth } from "@/lib/forum-auth";
+import { lockBodyScroll } from "@/lib/body-scroll-lock";
 import { ImageLightbox } from "@/components/image-lightbox";
 import { MarkdownContent } from "@/components/markdown-content";
 import { UserProfileCard } from "@/components/user-profile-card";
@@ -207,6 +209,136 @@ function createFeedItemStyle(index: number): CSSProperties {
   };
 }
 
+function ClampedPostBody({
+  body,
+  onImageClick,
+  onShowFull,
+}: {
+  body: string;
+  onImageClick: (src: string) => void;
+  onShowFull: () => void;
+}) {
+  const contentRef = useRef<HTMLDivElement | null>(null);
+  const [isOverflowing, setIsOverflowing] = useState(false);
+
+  useEffect(() => {
+    const element = contentRef.current;
+    if (!element) return;
+
+    const updateOverflow = () => {
+      setIsOverflowing(element.scrollHeight > element.clientHeight + 1);
+    };
+
+    updateOverflow();
+    if (typeof ResizeObserver !== "undefined") {
+      const observer = new ResizeObserver(updateOverflow);
+      observer.observe(element);
+      return () => observer.disconnect();
+    }
+
+    window.addEventListener("resize", updateOverflow);
+
+    return () => window.removeEventListener("resize", updateOverflow);
+  }, [body]);
+
+  return (
+    <div className="mt-4 max-w-4xl">
+      <div
+        ref={contentRef}
+        className="line-clamp-3 whitespace-pre-wrap break-words text-[15px] leading-7 text-[var(--color-ink)] sm:text-base sm:leading-8"
+      >
+        <MarkdownContent
+          text={body}
+          imageClassName="my-2 max-h-40 w-auto max-w-full cursor-zoom-in rounded-lg border border-white/5 object-cover shadow-sm transition-opacity hover:opacity-90"
+          onImageClick={onImageClick}
+        />
+      </div>
+
+      {isOverflowing ? (
+        <button
+          className="mt-2 inline-flex min-h-[36px] items-center rounded-full border border-[var(--color-line)] bg-[var(--color-soft)] px-3.5 py-1.5 text-xs font-bold text-[var(--color-brand-deep)] transition hover:-translate-y-0.5 hover:border-[var(--color-brand)] hover:bg-[var(--color-brand-soft)]"
+          onClick={onShowFull}
+          type="button"
+        >
+          显示全部
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
+function FullPostModal({
+  post,
+  onClose,
+  onImageClick,
+}: {
+  post: DiscussionPost;
+  onClose: () => void;
+  onImageClick: (src: string) => void;
+}) {
+  useEffect(() => {
+    const unlock = lockBodyScroll();
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        onClose();
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      unlock();
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [onClose]);
+
+  return createPortal(
+    <div
+      aria-modal="true"
+      className="fixed inset-0 z-[99990] flex items-center justify-center bg-black/55 px-4 py-6 backdrop-blur-xl sm:px-6"
+      onClick={onClose}
+      role="dialog"
+    >
+      <div
+        className="relative flex max-h-[86vh] w-full max-w-3xl flex-col overflow-hidden rounded-[28px] border border-[var(--color-line)] bg-[var(--color-panel-strong)] shadow-[0_30px_100px_rgba(0,0,0,0.35)]"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="shrink-0 border-b border-[var(--color-line)] px-5 py-4 pr-14 sm:px-6">
+          <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-[var(--color-muted)]">
+            <span>{post.author}</span>
+            <span>·</span>
+            <span>{formatRelativeTime(post.postedAt)}</span>
+            {post.station ? (
+              <span className="rounded-full border border-[var(--color-line)] bg-[var(--color-soft)] px-2 py-0.5 text-[var(--color-brand-deep)]">
+                {post.station}
+              </span>
+            ) : null}
+          </div>
+          <h2 className="mt-2 text-lg font-black leading-7 text-[var(--color-ink)] sm:text-xl">
+            完整内容
+          </h2>
+        </div>
+
+        <button
+          aria-label="关闭完整内容"
+          className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-[var(--color-soft)] text-[var(--color-muted)] transition hover:bg-[var(--color-brand-soft)] hover:text-[var(--color-brand-deep)]"
+          onClick={onClose}
+          type="button"
+        >
+          ✕
+        </button>
+
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-5 sm:px-6">
+          <div className="whitespace-pre-wrap break-words text-[15px] leading-8 text-[var(--color-ink)] sm:text-base sm:leading-8">
+            <MarkdownContent text={post.body} onImageClick={onImageClick} />
+          </div>
+        </div>
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
 export function DiscussionFeed({
   compact = false,
   title = "讨论",
@@ -225,7 +357,7 @@ export function DiscussionFeed({
   const [body, setBody] = useState("");
   const [station, setStation] = useState("");
   const [expandedPostId, setExpandedPostId] = useState<string | null>(null);
-  const [expandedBodies, setExpandedBodies] = useState<Set<string>>(new Set());
+  const [fullPost, setFullPost] = useState<DiscussionPost | null>(null);
   const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
   const [replyTargets, setReplyTargets] = useState<Record<string, string>>({});
   /** Store the body of the reply being quoted so we can show a quote preview */
@@ -1376,38 +1508,12 @@ export function DiscussionFeed({
                         </button>
                       </div>
                     </div>
-                  ) : post.body.length > 500 ? (
-                    <>
-                      <p className="mt-4 max-w-4xl text-[15px] leading-7 text-[var(--color-ink)] sm:text-base sm:leading-8">
-                        <span className="whitespace-pre-wrap break-words">
-                          <MarkdownContent
-                            text={expandedBodies.has(post.issueNumber) ? post.body : `${post.body.slice(0, 500)}...`}
-                            onImageClick={setLightboxImage}
-                          />
-                        </span>
-                      </p>
-                      <button
-                        className="mt-1 min-h-[44px] rounded-lg px-3 py-2 text-xs font-semibold text-[var(--color-brand-deep)] transition hover:bg-[var(--color-soft)] hover:text-[var(--color-brand)]"
-                        onClick={() => {
-                          setExpandedBodies((prev) => {
-                            const next = new Set(prev);
-                            if (next.has(post.issueNumber)) {
-                              next.delete(post.issueNumber);
-                            } else {
-                              next.add(post.issueNumber);
-                            }
-                            return next;
-                          });
-                        }}
-                        type="button"
-                      >
-                        {expandedBodies.has(post.issueNumber) ? "收起 ▲" : "展开全文 ▼"}
-                      </button>
-                    </>
                   ) : (
-                    <p className="mt-4 max-w-4xl whitespace-pre-wrap break-words text-[15px] leading-7 text-[var(--color-ink)] sm:text-base sm:leading-8">
-                      <MarkdownContent text={post.body} onImageClick={setLightboxImage} />
-                    </p>
+                    <ClampedPostBody
+                      body={post.body}
+                      onImageClick={setLightboxImage}
+                      onShowFull={() => setFullPost(post)}
+                    />
                   )}
                   <div className="mt-4 flex flex-wrap gap-2">
                     {post.tags.map((tag) => (
@@ -1700,6 +1806,14 @@ export function DiscussionFeed({
 
       {lightboxImage ? (
         <ImageLightbox src={lightboxImage} onClose={() => setLightboxImage(null)} />
+      ) : null}
+      {fullPost ? (
+        <FullPostModal
+          key={fullPost.issueNumber}
+          post={fullPost}
+          onClose={() => setFullPost(null)}
+          onImageClick={setLightboxImage}
+        />
       ) : null}
 
       <style jsx>{`

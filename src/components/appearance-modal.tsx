@@ -41,9 +41,9 @@ const THEMES: ThemeDef[] = [
   },
   {
     id: "apple-light",
-    name: "极简白 & 3D 几何",
+    name: "Apple Light & 3D",
     enName: "Apple Light",
-    desc: "通透、克制、空间折射 — 极简白底搭配悬浮玻璃几何背景。",
+    desc: "Frosted glass refraction & deep clarity.",
     colors: ["#ffffff", "#f5f5f7", "#0066cc"],
     gradient: "linear-gradient(135deg, #ffffff, #f5f5f7, #d2d2d7)",
   },

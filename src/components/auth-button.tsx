@@ -50,7 +50,7 @@ export function AuthButton() {
           </button>
         ) : null}
         <Link
-          className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border-2 border-white/20 transition hover:border-white/50"
+          className="flex h-8 w-8 flex-shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-white/20 transition hover:border-white/50"
           href="/profile"
           title={email ?? undefined}
         >
@@ -65,7 +65,7 @@ export function AuthButton() {
         {(isAdmin || isOwner) && (
           <Link
             aria-label="打开管理面板"
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-white/25 bg-white/10 text-white/70 transition hover:border-white/50 hover:bg-white/20 hover:text-white"
+            className="flex h-8 w-8 flex-shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/25 bg-white/10 text-white/70 transition hover:border-white/50 hover:bg-white/20 hover:text-white"
             href="/admin"
             title="管理面板"
           >

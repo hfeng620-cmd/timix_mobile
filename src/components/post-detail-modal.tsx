@@ -44,7 +44,8 @@ type PostNode = {
   authorId: string;
   body: string;
   isHot: boolean;
-  authorName?: string;
+  authorName?: string | null;
+  authorAvatar?: string | null;
   createdAt?: string;
 };
 
@@ -599,12 +600,24 @@ export function PostDetailModal({ post, onClose, onEdit }: Props) {
               <h2 className="text-3xl font-heading italic text-white md:text-4xl leading-tight">{post.title}</h2>
 
               <div className="flex items-center gap-3 mt-4 text-sm text-white/40 font-body">
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white/10 text-[10px] text-white/50">
-                  {(post.authorName ?? "U").charAt(0)}
-                </span>
-                <span className="text-white/60">{post.authorName ?? "未知用户"}</span>
-                <span>·</span>
-                <span>{formatRelativeTime(post.createdAt ?? new Date().toISOString())}</span>
+                {(post.authorName || post.authorAvatar) ? (
+                  <>
+                    {post.authorAvatar ? (
+                      <img
+                        src={post.authorAvatar}
+                        className="h-6 w-6 flex-shrink-0 rounded-full object-cover"
+                        alt={post.authorName ?? "作者头像"}
+                      />
+                    ) : post.authorName ? (
+                      <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-white/10 text-[10px] text-white/50">
+                        {post.authorName.charAt(0)}
+                      </span>
+                    ) : null}
+                    {post.authorName ? <span className="text-white/60">{post.authorName}</span> : null}
+                    {post.createdAt ? <span>·</span> : null}
+                  </>
+                ) : null}
+                {post.createdAt ? <span>{formatRelativeTime(post.createdAt)}</span> : null}
               </div>
 
               <p className="mt-5 text-sm leading-relaxed text-white/50 font-body">{post.summary}</p>

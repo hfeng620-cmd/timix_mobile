@@ -18,7 +18,7 @@ export function Navbar() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed top-4 left-0 right-0 z-50 px-4 sm:px-8 lg:px-16">
+    <nav className="fixed top-4 left-0 right-0 z-[100] px-4 sm:px-8 lg:px-16">
       <div className="mx-auto flex max-w-7xl items-center justify-between py-3 gap-3">
         <Link
           href="/"

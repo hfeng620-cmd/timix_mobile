@@ -40,6 +40,9 @@ type PostNode = {
   comments: number;
   bookmarks: number;
   authorId: string;
+  authorName: string | null;
+  authorAvatar: string | null;
+  createdAt: string;
   body: string;
   isHot: boolean;
 };
@@ -63,14 +66,18 @@ function buildTreeFromDb(dbFolders: ShareFolder[], dbPosts: SharePost[]): Folder
     const childFolders = (childrenMap.get(f.id) ?? []).map(convertFolder);
     const childPosts: PostNode[] = (postsByFolder.get(f.id) ?? []).map((p) => ({
       type: "post", id: p.id, title: p.title, summary: p.summary,
-      tag: f.name, likes: p.likesCount, comments: p.commentsCount, bookmarks: 0, authorId: p.authorId, body: p.body, isHot: p.isHot,
+      tag: f.name, likes: p.likesCount, comments: p.commentsCount, bookmarks: 0,
+      authorId: p.authorId, authorName: p.authorName, authorAvatar: p.authorAvatar,
+      createdAt: p.createdAt, body: p.body, isHot: p.isHot,
     }));
     return { type: "folder", name: f.name, desc: f.description || undefined, dbId: f.id, children: [...childFolders, ...childPosts] };
   }
   const rootFolders = (childrenMap.get(null) ?? []).map(convertFolder);
   const rootPosts: PostNode[] = (postsByFolder.get("__root__") ?? []).map((p) => ({
     type: "post", id: p.id, title: p.title, summary: p.summary,
-    tag: "root", likes: p.likesCount, comments: p.commentsCount, bookmarks: 0, authorId: p.authorId, body: p.body, isHot: p.isHot,
+    tag: "root", likes: p.likesCount, comments: p.commentsCount, bookmarks: 0,
+    authorId: p.authorId, authorName: p.authorName, authorAvatar: p.authorAvatar,
+    createdAt: p.createdAt, body: p.body, isHot: p.isHot,
   }));
   return { type: "folder", name: "root", children: [...rootFolders, ...rootPosts] };
 }
@@ -85,7 +92,8 @@ const OLD_MOCK: FolderNode = {
             {
               type: "post", id: "p1", title: "Codex CLI 实战：用自然语言操控终端",
               summary: "OpenAI Codex 命令行工具深度体验，附常用 prompt 模板和避坑记录。",
-              tag: "Codex", likes: 2340, comments: 156, bookmarks: 892, authorId: "", body: "", isHot: false,
+              tag: "Codex", likes: 2340, comments: 156, bookmarks: 892, authorId: "",
+              authorName: null, authorAvatar: null, createdAt: "", body: "", isHot: false,
             },
           ],
         },
@@ -94,7 +102,8 @@ const OLD_MOCK: FolderNode = {
             {
               type: "post", id: "p2", title: "Claude Code 终极配置指南",
               summary: "从零搭建 Claude Code 开发环境，MCP 插件、自定义 hooks 与快捷键映射。",
-              tag: "ClaudeCode", likes: 1890, comments: 98, bookmarks: 654, authorId: "", body: "", isHot: false,
+              tag: "ClaudeCode", likes: 1890, comments: 98, bookmarks: 654, authorId: "",
+              authorName: null, authorAvatar: null, createdAt: "", body: "", isHot: false,
             },
           ],
         },
@@ -110,7 +119,8 @@ const OLD_MOCK: FolderNode = {
             {
               type: "post", id: "p3", title: "Tauri 2.0 桌面应用开发指南",
               summary: "基于 Rust 的轻量级跨平台桌面应用框架，替代 Electron 的首选方案。",
-              tag: "前端", likes: 2780, comments: 187, bookmarks: 940, authorId: "", body: "", isHot: false,
+              tag: "前端", likes: 2780, comments: 187, bookmarks: 940, authorId: "",
+              authorName: null, authorAvatar: null, createdAt: "", body: "", isHot: false,
             },
           ],
         },
@@ -669,7 +679,7 @@ export default function GuidesPage() {
         </div>
       </div>
 
-      {modalPost && <PostDetailModal post={{ ...modalPost, authorName: (modalPost as any).authorName, createdAt: (modalPost as any).createdAt }} onClose={() => setModalPost(null)} onEdit={() => openEditPost(modalPost)} />}
+      {modalPost && <PostDetailModal post={modalPost} onClose={() => setModalPost(null)} onEdit={() => openEditPost(modalPost)} />}
       <ShareCreateModal
         open={createOpen}
         mode={createMode}

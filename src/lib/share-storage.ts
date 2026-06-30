@@ -27,13 +27,38 @@ export type SharePost = {
   body: string;
   folderId: string | null;
   authorId: string;
-  authorName: string;
+  authorName: string | null;
+  authorAvatar: string | null;
   likesCount: number;
   commentsCount: number;
   createdAt: string;
   isHot: boolean;
   hotUntil: string | null;
 };
+
+async function loadProfilesById(authorIds: string[]) {
+  const profiles = new Map<string, { displayName: string | null; avatarUrl: string | null }>();
+  const uniqueIds = [...new Set(authorIds.filter(Boolean))];
+  if (uniqueIds.length === 0) return profiles;
+
+  try {
+    const { data } = await getSupabaseClient()
+      .from("forum_profiles")
+      .select("id, display_name, avatar_url")
+      .in("id", uniqueIds);
+
+    for (const profile of data ?? []) {
+      profiles.set((profile as any).id, {
+        displayName: ((profile as any).display_name as string | null) ?? null,
+        avatarUrl: ((profile as any).avatar_url as string | null) ?? null,
+      });
+    }
+  } catch {
+    /* Profile data is optional for rendering; never fake an author identity. */
+  }
+
+  return profiles;
+}
 
 export async function loadFolders(): Promise<ShareFolder[]> {
   if (!isSupabaseConfigured()) return [];
@@ -85,21 +110,14 @@ export async function loadAllPosts(): Promise<SharePost[]> {
       .order("created_at", { ascending: false })
       .limit(100);
     if (error) throw error;
-    // Batch load all unique author profiles
     const rows = (data ?? []) as Record<string, unknown>[];
-    const authorIds = [...new Set(rows.map(r => r.author_id as string).filter(Boolean))];
-    const nameMap = new Map<string, string>();
-    if (authorIds.length > 0) {
-      try {
-        const { data: profiles } = await getSupabaseClient()
-          .from("forum_profiles").select("id, display_name").in("id", authorIds);
-        for (const p of (profiles ?? [])) nameMap.set((p as any).id, (p as any).display_name);
-      } catch {}
-    }
+    const profiles = await loadProfilesById(rows.map((r) => r.author_id as string));
     return rows.map((row) => ({
       id: row.id as string, title: row.title as string, summary: row.summary as string,
       body: row.body as string, folderId: (row.folder_id as string) ?? null,
-      authorId: row.author_id as string, authorName: nameMap.get(row.author_id as string) ?? "未知用户",
+      authorId: row.author_id as string,
+      authorName: profiles.get(row.author_id as string)?.displayName ?? null,
+      authorAvatar: profiles.get(row.author_id as string)?.avatarUrl ?? null,
       likesCount: (row.likes_count as number) ?? 0, commentsCount: (row.comments_count as number) ?? 0,
       createdAt: row.created_at as string,
       isHot: (row.is_hot as boolean) ?? false,
@@ -133,39 +151,33 @@ export async function createFolder(name: string, desc: string, parentId: string 
 
 export async function createSharePost(title: string, summary: string, body: string, link: string, folderId: string | null): Promise<SharePost> {
   if (!isSupabaseConfigured()) throw new Error("Supabase 未配置。");
-  const { data: userData } = await getSupabaseClient().auth.getUser();
-  if (!userData.user) throw new Error("请先登录后再分享项目。");
+  const { data: sessionData } = await getSupabaseClient().auth.getSession();
+  const currentUser = sessionData.session?.user ?? null;
+  if (!currentUser) throw new Error("请先登录后再分享项目。");
   const t = title.trim(), s = summary.trim(), b = body.trim();
   if (!t || t.length > 200) throw new Error("标题无效。");
   if (!s) throw new Error("简介不能为空。");
   if (!b) throw new Error("内容不能为空。");
-  const payload = { title: t, summary: s, body: b, url: link.trim() || null, folder_id: folderId, author_id: userData.user.id, likes_count: 0, comments_count: 0 };
-  alert("【Debug】准备发送: " + JSON.stringify({ table: "shared_posts", title: t, folder_id: folderId, author_id: userData.user.id }));
+  const payload = { title: t, summary: s, body: b, url: link.trim() || null, folder_id: folderId, author_id: currentUser.id, likes_count: 0, comments_count: 0 };
   const { data, error } = await getSupabaseClient()
     .from("shared_posts")
     .insert(payload)
     .select("id, title, summary, body, folder_id, author_id, likes_count, comments_count, created_at").single();
-  alert("【Debug】Supabase返回: " + JSON.stringify({ hasData: !!data, errorCode: error?.code, errorMsg: error?.message, dataId: data?.id }));
   if (error) {
     console.error("[share-storage] createSharePost 失败:", error, "payload:", payload);
-    alert("【插入失败】" + error.message + " (code:" + error.code + ")");
     throw new Error(`发布失败: ${error.message} (code: ${error.code})`);
   }
   if (!data) {
-    alert("【诡异】没报错但data为空！检查RLS是否拦截了INSERT或SELECT！");
     throw new Error("发布失败: 服务器未返回数据，请检查RLS策略。");
   }
-  alert("【成功】插入成功! ID: " + data.id);
   const row = data as Record<string, unknown>;
-  let authorName = userData.user.user_metadata?.display_name as string ?? "未知用户";
-  try {
-    const { data: profile } = await getSupabaseClient().from("forum_profiles").select("display_name").eq("id", userData.user.id).maybeSingle();
-    authorName = (profile as any)?.display_name ?? authorName;
-  } catch {}
+  const profile = (await loadProfilesById([currentUser.id])).get(currentUser.id);
   return {
     id: row.id as string, title: row.title as string, summary: row.summary as string,
     body: row.body as string, folderId: (row.folder_id as string) ?? null,
-    authorId: row.author_id as string, authorName,
+    authorId: row.author_id as string,
+    authorName: profile?.displayName ?? null,
+    authorAvatar: profile?.avatarUrl ?? null,
     likesCount: (row.likes_count as number) ?? 0, commentsCount: (row.comments_count as number) ?? 0,
     createdAt: row.created_at as string,
     isHot: false, hotUntil: null,

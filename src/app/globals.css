@@ -103,20 +103,20 @@
 /* Apple 极简白 */
 [data-theme="apple-light"] {
   --dt-primary: #1D1D1F;
-  --dt-primary-glow: rgba(0, 0, 0, 0.05);
+  --dt-primary-glow: rgba(0, 0, 0, 0.04);
   --dt-accent: #0066CC;
   --dt-bg-base: #FBFBFD;
-  --dt-bg-card: rgba(255, 255, 255, 0.6);
+  --dt-bg-card: rgba(255, 255, 255, 0.65);
   --dt-border: rgba(0, 0, 0, 0.06);
   --dt-text-main: #1D1D1F;
   --dt-text-sub: #86868B;
   --dt-gradient-bar: linear-gradient(135deg, #ffffff, #f5f5f7, #d2d2d7);
 
   --color-primary: #1D1D1F;
-  --color-primary-glow: rgba(0, 0, 0, 0.05);
+  --color-primary-glow: rgba(0, 0, 0, 0.04);
   --color-accent: #0066CC;
   --color-bg-base: #FBFBFD;
-  --color-bg-card: rgba(255, 255, 255, 0.6);
+  --color-bg-card: rgba(255, 255, 255, 0.65);
   --color-border: rgba(0, 0, 0, 0.06);
   --color-text-main: #1D1D1F;
   --color-text-sub: #86868B;
@@ -154,8 +154,10 @@
 html {
   transition: background-color 0.5s ease;
 }
-*, *::before, *::after {
-  transition: background-color 0.5s ease, border-color 0.5s ease, color 0.3s ease;
+*, ::before, ::after {
+  transition-property: background-color, border-color, color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 300ms;
 }
 
 /* ═══════════════════════════════════════════
