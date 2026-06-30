@@ -69,6 +69,8 @@ const EDITABLE_FIELDS: { key: keyof Station; label: string; type: "input" | "tex
   { key: "sortOrder", label: "排序", type: "input" },
 ];
 
+const EDITABLE_FIELD_KEYS = EDITABLE_FIELDS.map(({ key }) => key);
+
 /** Human-readable labels for snake_case field names returned from edit history. */
 const FIELD_LABELS: Record<string, string> = {
   name: "站点名",
@@ -232,6 +234,17 @@ function stationFormToCreateInput(form: Partial<Station>) {
     groupName: form.groupName,
     sortOrder: form.sortOrder,
   };
+}
+
+function pickEditableStationFields(station: Partial<Station>): Partial<Station> {
+  const next: Partial<Station> = {};
+  for (const key of EDITABLE_FIELD_KEYS) {
+    const value = station[key];
+    if (value !== undefined) {
+      next[key] = value;
+    }
+  }
+  return next;
 }
 
 // ---------------------------------------------------------------------------
@@ -483,7 +496,7 @@ export function StationsBoard() {
   const startEdit = useCallback((station: Station) => {
     setEditingId(station.id);
     setAddingNew(false);
-    setEditForm({ ...station });
+    setEditForm(pickEditableStationFields(station));
   }, []);
 
   const cancelEdit = useCallback(() => {

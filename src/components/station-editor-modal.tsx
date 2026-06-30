@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { stationComparisonRows, stationLinkMap } from "@/lib/site-data";
 import {
   loadStations,
   reorderStation,
@@ -55,21 +54,8 @@ export function StationEditorModal({ open, onClose }: StationEditorModalProps) {
   const refresh = useCallback(async () => {
     setLoading(true);
     try {
-      const dbStations = await loadStations();
-      const staticStations: Station[] = stationComparisonRows.map((row, i) => ({
-        id: `static-${i}`,
-        name: row.name, url: stationLinkMap[row.name] ?? "",
-        price: row.price, multiplier: row.multiplier,
-        entry: row.entry ?? "", packageType: row.packageType ?? "",
-        status: row.status ?? "", models: row.models ?? "",
-        uptime: row.uptime ?? "", latency: row.latency ?? "",
-        source: row.source ?? "", verdict: row.verdict ?? "",
-        note: row.note ?? "", advantage: row.advantage ?? "",
-        risk: row.risk ?? "", badge: row.badge ?? "",
-        groupName: row.group ?? "", sortOrder: i + 1,
-      }));
-      const dbNames = new Set(dbStations.map((s) => s.name));
-      setStations([...dbStations, ...staticStations.filter((s) => !dbNames.has(s.name))]);
+      setStations(await loadStations());
+      setStatus("");
     } catch {
       setStatus("加载站点失败");
     } finally {
@@ -119,7 +105,7 @@ export function StationEditorModal({ open, onClose }: StationEditorModalProps) {
     }
   }
 
-  async function handleMove(id: string, dir: -1 | 1, name: string) {
+  async function handleMove(id: string, dir: -1 | 1) {
     setReorderingId(id);
     try {
       await reorderStation(id, dir);
@@ -240,13 +226,13 @@ export function StationEditorModal({ open, onClose }: StationEditorModalProps) {
                         <button
                           className="text-xs text-white/25 hover:text-white disabled:opacity-10 transition"
                           disabled={idx === 0 || reorderingId === s.id}
-                          onClick={(e) => { e.stopPropagation(); handleMove(s.id, -1, s.name); }}
+                          onClick={(e) => { e.stopPropagation(); handleMove(s.id, -1); }}
                           type="button"
                         >▲</button>
                         <button
                           className="text-xs text-white/25 hover:text-white disabled:opacity-10 transition"
                           disabled={idx === stations.length - 1 || reorderingId === s.id}
-                          onClick={(e) => { e.stopPropagation(); handleMove(s.id, 1, s.name); }}
+                          onClick={(e) => { e.stopPropagation(); handleMove(s.id, 1); }}
                           type="button"
                         >▼</button>
                       </div>

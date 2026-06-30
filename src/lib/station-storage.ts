@@ -143,6 +143,21 @@ function assertEditableStationField(fieldName: string) {
   }
 }
 
+function sanitizeStationUpdates(updates: Partial<Station>): Partial<Station> {
+  const sanitized: Partial<Station> = {};
+
+  for (const [camelKey, value] of Object.entries(updates) as Array<[keyof Station, Station[keyof Station]]>) {
+    if (camelKey === "id") continue;
+
+    const snakeKey = toSnakeCase(String(camelKey));
+    if (!EDITABLE_STATION_FIELDS.has(snakeKey)) continue;
+
+    sanitized[camelKey] = value;
+  }
+
+  return sanitized;
+}
+
 /** Map a station_edits row (snake_case) to our camelCase StationEditRecord. */
 function editRecordFromRow(row: Record<string, unknown>): StationEditRecord {
   return {
@@ -206,6 +221,12 @@ export async function loadStations(): Promise<Station[]> {
 /** Move a station up (direction=-1) or down (direction=1) by swapping sort_order with its neighbor. */
 export async function reorderStation(id: string, direction: -1 | 1): Promise<void> {
   if (!isSupabaseConfigured()) return;
+  if (!isOfficialStationId(id)) {
+    if (isTemporaryStationId(id)) {
+      throw new Error("这条站点还是本地兜底数据，不能直接排序；请先导入模板或保存为正式站点。");
+    }
+    throw new Error("站点ID无效，无法排序。");
+  }
   const supabase = getSupabaseClient();
 
   // Get current station's sort_order
@@ -414,9 +435,9 @@ export async function updateStation(
       throw new Error("站点ID格式不正确，无法更新。");
     }
 
-    const normalizedUpdates: Partial<Station> = { ...updates };
-    if (updates.url !== undefined) {
-      normalizedUpdates.url = normalizeStationUrl(updates.url);
+    const normalizedUpdates = sanitizeStationUpdates(updates);
+    if (normalizedUpdates.url !== undefined) {
+      normalizedUpdates.url = normalizeStationUrl(normalizedUpdates.url);
     }
 
     // Fetch current row

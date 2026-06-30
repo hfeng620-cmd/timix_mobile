@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Navbar } from "@/components/navbar";
@@ -14,7 +13,7 @@ import {
   loadFeaturedStationDrafts,
   saveFeaturedStationDrafts,
 } from "@/lib/featured-station-storage";
-import { homeFeaturedStations, type HomeFeaturedStation, stationComparisonRows, stationLinkMap } from "@/lib/site-data";
+import { homeFeaturedStations, type HomeFeaturedStation } from "@/lib/site-data";
 import {
   loadStationSubmissions,
   saveStationSubmissions,
@@ -585,32 +584,8 @@ export default function AdminPage() {
     if (!adminOk) return;
     setAllStationsLoading(true);
     try {
-      const dbStations = await loadStations();
-      // Merge with static fallback — DB data takes priority by name
-      const staticStations: Station[] = stationComparisonRows.map((row, i) => ({
-        id: `static-${i}`,
-        name: row.name,
-        url: stationLinkMap[row.name] ?? "",
-        price: row.price,
-        multiplier: row.multiplier,
-        entry: row.entry ?? "",
-        packageType: row.packageType ?? "",
-        status: row.status ?? "",
-        models: row.models ?? "",
-        uptime: row.uptime ?? "",
-        latency: row.latency ?? "",
-        source: row.source ?? "",
-        verdict: row.verdict ?? "",
-        note: row.note ?? "",
-        advantage: row.advantage ?? "",
-        risk: row.risk ?? "",
-        badge: row.badge ?? "",
-        groupName: row.group ?? "",
-        sortOrder: i + 1,
-      }));
-      const dbNames = new Set(dbStations.map((s) => s.name));
-      const merged = [...dbStations, ...staticStations.filter((s) => !dbNames.has(s.name))];
-      setAllStations(merged);
+      setAllStations(await loadStations());
+      setStationMgmtStatus("");
     } catch (error) {
       setStationMgmtStatus(`加载失败: ${getErrorMessage(error, "请稍后重试。")}`);
     } finally {
