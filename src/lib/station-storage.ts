@@ -152,7 +152,7 @@ function sanitizeStationUpdates(updates: Partial<Station>): Partial<Station> {
     const snakeKey = toSnakeCase(String(camelKey));
     if (!EDITABLE_STATION_FIELDS.has(snakeKey)) continue;
 
-    sanitized[camelKey] = value;
+    Object.assign(sanitized, { [camelKey]: value });
   }
 
   return sanitized;

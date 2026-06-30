@@ -1,11 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { createPortal } from "react-dom";
 
 import {
   createDiscussionPost,
   deleteDiscussionPost,
+  getUserBookmarkedPostIds,
   getUserLikedPostIds,
   getUserLikedReplyIds,
   likeDiscussionPost,
@@ -16,6 +16,7 @@ import {
   pinDiscussionPost,
   replyDiscussionPost,
   searchDiscussionPosts,
+  toggleDiscussionBookmark,
   unlikeDiscussionPost,
   updatePostBody,
   uploadForumImage,
@@ -25,7 +26,7 @@ import {
 } from "@/lib/discussion-storage";
 import { FORUM_IMAGE_ACCEPT } from "@/lib/forum-image-safety";
 import { useForumAuth } from "@/lib/forum-auth";
-import { lockBodyScroll } from "@/lib/body-scroll-lock";
+import { ForumPostModal } from "@/components/forum-post-modal";
 import { ImageLightbox } from "@/components/image-lightbox";
 import { MarkdownContent } from "@/components/markdown-content";
 import { UserProfileCard } from "@/components/user-profile-card";
@@ -45,27 +46,6 @@ type ActiveProfileCard = {
   userId: string;
   position: { x: number; y: number };
 };
-
-function getBookmarkKey(uid: string) {
-  return `timin-bookmarks-${uid}`;
-}
-
-function loadBookmarksFromStorage(uid: string): Set<string> {
-  try {
-    const raw = localStorage.getItem(getBookmarkKey(uid));
-    if (raw) {
-      const arr = JSON.parse(raw) as string[];
-      return new Set(arr);
-    }
-  } catch {
-    // ignore corrupt data
-  }
-  return new Set();
-}
-
-function saveBookmarksToStorage(uid: string, ids: Set<string>) {
-  localStorage.setItem(getBookmarkKey(uid), JSON.stringify([...ids]));
-}
 
 function formatAbsoluteTime(date: Date): string {
   const month = `${date.getMonth() + 1}`.padStart(2, "0");
@@ -267,78 +247,6 @@ function ClampedPostBody({
   );
 }
 
-function FullPostModal({
-  post,
-  onClose,
-  onImageClick,
-}: {
-  post: DiscussionPost;
-  onClose: () => void;
-  onImageClick: (src: string) => void;
-}) {
-  useEffect(() => {
-    const unlock = lockBodyScroll();
-
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        onClose();
-      }
-    }
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => {
-      unlock();
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [onClose]);
-
-  return createPortal(
-    <div
-      aria-modal="true"
-      className="fixed inset-0 z-[99990] flex items-center justify-center bg-black/55 px-4 py-6 backdrop-blur-xl sm:px-6"
-      onClick={onClose}
-      role="dialog"
-    >
-      <div
-        className="relative flex max-h-[86vh] w-full max-w-3xl flex-col overflow-hidden rounded-[28px] border border-[var(--color-line)] bg-[var(--color-panel-strong)] shadow-[0_30px_100px_rgba(0,0,0,0.35)]"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <div className="shrink-0 border-b border-[var(--color-line)] px-5 py-4 pr-14 sm:px-6">
-          <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-[var(--color-muted)]">
-            <span>{post.author}</span>
-            <span>·</span>
-            <span>{formatRelativeTime(post.postedAt)}</span>
-            {post.station ? (
-              <span className="rounded-full border border-[var(--color-line)] bg-[var(--color-soft)] px-2 py-0.5 text-[var(--color-brand-deep)]">
-                {post.station}
-              </span>
-            ) : null}
-          </div>
-          <h2 className="mt-2 text-lg font-black leading-7 text-[var(--color-ink)] sm:text-xl">
-            完整内容
-          </h2>
-        </div>
-
-        <button
-          aria-label="关闭完整内容"
-          className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-[var(--color-soft)] text-[var(--color-muted)] transition hover:bg-[var(--color-brand-soft)] hover:text-[var(--color-brand-deep)]"
-          onClick={onClose}
-          type="button"
-        >
-          ✕
-        </button>
-
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-5 sm:px-6">
-          <div className="whitespace-pre-wrap break-words text-[15px] leading-8 text-[var(--color-ink)] sm:text-base sm:leading-8">
-            <MarkdownContent text={post.body} onImageClick={onImageClick} />
-          </div>
-        </div>
-      </div>
-    </div>,
-    document.body,
-  );
-}
-
 export function DiscussionFeed({
   compact = false,
   title = "讨论",
@@ -356,12 +264,7 @@ export function DiscussionFeed({
   const [error, setError] = useState<string | null>(null);
   const [body, setBody] = useState("");
   const [station, setStation] = useState("");
-  const [expandedPostId, setExpandedPostId] = useState<string | null>(null);
-  const [fullPost, setFullPost] = useState<DiscussionPost | null>(null);
-  const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
-  const [replyTargets, setReplyTargets] = useState<Record<string, string>>({});
-  /** Store the body of the reply being quoted so we can show a quote preview */
-  const [replyQuotes, setReplyQuotes] = useState<Record<string, { author: string; body: string }>>({});
+  const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
   const [status, setStatus] = useState("发帖讨论。");
   const [submitting, setSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -370,7 +273,7 @@ export function DiscussionFeed({
   const [editingPostId, setEditingPostId] = useState<string | null>(null);
   const [editBody, setEditBody] = useState("");
   const [editSaving, setEditSaving] = useState(false);
-  const [replySubmitting, setReplySubmitting] = useState<Set<string>>(new Set());
+  const [replySubmitting, setReplySubmitting] = useState<string | null>(null);
   const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
   const [likedReplies, setLikedReplies] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState("");
@@ -475,11 +378,31 @@ export function DiscussionFeed({
 
   // Load bookmarks on mount and when user changes
   useEffect(() => {
-    if (user?.id) {
-      setBookmarkedIds(loadBookmarksFromStorage(user.id));
-    } else {
+    const uid = user?.id;
+    if (!uid) {
       setBookmarkedIds(new Set());
+      return;
     }
+    const userId = uid;
+
+    let cancelled = false;
+    async function loadBookmarks() {
+      try {
+        const bookmarks = await getUserBookmarkedPostIds(userId);
+        if (!cancelled) {
+          setBookmarkedIds(bookmarks);
+        }
+      } catch {
+        if (!cancelled) {
+          setBookmarkedIds(new Set());
+        }
+      }
+    }
+
+    void loadBookmarks();
+    return () => {
+      cancelled = true;
+    };
   }, [user?.id]);
 
   // Load user's existing likes from Supabase on mount
@@ -508,6 +431,7 @@ export function DiscussionFeed({
       showAuthModal();
       return;
     }
+    const wasBookmarked = bookmarkedIds.has(postId);
     setBookmarkedIds((prev) => {
       const next = new Set(prev);
       if (next.has(postId)) {
@@ -515,8 +439,19 @@ export function DiscussionFeed({
       } else {
         next.add(postId);
       }
-      saveBookmarksToStorage(user.id, next);
       return next;
+    });
+    void toggleDiscussionBookmark(postId).catch(() => {
+      setBookmarkedIds((prev) => {
+        const next = new Set(prev);
+        if (wasBookmarked) {
+          next.add(postId);
+        } else {
+          next.delete(postId);
+        }
+        return next;
+      });
+      setStatus("收藏操作失败，请稍后重试。");
     });
   }
 
@@ -798,89 +733,35 @@ export function DiscussionFeed({
     }
   }
 
-  function togglePost(postId: string, expanded: boolean) {
-    setExpandedPostId(expanded ? null : postId);
-    if (!expanded) void loadPostComments(postId);
+  function openPostModal(postId: string) {
+    setSelectedPostId(postId);
+    void loadPostComments(postId);
   }
 
-  /** Open the reply box for a post. When replying to a specific author, auto-prepend @author
-   *  and store the target reply body as a quote reference. */
-  function openReplyBox(postId: string, targetAuthor = "楼主", targetReply?: DiscussionReply) {
-    // Always expand the post and set reply target
-    setExpandedPostId(postId);
-    setReplyTargets((current) => ({ ...current, [postId]: targetAuthor }));
-
-    // Auto-prepend @authorName when replying to a specific user (not the original post)
-    if (targetAuthor !== "楼主") {
-        setReplyDrafts((current) => {
-          const existing = current[postId] ?? "";
-          const mention = `@${targetAuthor} `;
-          // Only prepend if not already present
-          if (!existing.startsWith(mention)) {
-            return { ...current, [postId]: mention + existing };
-          }
-          return current;
-        });
-
-        if (targetReply) {
-          setReplyQuotes((current) => ({
-            ...current,
-            [postId]: { author: targetReply.author, body: targetReply.body },
-          }));
-        }
-      } else {
-        // Clear quote when replying to OP
-        setReplyQuotes((current) => {
-          const next = { ...current };
-          delete next[postId];
-          return next;
-        });
-      }
-
-      void loadPostComments(postId);
-  }
-
-  /** 回复区 Enter 发送处理器 */
-  function handleReplyKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>, postId: string) {
-    if (e.nativeEvent.isComposing) return;
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      void handleReply(postId);
-    }
-  }
-
-  async function handleReply(postId: string) {
+  async function handleReply(postId: string, draft: string) {
     if (!isConnected) {
       showAuthModal();
       return;
     }
-    if (replySubmitting.has(postId)) return;
+    if (replySubmitting === postId) return;
 
-    const draft = replyDrafts[postId]?.trim();
-    if (!draft) {
+    const trimmedDraft = draft.trim();
+    if (!trimmedDraft) {
       console.warn("[讨论] 回复内容为空，拦截发送");
       setStatus("先写一点回复内容。");
       return;
     }
 
-    setReplySubmitting((prev) => new Set(prev).add(postId));
+    setReplySubmitting(postId);
     setStatus("回复中...");
     try {
-      console.log("[讨论] 准备发送回复:", { postId, draft });
-      await replyDiscussionPost(postId, draft);
+      console.log("[讨论] 准备发送回复:", { postId, draft: trimmedDraft });
+      await replyDiscussionPost(postId, trimmedDraft);
       const newComments = await loadComments(postId);
       setCommentsMap((current) => ({ ...current, [postId]: newComments }));
       setPosts((current) =>
         current.map((p) => (p.issueNumber === postId ? { ...p, replyCount: newComments.length } : p)),
       );
-      setReplyDrafts((current) => ({ ...current, [postId]: "" }));
-      setReplyTargets((current) => ({ ...current, [postId]: "楼主" }));
-      setReplyQuotes((current) => {
-        const next = { ...current };
-        delete next[postId];
-        return next;
-      });
-      setExpandedPostId(postId);
       setStatus("已回复。");
     } catch (err) {
       const msg = err instanceof Error ? err.message : "回复失败，请检查网络后重试。";
@@ -888,7 +769,7 @@ export function DiscussionFeed({
       setStatus(msg);
       alert("回复失败: " + msg);
     } finally {
-      setReplySubmitting((prev) => { const next = new Set(prev); next.delete(postId); return next; });
+      setReplySubmitting(null);
     }
   }
 
@@ -934,9 +815,77 @@ export function DiscussionFeed({
     try {
       await deleteDiscussionPost(postId);
       setPosts((current) => current.filter((p) => p.issueNumber !== postId));
+      setCommentsMap((current) => {
+        const next = { ...current };
+        delete next[postId];
+        return next;
+      });
+      setBookmarkedIds((current) => {
+        const next = new Set(current);
+        next.delete(postId);
+        return next;
+      });
+      setLikedPosts((current) => {
+        const next = new Set(current);
+        next.delete(postId);
+        return next;
+      });
+      if (selectedPostId === postId) {
+        setSelectedPostId(null);
+      }
       setStatus("已删除。");
     } catch {
       setStatus("删除失败，请检查网络后重试。");
+    }
+  }
+
+  async function handleReplyLike(postId: string, replyId: string) {
+    if (!isConnected) {
+      showAuthModal();
+      return;
+    }
+
+    const alreadyLiked = likedReplies.has(replyId);
+    setLikedReplies((prev) => {
+      const next = new Set(prev);
+      if (alreadyLiked) next.delete(replyId);
+      else next.add(replyId);
+      return next;
+    });
+    setCommentsMap((prev) => ({
+      ...prev,
+      [postId]: (prev[postId] ?? []).map((reply) =>
+        reply.id === replyId ? { ...reply, likes: Math.max(0, reply.likes + (alreadyLiked ? -1 : 1)) } : reply,
+      ),
+    }));
+
+    try {
+      const result = await likeReply(replyId);
+      setLikedReplies((prev) => {
+        const next = new Set(prev);
+        if (result.liked) next.add(replyId);
+        else next.delete(replyId);
+        return next;
+      });
+      setCommentsMap((prev) => ({
+        ...prev,
+        [postId]: (prev[postId] ?? []).map((reply) =>
+          reply.id === replyId ? { ...reply, likes: result.count } : reply,
+        ),
+      }));
+    } catch {
+      setLikedReplies((prev) => {
+        const next = new Set(prev);
+        if (alreadyLiked) next.add(replyId);
+        else next.delete(replyId);
+        return next;
+      });
+      setCommentsMap((prev) => ({
+        ...prev,
+        [postId]: (prev[postId] ?? []).map((reply) =>
+          reply.id === replyId ? { ...reply, likes: Math.max(0, reply.likes + (alreadyLiked ? 1 : -1)) } : reply,
+        ),
+      }));
     }
   }
 
@@ -960,6 +909,11 @@ export function DiscussionFeed({
     if (event.key !== "Enter" && event.key !== " ") return;
     handleAvatarClick(userId, event as unknown as React.MouseEvent);
   }
+
+  const selectedPost = selectedPostId
+    ? posts.find((post) => post.issueNumber === selectedPostId) ?? null
+    : null;
+  const selectedPostComments = selectedPostId ? commentsMap[selectedPostId] : undefined;
 
   if (loading) {
     return (
@@ -1340,19 +1294,24 @@ export function DiscussionFeed({
         ) : null}
 
         {visiblePosts.map((post, index) => {
-          const expanded = expandedPostId === post.issueNumber;
-          const comments = commentsMap[post.issueNumber];
           const isBookmarked = bookmarkedIds.has(post.issueNumber);
-          const replyTarget = replyTargets[post.issueNumber];
-          const replyQuote = replyQuotes[post.issueNumber];
 
           return (
-            <article id={post.issueNumber} key={post.issueNumber} className={`surface-in card-lift rounded-[24px] border border-[var(--color-line)] bg-[var(--color-panel)] px-4 py-4 transition duration-200 hover:border-[var(--color-brand)] hover:bg-[linear-gradient(180deg,var(--color-panel),var(--color-soft))] sm:px-5 ${
+            <article
+              id={post.issueNumber}
+              key={post.issueNumber}
+              className={`surface-in card-lift rounded-[24px] border border-[var(--color-line)] bg-[var(--color-panel)] px-4 py-4 transition duration-200 hover:border-[var(--color-brand)] hover:bg-[linear-gradient(180deg,var(--color-panel),var(--color-soft))] sm:px-5 ${
                 post.is_pinned ? "bg-[linear-gradient(180deg,var(--color-brand-soft),var(--color-panel))] shadow-[0_16px_44px_var(--color-panel-glow)]" : ""
-              } ${expanded || stationFilter ? "xl:col-span-2" : ""}`}
+              } ${stationFilter ? "xl:col-span-2" : ""}`}
               style={createFeedItemStyle(index)}
             >
-              <div className="flex items-start gap-3 sm:gap-4">
+              <button
+                aria-label={`打开 ${post.author} 的论坛详情`}
+                className="absolute inset-0 z-0 rounded-[24px]"
+                onClick={() => openPostModal(post.issueNumber)}
+                type="button"
+              />
+              <div className="relative z-[1] flex items-start gap-3 sm:gap-4">
                 {post.authorAvatarUrl ? (
                   <img
                     alt={post.author}
@@ -1512,7 +1471,7 @@ export function DiscussionFeed({
                     <ClampedPostBody
                       body={post.body}
                       onImageClick={setLightboxImage}
-                      onShowFull={() => setFullPost(post)}
+                      onShowFull={() => openPostModal(post.issueNumber)}
                     />
                   )}
                   <div className="mt-4 flex flex-wrap gap-2">
@@ -1534,17 +1493,28 @@ export function DiscussionFeed({
                   <div className="mt-5 grid grid-cols-2 gap-2 border-t border-[var(--color-line)] pt-3 sm:flex sm:flex-wrap sm:items-center sm:gap-3">
                     <button
                       className="rounded-full bg-[var(--color-brand)] px-3 py-2.5 text-sm font-bold text-[var(--color-on-brand)] shadow-[0_10px_24px_var(--color-panel-glow)] transition hover:bg-[var(--color-brand-deep)] sm:px-4"
-                      onClick={() => openReplyBox(post.issueNumber)}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        openPostModal(post.issueNumber);
+                      }}
                       type="button"
                     >
                       回复讨论
                     </button>
-                    <ActionButton count={post.replyCount} icon="comment" onClick={() => openReplyBox(post.issueNumber)} />
-                    <ActionButton count={post.likes} icon="like" liked={likedPosts.has(post.issueNumber)} onClick={() => handleLike(post.issueNumber)} />
+                    <ActionButton count={post.replyCount} icon="comment" onClick={() => openPostModal(post.issueNumber)} />
+                    <ActionButton
+                      count={post.likes}
+                      icon="like"
+                      liked={likedPosts.has(post.issueNumber)}
+                      onClick={() => handleLike(post.issueNumber)}
+                    />
                     {/* Bookmark button */}
                     <button
                       className="inline-flex min-h-[40px] min-w-[40px] items-center justify-center gap-2 rounded-full px-2 text-[15px] text-[var(--color-muted)] transition hover:bg-[var(--color-soft)] hover:text-[var(--color-ink)] sm:min-h-[44px] sm:min-w-[44px] sm:justify-start"
-                      onClick={() => handleToggleBookmark(post.issueNumber)}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        handleToggleBookmark(post.issueNumber);
+                      }}
                       type="button"
                       title={isBookmarked ? "取消收藏" : "收藏"}
                     >
@@ -1568,204 +1538,17 @@ export function DiscussionFeed({
                     )}
                     <button
                       className="min-h-[40px] rounded-full border border-[var(--color-line)] px-3 py-2 text-xs font-bold text-[var(--color-muted)] transition hover:bg-[var(--color-soft)] hover:text-[var(--color-brand-deep)] sm:min-h-[44px]"
-                      onClick={() => togglePost(post.issueNumber, expanded)}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        openPostModal(post.issueNumber);
+                      }}
                       type="button"
                     >
-                      {expanded ? "收起讨论" : "查看详情"}
+                      查看详情
                     </button>
                   </div>
                 </div>
               </div>
-
-              {expanded ? (
-                <div className="mt-4 origin-top animate-[discussionExpand_220ms_ease-out] rounded-[20px] border border-[var(--color-line)] bg-[var(--color-soft)]/70 p-4 motion-reduce:animate-none">
-                  <div className="space-y-4">
-                    {comments === undefined ? (
-                      <p className="text-sm text-[var(--color-muted)]">正在加载回复...</p>
-                    ) : comments.length === 0 ? (
-                      <p className="text-sm text-[var(--color-muted)]">还没有回复，可以先补充处理结论或下一步判断。</p>
-                    ) : (
-                      comments.map((reply) => (
-                        <div key={reply.id} className="group">
-                          <div className="flex items-start gap-2">
-                            {reply.avatar ? (
-                              <img
-                                alt={reply.author}
-                                aria-haspopup="dialog"
-                                className="h-9 w-9 shrink-0 cursor-pointer rounded-full object-cover transition hover:ring-2 hover:ring-[var(--color-brand)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)]"
-                                src={reply.avatar}
-                                onClick={(e) => handleAvatarClick(reply.authorId, e)}
-                                onContextMenu={(e) => handleAvatarClick(reply.authorId, e)}
-                                onKeyDown={(e) => handleProfileKeyDown(reply.authorId, e)}
-                                role="button"
-                                tabIndex={0}
-                                title="查看公开主页"
-                              />
-                            ) : (
-                              <div
-                                aria-haspopup="dialog"
-                                className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full bg-[var(--color-soft)] text-sm font-bold text-[var(--color-muted)] transition hover:ring-2 hover:ring-[var(--color-brand)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)]"
-                                onClick={(e) => handleAvatarClick(reply.authorId, e)}
-                                onContextMenu={(e) => handleAvatarClick(reply.authorId, e)}
-                                onKeyDown={(e) => handleProfileKeyDown(reply.authorId, e)}
-                                role="button"
-                                tabIndex={0}
-                                title="查看公开主页"
-                              >
-                                {reply.author.charAt(0)}
-                              </div>
-                            )}
-                            <div className="min-w-0 flex-1">
-                              <div className="flex flex-wrap items-center gap-2 text-sm">
-                                <span
-                                  aria-haspopup="dialog"
-                                  className="cursor-pointer rounded-md font-bold text-[var(--color-ink)] transition hover:text-[var(--color-brand)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)]"
-                                  onClick={(e) => handleAvatarClick(reply.authorId, e)}
-                                  onContextMenu={(e) => handleAvatarClick(reply.authorId, e)}
-                                  onKeyDown={(e) => handleProfileKeyDown(reply.authorId, e)}
-                                  role="button"
-                                  tabIndex={0}
-                                  title="查看公开主页"
-                                >
-                                  {reply.author}
-                                </span>
-                                {reply.authorId && ownerUserIds.has(reply.authorId) ? (
-                                  <span className="rounded-full border border-[var(--color-brand)]/25 bg-[var(--color-brand-soft)] px-2 py-0.5 text-[10px] font-bold text-[var(--color-brand-deep)]">
-                                    站主
-                                  </span>
-                                ) : reply.authorId && adminUserIds.has(reply.authorId) ? (
-                                  <span className="rounded-full border border-[var(--color-line)] bg-[var(--color-soft)] px-2 py-0.5 text-[10px] font-bold text-[var(--color-muted)]">
-                                    管理员
-                                  </span>
-                                ) : null}
-                                <span className="text-[var(--color-muted)]">·</span>
-                                <span className="text-[var(--color-muted)]">{formatRelativeTime(reply.postedAt)}</span>
-                              </div>
-                              <p className="mt-1 text-sm leading-7 text-[var(--color-ink)]">
-                                <span className="whitespace-pre-wrap break-words">
-                                  <MarkdownContent
-                                    text={reply.body}
-                                    imageClassName="max-h-48 w-auto cursor-zoom-in rounded-md border border-white/10 object-cover mt-2 transition-opacity hover:opacity-90"
-                                    onImageClick={setLightboxImage}
-                                  />
-                                </span>
-                              </p>
-                              <div className="mt-1 flex items-center gap-3">
-                                <button
-                                  className="text-xs font-semibold text-[var(--color-muted)] transition hover:text-[var(--color-brand-deep)]"
-                                  onClick={() => openReplyBox(post.issueNumber, reply.author, reply)}
-                                  type="button"
-                                >
-                                  回复
-                                </button>
-                                <button
-                                  className={`inline-flex items-center gap-1 text-xs font-semibold transition ${likedReplies.has(reply.id) ? "text-[#ef4444]" : "text-[var(--color-muted)] hover:text-red-400"}`}
-                                  onClick={async () => {
-                                    if (!isConnected) { showAuthModal(); return; }
-                                    const alreadyLiked = likedReplies.has(reply.id);
-                                    // Optimistic toggle
-                                    setLikedReplies((prev) => {
-                                      const next = new Set(prev);
-                                      if (alreadyLiked) next.delete(reply.id);
-                                      else next.add(reply.id);
-                                      return next;
-                                    });
-                                    try {
-                                      const result = await likeReply(reply.id);
-                                      // Update with server response
-                                      setLikedReplies((prev) => {
-                                        const next = new Set(prev);
-                                        if (result.liked) next.add(reply.id);
-                                        else next.delete(reply.id);
-                                        return next;
-                                      });
-                                      setCommentsMap((prev) => ({
-                                        ...prev,
-                                        [post.issueNumber]: (prev[post.issueNumber] ?? []).map((r) =>
-                                          r.id === reply.id ? { ...r, likes: result.count } : r
-                                        ),
-                                      }));
-                                    } catch {
-                                      // Revert on error
-                                      setLikedReplies((prev) => {
-                                        const next = new Set(prev);
-                                        if (alreadyLiked) next.add(reply.id);
-                                        else next.delete(reply.id);
-                                        return next;
-                                      });
-                                    }
-                                  }}
-                                  type="button"
-                                >
-                                  <svg className="h-3.5 w-3.5" fill={likedReplies.has(reply.id) ? "#ef4444" : "none"} viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                    <path d="M12 20.4s-7-4.355-7-9.24A4.16 4.16 0 0 1 9.2 7a4.62 4.62 0 0 1 2.8 1.1A4.62 4.62 0 0 1 14.8 7A4.16 4.16 0 0 1 19 11.16c0 4.885-7 9.24-7 9.24Z" />
-                                  </svg>
-                                  {reply.likes > 0 ? reply.likes : null}
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-
-                  {/* Quote/reply reference preview */}
-                  {replyQuote ? (
-                    <div className="mt-3 rounded-lg border border-[var(--color-line)] bg-[var(--color-soft)] px-3 py-2">
-                      <p className="text-[11px] font-semibold text-[var(--color-muted)]">
-                        回复 <span className="text-[var(--color-brand)]">@{replyQuote.author}</span>：
-                      </p>
-                      <p className="mt-0.5 text-xs leading-5 text-[var(--color-muted)] line-clamp-2">
-                        {replyQuote.body}
-                      </p>
-                    </div>
-                  ) : null}
-
-                  <div className="mt-4 flex flex-col gap-3 border-t border-[var(--color-line)] pt-4 sm:flex-row">
-                    <textarea
-                      className="min-h-[48px] min-w-0 flex-1 resize-none rounded-2xl border border-[var(--color-line)] bg-[var(--color-input)] px-4 py-3 text-sm leading-6 outline-none transition focus:border-[var(--color-brand)]"
-                      rows={1}
-                      onChange={(event) =>
-                        setReplyDrafts((current) => ({ ...current, [post.issueNumber]: event.target.value }))
-                      }
-                      onPaste={async (e) => {
-                        const items = e.clipboardData?.items;
-                        if (!items) return;
-                        for (const item of items) {
-                          if (item.type.startsWith("image/")) {
-                            e.preventDefault();
-                            const file = item.getAsFile();
-                            if (!file) return;
-                            if (file.size > 5 * 1024 * 1024) { setStatus("图片不能超过 5MB。"); return; }
-                            setUploadingImage(true);
-                            setStatus("图片上传中...");
-                            try {
-                              const url = await uploadForumImage(file);
-                              const currentDraft = replyDrafts[post.issueNumber] ?? "";
-                              setReplyDrafts((prev) => ({ ...prev, [post.issueNumber]: (currentDraft + `\n![图片](${url})`).trim() }));
-                              setStatus("图片已插入。");
-                            } catch { setStatus("图片上传失败。"); }
-                            finally { setUploadingImage(false); }
-                            return;
-                          }
-                        }
-                      }}
-                      onKeyDown={(e) => handleReplyKeyDown(e, post.issueNumber)}
-                      placeholder={`回复 ${replyTarget ?? "楼主"}（支持粘贴图片, Enter 发送, Shift+Enter 换行）`}
-                      value={replyDrafts[post.issueNumber] ?? ""}
-                    />
-                    <button
-                      className="w-full cursor-pointer rounded-full bg-[var(--color-brand)] px-4 py-3.5 text-sm font-bold text-[var(--color-on-brand)] transition hover:bg-[var(--color-brand-deep)] disabled:opacity-50 sm:w-auto"
-                      disabled={replySubmitting.has(post.issueNumber)}
-                      onClick={() => handleReply(post.issueNumber)}
-                      type="button"
-                    >
-                      {replySubmitting.has(post.issueNumber) ? "发送中..." : "发送"}
-                    </button>
-                  </div>
-                </div>
-              ) : null}
             </article>
           );
         })}
@@ -1807,26 +1590,30 @@ export function DiscussionFeed({
       {lightboxImage ? (
         <ImageLightbox src={lightboxImage} onClose={() => setLightboxImage(null)} />
       ) : null}
-      {fullPost ? (
-        <FullPostModal
-          key={fullPost.issueNumber}
-          post={fullPost}
-          onClose={() => setFullPost(null)}
-          onImageClick={setLightboxImage}
+      {selectedPost ? (
+        <ForumPostModal
+          key={selectedPost.issueNumber}
+          adminUserIds={adminUserIds}
+          comments={selectedPostComments}
+          commentsLoading={selectedPostComments === undefined}
+          currentUserId={user?.id}
+          isConnected={isConnected}
+          likedReplies={likedReplies}
+          onClose={() => setSelectedPostId(null)}
+          onOpenImage={setLightboxImage}
+          onSendComment={(postId, draft) => handleReply(postId, draft)}
+          onToggleBookmark={handleToggleBookmark}
+          onTogglePostLike={handleLike}
+          onToggleReplyLike={handleReplyLike}
+          ownerUserIds={ownerUserIds}
+          post={selectedPost}
+          postBookmarked={bookmarkedIds.has(selectedPost.issueNumber)}
+          postLiked={likedPosts.has(selectedPost.issueNumber)}
+          replySubmitting={replySubmitting === selectedPost.issueNumber}
         />
       ) : null}
 
       <style jsx>{`
-        @keyframes discussionExpand {
-          from {
-            opacity: 0;
-            transform: translateY(6px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
       `}</style>
 
     </section>

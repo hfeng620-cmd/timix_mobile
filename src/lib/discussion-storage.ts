@@ -752,6 +752,62 @@ export async function likeDiscussionPost(
   return getDiscussionPostLikeCount(postId, currentLikes + 1);
 }
 
+export async function getUserBookmarkedPostIds(userId: string): Promise<Set<string>> {
+  if (!isSupabaseConfigured()) return new Set();
+  try {
+    const { data, error } = await getSupabaseClient()
+      .from("forum_bookmarks")
+      .select("post_id")
+      .eq("user_id", userId)
+      .not("post_id", "is", null);
+
+    if (error) throw error;
+    const ids = (data ?? []).map((row: { post_id: string }) => row.post_id).filter(Boolean);
+    return new Set(ids);
+  } catch {
+    return new Set();
+  }
+}
+
+export async function toggleDiscussionBookmark(postId: string): Promise<boolean> {
+  const userId = await ensureProfile();
+  const supabase = getSupabaseClient();
+
+  const { data: existing, error: existingError } = await supabase
+    .from("forum_bookmarks")
+    .select("id")
+    .eq("post_id", postId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (existingError) throw existingError;
+
+  if (existing) {
+    const { error } = await supabase
+      .from("forum_bookmarks")
+      .delete()
+      .eq("post_id", postId)
+      .eq("user_id", userId);
+
+    if (error) throw error;
+    return false;
+  }
+
+  const { error } = await supabase.from("forum_bookmarks").insert({
+    post_id: postId,
+    user_id: userId,
+  });
+
+  if (error) {
+    if (error.code === "23505") {
+      return true;
+    }
+    throw error;
+  }
+
+  return true;
+}
+
 /** Get the set of post IDs the current user has liked. */
 export async function getUserLikedPostIds(userId: string): Promise<Set<string>> {
   if (!isSupabaseConfigured()) return new Set();

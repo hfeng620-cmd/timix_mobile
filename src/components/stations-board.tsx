@@ -241,7 +241,7 @@ function pickEditableStationFields(station: Partial<Station>): Partial<Station> 
   for (const key of EDITABLE_FIELD_KEYS) {
     const value = station[key];
     if (value !== undefined) {
-      next[key] = value;
+      Object.assign(next, { [key]: value });
     }
   }
   return next;
