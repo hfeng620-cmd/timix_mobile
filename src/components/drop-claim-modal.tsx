@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Copy, ExternalLink, Loader2, Sparkles, X } from "lucide-react";
+import { Check, Copy, ExternalLink, Gift, Loader2, PartyPopper, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { claimPromoCode, type Campaign } from "@/lib/drop-storage";
@@ -8,6 +8,7 @@ import { useForumAuth } from "@/lib/forum-auth";
 
 type DropClaimModalProps = {
   campaign: Campaign | null;
+  onClaimed?: () => void;
   open: boolean;
   onClose: () => void;
 };
@@ -18,7 +19,7 @@ const RATINGS = [
   { value: "还有欠缺", label: "🤨 还有欠缺" },
 ] as const;
 
-export function DropClaimModal({ campaign, open, onClose }: DropClaimModalProps) {
+export function DropClaimModal({ campaign, onClaimed, open, onClose }: DropClaimModalProps) {
   const { user } = useForumAuth();
 
   // ── Form state ──
@@ -90,10 +91,11 @@ export function DropClaimModal({ campaign, open, onClose }: DropClaimModalProps)
 
     if (result.ok) {
       setClaimedCode(result.code);
+      onClaimed?.();
     } else {
       setError(result.error);
     }
-  }, [campaign, user, account, rating, suggestion]);
+  }, [campaign, user, account, rating, suggestion, onClaimed]);
 
   // ── Copy to clipboard ──
   const handleCopy = useCallback(async () => {
@@ -111,10 +113,17 @@ export function DropClaimModal({ campaign, open, onClose }: DropClaimModalProps)
 
   const isLoggedIn = Boolean(user?.id);
   const isSuccess = Boolean(claimedCode);
+  const isSoldOut = error?.includes("SOLD_OUT") || error?.includes("抢空") || error?.includes("已被抢空");
+  const isAlreadyClaimed = error?.includes("ALREADY_CLAIMED") || error?.includes("领取过") || error?.includes("参与过");
+  const displayError = isAlreadyClaimed
+    ? "您已经参与过本次活动啦！把机会留给其他人吧。"
+    : isSoldOut
+      ? "手慢了，本次福利已经被抢空啦！下次记得早点来~"
+      : error;
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-xl"
+      className="fixed inset-0 z-[100] flex items-center justify-center overscroll-none bg-black/85 backdrop-blur-xl"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -139,18 +148,18 @@ export function DropClaimModal({ campaign, open, onClose }: DropClaimModalProps)
         {isSuccess ? (
           <div className="flex flex-col items-center px-8 py-12 text-center">
             <div className="flex h-20 w-20 items-center justify-center rounded-full border border-emerald-400/30 bg-emerald-400/10 shadow-[0_0_60px_rgba(52,211,153,0.15)]">
-              <Sparkles className="h-10 w-10 text-emerald-300" />
+              <PartyPopper className="h-10 w-10 text-emerald-300" />
             </div>
             <h2 className="mt-6 text-2xl font-black text-white">
-              🎉 恭喜获得专属福利！
+              恭喜！这是您的专属兑换码：
             </h2>
             <p className="mt-2 text-sm text-zinc-400">
               您的专属兑换码已生成，请妥善保管。
             </p>
 
             {/* Code display */}
-            <div className="mt-8 flex w-full items-center justify-between gap-4 rounded-xl border border-white/10 bg-zinc-900 p-6">
-              <code className="select-all text-2xl font-mono tracking-[0.3em] text-white">
+            <div className="mt-8 flex w-full items-center justify-between gap-4 rounded-xl border border-zinc-700 bg-zinc-950 p-5">
+              <code className="select-all text-2xl font-bold font-mono tracking-[0.3em] text-emerald-400">
                 {claimedCode}
               </code>
               <button
@@ -185,7 +194,7 @@ export function DropClaimModal({ campaign, open, onClose }: DropClaimModalProps)
              ═══════════════════════════════════════ */
           <div className="overflow-y-auto px-6 py-8 sm:px-8">
             <div className="pr-6">
-              <h2 className="text-xl font-bold text-white">专属福利发放</h2>
+              <h2 className="text-xl font-bold text-white">领取 {campaign.sponsor_name} 专属福利</h2>
               <p className="mt-1 text-sm text-zinc-400">
                 {campaign.sponsor_name} · {campaign.title}
               </p>
@@ -194,7 +203,7 @@ export function DropClaimModal({ campaign, open, onClose }: DropClaimModalProps)
             {/* Step 1: Sponsor URL */}
             <div className="mt-8">
               <p className="text-sm font-semibold text-zinc-300">
-                第 1 步 · 前往赞助商平台注册
+                第一步：请先前往 {campaign.sponsor_name} 注册账号
               </p>
               <a
                 className="mt-3 flex items-center gap-2 rounded-xl border border-white/10 bg-zinc-900 px-5 py-4 text-base font-bold text-cyan-300 transition hover:border-cyan-400/30 hover:bg-zinc-900/80"
@@ -287,10 +296,17 @@ export function DropClaimModal({ campaign, open, onClose }: DropClaimModalProps)
                   </div>
 
                   {/* Error */}
-                  {error && (
-                    <p className="rounded-xl border border-rose-400/20 bg-rose-400/5 px-4 py-3 text-sm text-rose-300">
-                      {error}
-                    </p>
+                  {displayError && (
+                    <div className={`rounded-xl border px-4 py-3 text-sm ${
+                      isSoldOut
+                        ? "border-zinc-700 bg-zinc-900/70 text-zinc-300"
+                        : "border-rose-400/20 bg-rose-400/5 text-rose-300"
+                    }`}>
+                      <div className="flex items-start gap-3">
+                        {isSoldOut ? <Gift className="mt-0.5 h-4 w-4 shrink-0 text-zinc-500" /> : null}
+                        <p>{displayError}</p>
+                      </div>
+                    </div>
                   )}
 
                   {/* Submit */}
@@ -303,10 +319,10 @@ export function DropClaimModal({ campaign, open, onClose }: DropClaimModalProps)
                     {submitting ? (
                       <>
                         <Loader2 className="h-4 w-4 animate-spin" />
-                        正在确认...
+                        正在开启盲盒...
                       </>
                     ) : (
-                      "立即领取"
+                      "提交并开奖"
                     )}
                   </button>
                 </div>
