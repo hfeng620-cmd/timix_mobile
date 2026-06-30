@@ -1,6 +1,8 @@
 "use client";
 
 import type { ReactNode } from "react";
+
+import { HOT_EMOJI_MAP, HOT_EMOJI_SPLIT_PATTERN, HOT_EMOJI_TOKEN_PATTERN } from "@/lib/hot-emojis";
 import { getSafeImageSrc } from "@/lib/url-safety";
 
 type MarkdownContentProps = {
@@ -11,8 +13,6 @@ type MarkdownContentProps = {
   onImageClick?: (src: string) => void;
 };
 
-const TOKEN_PATTERN = /(!\[[^\]]*]\([^)]+\)|@[\w一-鿿]+)/g;
-
 export function MarkdownContent({
   text,
   highlightAuthor,
@@ -20,7 +20,7 @@ export function MarkdownContent({
   imageAlt = "帖子图片",
   onImageClick,
 }: MarkdownContentProps) {
-  const parts = text.split(TOKEN_PATTERN);
+  const parts = text.split(HOT_EMOJI_SPLIT_PATTERN);
 
   return (
     <>
@@ -71,6 +71,25 @@ function renderMarkdownPart(
         className={`font-semibold ${isTarget ? "rounded bg-[var(--color-brand-soft)] px-0.5 text-[var(--color-brand-deep)]" : "text-[var(--color-brand)]"}`}
       >
         {part}
+      </span>
+    );
+  }
+
+  if (HOT_EMOJI_TOKEN_PATTERN.test(part)) {
+    const item = HOT_EMOJI_MAP.get(part);
+    if (!item) {
+      return part;
+    }
+
+    return (
+      <span
+        key={index}
+        className="mx-0.5 inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.06] px-2 py-0.5 text-[12px] font-medium text-zinc-200 align-middle"
+      >
+        <span aria-hidden="true" className="text-[13px] leading-none">
+          {item.preview}
+        </span>
+        <span>{item.label}</span>
       </span>
     );
   }

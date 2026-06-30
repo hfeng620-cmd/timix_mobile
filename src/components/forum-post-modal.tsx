@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Bookmark, Heart, ImageIcon, Loader2, MessageCircle, Send, X } from "lucide-react";
 
+import { EmojiPickerButton } from "@/components/emoji-picker-button";
 import { MarkdownContent } from "@/components/markdown-content";
 import { lockBodyScroll } from "@/lib/body-scroll-lock";
 import { uploadForumImage, type DiscussionPost, type DiscussionReply } from "@/lib/discussion-storage";
@@ -74,6 +75,7 @@ export function ForumPostModal({
   const [replyTarget, setReplyTarget] = useState<string | null>(null);
   const [replyQuote, setReplyQuote] = useState<ReplyQuote | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   useEffect(() => {
     const unlock = lockBodyScroll();
@@ -97,6 +99,7 @@ export function ForumPostModal({
     setComposerValue("");
     setReplyTarget(null);
     setReplyQuote(null);
+    setShowEmojiPicker(false);
   }, [post.issueNumber]);
 
   function focusComposerWithMention(authorName: string, reply?: DiscussionReply) {
@@ -138,6 +141,22 @@ export function ForumPostModal({
     } finally {
       setUploadingImage(false);
     }
+  }
+
+  function insertEmojiAtCursor(emoji: string) {
+    const textarea = composerRef.current;
+    const start = textarea?.selectionStart ?? composerValue.length;
+    const end = textarea?.selectionEnd ?? start;
+    const nextValue = composerValue.slice(0, start) + emoji + composerValue.slice(end);
+    const nextCursor = start + emoji.length;
+
+    setComposerValue(nextValue);
+    requestAnimationFrame(() => {
+      const node = composerRef.current;
+      if (!node) return;
+      node.focus();
+      node.setSelectionRange(nextCursor, nextCursor);
+    });
   }
 
   async function handlePaste(event: React.ClipboardEvent<HTMLTextAreaElement>) {
@@ -433,6 +452,16 @@ export function ForumPostModal({
                   >
                     {uploadingImage ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImageIcon className="h-4 w-4" />}
                   </button>
+                  <EmojiPickerButton
+                    align="right"
+                    buttonClassName="inline-flex h-9 w-9 items-center justify-center rounded-full text-zinc-500 transition hover:text-zinc-200 disabled:opacity-40"
+                    disabled={replySubmitting}
+                    iconClassName="h-4 w-4"
+                    onClose={() => setShowEmojiPicker(false)}
+                    onEmojiSelect={insertEmojiAtCursor}
+                    onToggle={() => setShowEmojiPicker((current) => !current)}
+                    open={showEmojiPicker}
+                  />
                   <button
                     className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-zinc-200 transition hover:bg-white/20 disabled:opacity-40"
                     disabled={replySubmitting || !composerValue.trim()}

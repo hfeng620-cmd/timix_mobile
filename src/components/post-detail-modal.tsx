@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { lockBodyScroll } from "@/lib/body-scroll-lock";
 import { useForumAuth } from "@/lib/forum-auth";
+import { EmojiPickerButton } from "@/components/emoji-picker-button";
 import { ImageLightbox } from "@/components/image-lightbox";
 import { MarkdownContent } from "@/components/markdown-content";
 import { uploadPostImage } from "@/lib/post-image-upload";
@@ -87,6 +88,7 @@ function NestedReplyModal({
   const [replyText, setReplyText] = useState("");
   const [replyTarget, setReplyTarget] = useState<{ authorName: string } | null>(null);
   const [replyUploading, setReplyUploading] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const replyFileInputRef = useRef<HTMLInputElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
@@ -126,6 +128,20 @@ function NestedReplyModal({
       setReplyText("");
       setReplyTarget(null);
     }
+  }
+
+  function insertEmojiAtCursor(emoji: string) {
+    const textarea = inputRef.current;
+    const start = textarea?.selectionStart ?? replyText.length;
+    const end = textarea?.selectionEnd ?? start;
+    const next = replyText.slice(0, start) + emoji + replyText.slice(end);
+    const nextCursor = start + emoji.length;
+
+    setReplyText(next);
+    requestAnimationFrame(() => {
+      inputRef.current?.focus();
+      inputRef.current?.setSelectionRange(nextCursor, nextCursor);
+    });
   }
 
   async function uploadAndInsertReplyImage(file: File) {
@@ -308,6 +324,15 @@ function NestedReplyModal({
             >
               {replyUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImageIcon className="h-4 w-4" />}
             </button>
+            <EmojiPickerButton
+              align="right"
+              buttonClassName="shrink-0 rounded-full p-2 text-zinc-500 transition hover:text-white disabled:opacity-40"
+              iconClassName="h-4 w-4"
+              onClose={() => setShowEmojiPicker(false)}
+              onEmojiSelect={insertEmojiAtCursor}
+              onToggle={() => setShowEmojiPicker((current) => !current)}
+              open={showEmojiPicker}
+            />
             <button
               className="shrink-0 cursor-pointer rounded-full bg-white/15 px-4 py-2 text-xs text-white/50 hover:bg-white/25 transition disabled:opacity-30 font-body"
               onClick={() => { if (replyText.trim()) { onSendReply(rootComment.id, replyText); setReplyText(""); setReplyTarget(null); } }}
@@ -372,6 +397,7 @@ export function PostDetailModal({ post, onClose, onEdit }: Props) {
 
   const [commentText, setCommentText] = useState("");
   const [commentUploading, setCommentUploading] = useState(false);
+  const [showCommentEmojiPicker, setShowCommentEmojiPicker] = useState(false);
   const commentTextareaRef = useRef<HTMLTextAreaElement>(null);
   const commentFileInputRef = useRef<HTMLInputElement>(null);
   const [liked, setLiked] = useState(false);
@@ -542,6 +568,20 @@ export function PostDetailModal({ post, onClose, onEdit }: Props) {
     } finally {
       setCommentUploading(false);
     }
+  }
+
+  function insertCommentEmojiAtCursor(emoji: string) {
+    const textarea = commentTextareaRef.current;
+    const start = textarea?.selectionStart ?? commentText.length;
+    const end = textarea?.selectionEnd ?? start;
+    const next = commentText.slice(0, start) + emoji + commentText.slice(end);
+    const nextCursor = start + emoji.length;
+
+    setCommentText(next);
+    requestAnimationFrame(() => {
+      commentTextareaRef.current?.focus();
+      commentTextareaRef.current?.setSelectionRange(nextCursor, nextCursor);
+    });
   }
 
   async function handleCommentPaste(e: React.ClipboardEvent<HTMLTextAreaElement>) {
@@ -777,7 +817,7 @@ export function PostDetailModal({ post, onClose, onEdit }: Props) {
                   <div className="relative">
                     <textarea
                       ref={commentTextareaRef}
-                      className="w-full min-h-[44px] resize-none rounded-xl bg-white/5 border border-white/10 py-3 pl-10 pr-12 text-sm text-white placeholder:text-white/25 font-body outline-none focus:border-white/30 transition"
+                      className="w-full min-h-[44px] resize-none rounded-xl bg-white/5 border border-white/10 py-3 pl-10 pr-20 text-sm text-white placeholder:text-white/25 font-body outline-none focus:border-white/30 transition"
                       placeholder="说点什么... (Enter 发送, Shift+Enter 换行)"
                       onKeyDown={(e) => {
                         if (e.nativeEvent.isComposing) return;
@@ -814,14 +854,25 @@ export function PostDetailModal({ post, onClose, onEdit }: Props) {
                     >
                       {commentUploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ImageIcon className="h-3.5 w-3.5" />}
                     </button>
-                    <button
-                      className="absolute right-2 bottom-2 cursor-pointer rounded-full bg-white/15 p-1.5 text-white/50 hover:bg-white/25 hover:text-white transition disabled:opacity-30"
-                      type="button"
-                      onClick={handleSendComment}
-                      disabled={!commentText.trim()}
-                    >
-                      <Send className="h-3.5 w-3.5" />
-                    </button>
+                    <div className="absolute right-2 bottom-2 flex items-center gap-1">
+                      <EmojiPickerButton
+                        align="right"
+                        buttonClassName="cursor-pointer rounded-full p-1.5 text-zinc-500 transition hover:text-white disabled:opacity-40"
+                        iconClassName="h-3.5 w-3.5"
+                        onClose={() => setShowCommentEmojiPicker(false)}
+                        onEmojiSelect={insertCommentEmojiAtCursor}
+                        onToggle={() => setShowCommentEmojiPicker((current) => !current)}
+                        open={showCommentEmojiPicker}
+                      />
+                      <button
+                        className="cursor-pointer rounded-full bg-white/15 p-1.5 text-white/50 hover:bg-white/25 hover:text-white transition disabled:opacity-30"
+                        type="button"
+                        onClick={handleSendComment}
+                        disabled={!commentText.trim()}
+                      >
+                        <Send className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               </>
