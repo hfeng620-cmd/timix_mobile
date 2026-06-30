@@ -64,7 +64,7 @@ declare
 begin
   -- 校验活动是否存在且有效
   if not exists (select 1 from public.campaigns where id = p_campaign_id and is_active = true) then
-    raise exception '该活动不存在或已结束';
+    raise exception 'CAMPAIGN_NOT_FOUND';
   end if;
 
   -- 校验用户是否已领取过这个活动
@@ -72,7 +72,7 @@ begin
     select 1 from public.drop_submissions
     where campaign_id = p_campaign_id and user_id = p_user_id
   ) then
-    raise exception '您已经领取过该福利';
+    raise exception 'ALREADY_CLAIMED';
   end if;
 
   -- 锁行查找第一枚未领取的码（杜绝并发超发）
@@ -83,7 +83,7 @@ begin
   limit 1;
 
   if v_code_id is null then
-    raise exception '手慢了，兑换码已被抢空';
+    raise exception 'SOLD_OUT';
   end if;
 
   -- 标记为已领取
