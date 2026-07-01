@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState, useCallback } from "react";
 import {
   Heart, MessageCircle, Bookmark, X,
-  Send, Loader2, Pencil, Trash2, ChevronDown, ImageIcon, ExternalLink,
+  Send, Loader2, Pencil, Trash2, ChevronDown, ImageIcon, ExternalLink, Link as LinkIcon,
 } from "lucide-react";
 import { lockBodyScroll } from "@/lib/body-scroll-lock";
 import { useForumAuth } from "@/lib/forum-auth";
@@ -44,6 +44,7 @@ type PostNode = {
   title: string;
   summary: string;
   link?: string | null;
+  url?: string | null;
   tag: string;
   likes: number | Liker[];
   comments: number;
@@ -737,6 +738,7 @@ export function PostDetailModal({ post, onClose, onEdit }: Props) {
   /* ── 计算嵌套结构 ── */
   const rootComments = comments.filter((c) => c.parentId === null);
   const getReplies = (rootId: string) => comments.filter((c) => c.parentId === rootId);
+  const postLink = post.link || post.url || "";
 
   /* 当前打开的楼中楼 */
   const activeRoot = rootComments.find((c) => c.id === nestedRootId);
@@ -908,32 +910,39 @@ export function PostDetailModal({ post, onClose, onEdit }: Props) {
 
               <p className="mt-5 text-sm leading-relaxed text-white/50 font-body">{post.summary}</p>
 
-              {post.link && (
-                <div className="my-6 flex items-center justify-between rounded-xl border border-white/10 bg-zinc-900/50 p-4">
-                  <div className="flex min-w-0 flex-col pr-4">
-                    <span className="mb-1 text-sm text-zinc-500">项目直达链接</span>
+              <div className="my-6">
+                {postLink ? (
+                  <div className="flex items-center justify-between rounded-xl border border-emerald-500/20 bg-zinc-900/60 p-4 transition-colors hover:bg-zinc-900/80">
+                    <div className="flex min-w-0 flex-col overflow-hidden pr-4">
+                      <span className="mb-1 text-xs font-semibold uppercase tracking-wider text-emerald-500">🔗 项目直达链接</span>
+                      <a
+                        className="truncate text-sm font-medium text-white transition-colors hover:text-emerald-400"
+                        href={postLink}
+                        onClick={(event) => event.stopPropagation()}
+                        rel="noopener noreferrer"
+                        target="_blank"
+                      >
+                        {postLink}
+                      </a>
+                    </div>
                     <a
-                      className="truncate font-medium text-emerald-400 transition-colors hover:text-emerald-300"
-                      href={post.link}
+                      aria-label="打开项目链接"
+                      className="shrink-0 rounded-lg bg-emerald-500/10 p-3 text-emerald-400 shadow-lg shadow-emerald-500/10 transition-all hover:bg-emerald-500 hover:text-white"
+                      href={postLink}
                       onClick={(event) => event.stopPropagation()}
                       rel="noopener noreferrer"
                       target="_blank"
                     >
-                      {post.link}
+                      <ExternalLink className="h-5 w-5" />
                     </a>
                   </div>
-                  <a
-                    aria-label="打开项目链接"
-                    className="shrink-0 rounded-lg bg-emerald-500/10 p-2 text-emerald-400 transition-colors hover:bg-emerald-500/20"
-                    href={post.link}
-                    onClick={(event) => event.stopPropagation()}
-                    rel="noopener noreferrer"
-                    target="_blank"
-                  >
-                    <ExternalLink className="h-5 w-5" />
-                  </a>
-                </div>
-              )}
+                ) : (
+                  <div className="flex items-center gap-3 rounded-xl border border-white/5 bg-zinc-900/30 p-4 text-sm text-zinc-500">
+                    <LinkIcon className="h-4 w-4 opacity-50" />
+                    <span>该分享未提供直达链接或链接已失效</span>
+                  </div>
+                )}
+              </div>
 
               <div className="mt-6 whitespace-pre-wrap break-words text-sm leading-relaxed text-gray-300 font-body">
                 {post.body ? (
