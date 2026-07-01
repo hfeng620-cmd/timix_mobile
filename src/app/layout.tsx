@@ -44,7 +44,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="zh-CN" className="h-full antialiased">
+    <html lang="zh-CN" className="antialiased">
       <head>
         {process.env.NEXT_PUBLIC_SUPABASE_URL && (
           <link rel="preconnect" href={process.env.NEXT_PUBLIC_SUPABASE_URL} />
@@ -53,7 +53,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
-      <body className="min-h-full">
+      <body className="min-h-screen">
         <BackgroundSliderWrapper />
         <a
           className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-full focus:bg-white focus:px-5 focus:py-3 focus:text-sm focus:font-bold focus:text-black"
@@ -64,7 +64,7 @@ export default function RootLayout({
         <ForumAuthProvider>
           <SystemMonitorProvider>
             <ToastProvider>
-              <main id="main-content" className="relative z-10 flex min-h-full flex-col">
+              <main id="main-content" className="relative z-10 flex min-h-screen flex-col">
                 <ErrorBoundary>{children}</ErrorBoundary>
               </main>
               <ToastContainer />

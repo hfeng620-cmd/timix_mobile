@@ -186,6 +186,8 @@ html {
 html {
   scroll-behavior: smooth;
   background: var(--dt-bg-base);
+  min-height: 100%;
+  overflow-x: hidden;
 }
 
 body {
@@ -195,6 +197,8 @@ body {
   font-weight: 300;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  min-height: 100%;
+  overflow-x: hidden;
 }
 
 ::selection {

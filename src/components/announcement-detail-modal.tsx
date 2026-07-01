@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { Megaphone, X } from "lucide-react";
 
 import type { NotificationItem } from "@/lib/notification-storage";
+import { lockBodyScroll } from "@/lib/body-scroll-lock";
 
 type Props = {
   notice: NotificationItem | null;
@@ -21,8 +22,7 @@ export function AnnouncementDetailModal({ notice, onClose }: Props) {
 
   useEffect(() => {
     setMounted(true);
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    const unlock = lockBodyScroll();
 
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") onClose();
@@ -30,7 +30,7 @@ export function AnnouncementDetailModal({ notice, onClose }: Props) {
 
     document.addEventListener("keydown", handleKeyDown);
     return () => {
-      document.body.style.overflow = previousOverflow;
+      unlock();
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, [onClose]);
