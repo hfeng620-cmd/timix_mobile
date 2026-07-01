@@ -15,6 +15,8 @@ export interface NotificationItem {
   id: string;
   type: NotificationType;
   message: string;
+  title?: string;
+  content?: string;
   read: boolean;
   createdAt: number;
   postId?: string;
@@ -50,6 +52,7 @@ type SupabaseNotificationRow = {
 type AnnouncementPostRow = {
   id: string;
   title: string;
+  body: string;
   created_at: string;
 };
 
@@ -108,7 +111,7 @@ async function loadAnnouncementNotifications(
 
   const { data, error } = await supabase
     .from("forum_posts")
-    .select("id,title,created_at")
+    .select("id,title,body,created_at")
     .contains("tags", ["公告"])
     .eq("is_hidden", false)
     .order("created_at", { ascending: false })
@@ -129,10 +132,52 @@ async function loadAnnouncementNotifications(
       id: `${ANNOUNCEMENT_NOTIFICATION_PREFIX}${post.id}`,
       type: "admin_announcement",
       message: post.title,
+      title: post.title,
+      content: post.body,
       read: readIds.has(post.id),
       createdAt: new Date(post.created_at).getTime(),
       postId: post.id,
     }));
+}
+
+async function hydrateAnnouncementDetails(notifications: NotificationItem[]): Promise<NotificationItem[]> {
+  const announcementPostIds = [
+    ...new Set(
+      notifications
+        .filter((item) => item.type === "admin_announcement" && item.postId && !item.content)
+        .map((item) => item.postId as string),
+    ),
+  ];
+
+  if (announcementPostIds.length === 0) return notifications;
+
+  try {
+    const { data, error } = await getSupabaseClient()
+      .from("forum_posts")
+      .select("id,title,body,created_at")
+      .in("id", announcementPostIds);
+
+    if (error || !data) return notifications;
+
+    const postMap = new Map(
+      ((data ?? []) as AnnouncementPostRow[]).map((post) => [post.id, post]),
+    );
+
+    return notifications.map((item) => {
+      if (item.type !== "admin_announcement" || !item.postId) return item;
+      const post = postMap.get(item.postId);
+      if (!post) return item;
+
+      return {
+        ...item,
+        title: post.title,
+        content: post.body,
+        createdAt: new Date(post.created_at).getTime(),
+      };
+    });
+  } catch {
+    return notifications;
+  }
 }
 
 // ── Load & mutate ─────────────────────────────────────
@@ -156,7 +201,8 @@ export async function loadNotifications(): Promise<NotificationItem[]> {
     if (error) throw error;
     const dbNotifications = ((data ?? []) as SupabaseNotificationRow[]).map(mapNotification);
     const announcementNotifications = await loadAnnouncementNotifications(userData.user.id, dbNotifications);
-    return [...dbNotifications, ...announcementNotifications]
+    const hydratedNotifications = await hydrateAnnouncementDetails([...dbNotifications, ...announcementNotifications]);
+    return hydratedNotifications
       .sort((a, b) => b.createdAt - a.createdAt)
       .slice(0, 30);
   } catch {

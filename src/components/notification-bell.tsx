@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 
+import { AnnouncementDetailModal } from "@/components/announcement-detail-modal";
 import { useForumAuth } from "@/lib/forum-auth";
 import {
   deleteNotification,
@@ -84,6 +85,7 @@ export function NotificationBell({
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [selectedNotice, setSelectedNotice] = useState<NotificationItem | null>(null);
   const router = useRouter();
   const unsubRef = useRef<(() => void) | null>(null);
 
@@ -170,6 +172,12 @@ export function NotificationBell({
 
   function handleNotificationClick(item: NotificationItem) {
     markAsRead(item.id);
+    if (item.type === "admin_announcement" || item.message.includes("公告")) {
+      setSelectedNotice(item);
+      setOpen(false);
+      return;
+    }
+
     setOpen(false);
     if (item.postId) {
       router.push(`/community#${item.postId}`);
@@ -205,6 +213,8 @@ export function NotificationBell({
           </span>
         )}
       </button>
+
+      <AnnouncementDetailModal notice={selectedNotice} onClose={() => setSelectedNotice(null)} />
 
       {/* Full-screen overlay modal */}
       {open && createPortal(
