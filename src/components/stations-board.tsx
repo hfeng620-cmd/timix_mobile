@@ -278,6 +278,16 @@ export function StationsBoard() {
   // ---- detail modal -------------------------------------------------------
   const [detailStation, setDetailStation] = useState<Station | null>(null);
 
+  // Debug-safe wrapper: logs to console so you can inspect station.id in browser DevTools
+  function handleDetailStationClick(station: Station) {
+    if (!station || !station.id) {
+      console.error("[StationsBoard] Cannot open detail — station or station.id is missing:", station);
+      return;
+    }
+    console.log("[StationsBoard] Opening detail for station:", station.name, "| id:", station.id);
+    setDetailStation(station);
+  }
+
   // ---- station discussion modal --------------------------------------------
   const [discussionStation, setDiscussionStation] = useState<Station | null>(null);
 
@@ -1212,7 +1222,7 @@ export function StationsBoard() {
                   <div key={station.id}>
                     <div
                       className="relative z-10 cursor-pointer rounded-[20px] border border-[var(--color-line)] bg-[var(--color-panel)] p-4 shadow-[var(--shadow-card)] transition-colors hover:bg-white/5 sm:p-5"
-                      onClick={() => setDetailStation(station)}
+                      onClick={() => handleDetailStationClick(station)}
                     >
                       {/* Header row: rank + name + badge */}
                       <div className="flex items-start justify-between gap-3">
@@ -1221,10 +1231,10 @@ export function StationsBoard() {
                             {rankingBadge(index)}
                           </p>
                           <button
-                            className="mt-1 cursor-pointer text-xl font-black transition hover:text-[var(--color-brand)] break-words text-left"
+                            className="relative z-20 mt-1 cursor-pointer break-words text-left text-xl font-black transition hover:text-[var(--color-brand)]"
                             onClick={(event) => {
                               event.stopPropagation();
-                              setDetailStation(station);
+                              handleDetailStationClick(station);
                             }}
                             type="button"
                           >
@@ -1413,7 +1423,7 @@ export function StationsBoard() {
                   <div key={station.id}>
                     <article
                       className="relative z-10 grid cursor-pointer grid-cols-[0.48fr_1.32fr_0.78fr_0.96fr_0.82fr_0.68fr_1.28fr] items-start gap-x-3 border-l-2 border-l-transparent px-5 py-4 transition-all duration-300 hover:border-l-[var(--color-brand)] hover:bg-white/5"
-                      onClick={() => setDetailStation(station)}
+                      onClick={() => handleDetailStationClick(station)}
                     >
                       {/* 排序 */}
                       <div className="font-bold text-[var(--color-muted)]">
@@ -1424,10 +1434,10 @@ export function StationsBoard() {
                       <div>
                         <div className="flex flex-wrap items-center gap-3">
                           <button
-                            className="cursor-pointer font-bold transition hover:text-[var(--color-brand)]"
+                            className="relative z-20 cursor-pointer font-bold transition hover:text-[var(--color-brand)]"
                             onClick={(event) => {
                               event.stopPropagation();
-                              setDetailStation(station);
+                              handleDetailStationClick(station);
                             }}
                             type="button"
                           >
