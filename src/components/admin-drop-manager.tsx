@@ -11,6 +11,8 @@ const emptyForm = {
   sponsorName: "",
   sponsorUrl: "",
   description: "",
+  customQuestion: "",
+  customOptions: "",
 };
 
 function parseCodes(text: string) {
@@ -134,6 +136,32 @@ export function AdminDropManager() {
               placeholder="限量发放，先到先得..."
             />
           </label>
+          <div className="md:col-span-2 rounded-2xl border border-emerald-300/10 bg-emerald-300/[0.03] p-4">
+            <p className="text-sm font-semibold text-emerald-200">附加互动问卷 (可选)</p>
+            <p className="mt-1 text-xs text-zinc-500">
+              不填时会继续使用默认的 TiMix UI 评价问题；填写后领取弹窗会自动换成你这次活动的问题和选项。
+            </p>
+            <div className="mt-4 grid gap-4 md:grid-cols-2">
+              <label className="space-y-2 text-sm text-zinc-300">
+                <span>自定义问题</span>
+                <input
+                  value={form.customQuestion}
+                  onChange={(event) => setForm((next) => ({ ...next, customQuestion: event.target.value }))}
+                  className="w-full rounded-2xl border border-white/10 bg-zinc-950/70 px-4 py-3 text-white outline-none transition focus:border-emerald-300/60"
+                  placeholder="例如：你觉得本次活动的UI怎么样？"
+                />
+              </label>
+              <label className="space-y-2 text-sm text-zinc-300">
+                <span>自定义选项</span>
+                <input
+                  value={form.customOptions}
+                  onChange={(event) => setForm((next) => ({ ...next, customOptions: event.target.value }))}
+                  className="w-full rounded-2xl border border-white/10 bg-zinc-950/70 px-4 py-3 text-white outline-none transition focus:border-emerald-300/60"
+                  placeholder="例如：🔥 夯爆了, 🤖 NPC, 💩 拉完了 (请用逗号分隔)"
+                />
+              </label>
+            </div>
+          </div>
           <label className="space-y-2 text-sm text-zinc-300 md:col-span-2">
             <span>批量兑换码 (每行一个)</span>
             <textarea

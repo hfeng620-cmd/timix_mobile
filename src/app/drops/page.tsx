@@ -120,11 +120,15 @@ export default function DropsPage() {
               const remaining = campaign.remaining_codes;
               const progressPct = total > 0 ? (claimed / total) * 100 : 0;
               const isSoldOut = remaining === 0;
+              const isPaused = campaign.is_active === false;
+              const isDisabled = isSoldOut || isPaused;
 
               return (
                 <article
                   key={campaign.id}
-                  className="relative flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/40 p-6 backdrop-blur-xl transition-all hover:bg-zinc-800/50 hover:border-white/20"
+                  className={`relative flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/40 p-6 backdrop-blur-xl transition-all hover:bg-zinc-800/50 hover:border-white/20 ${
+                    isPaused ? "opacity-60 grayscale-[30%]" : ""
+                  }`}
                 >
                   {/* Sponsor badge */}
                   <div className="flex items-center gap-2 mb-1">
@@ -134,6 +138,11 @@ export default function DropsPage() {
                     {isSoldOut && (
                       <span className="rounded-full border border-rose-400/20 bg-rose-400/10 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-rose-300">
                         已抢空
+                      </span>
+                    )}
+                    {isPaused && (
+                      <span className="rounded-full border border-zinc-500/20 bg-zinc-500/10 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-300">
+                        已暂停
                       </span>
                     )}
                   </div>
@@ -169,15 +178,20 @@ export default function DropsPage() {
                   {/* CTA */}
                   <button
                     className={`mt-5 flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-bold transition font-body ${
-                      isSoldOut
+                      isDisabled
                         ? "cursor-not-allowed border border-white/5 bg-white/[0.02] text-zinc-600"
                         : "bg-cyan-300 text-black shadow-[0_0_24px_rgba(34,211,238,0.18)] hover:bg-cyan-200"
                     }`}
-                    disabled={isSoldOut}
-                    onClick={() => setSelectedCampaign(campaign)}
+                    disabled={isDisabled}
+                    onClick={() => {
+                      if (isDisabled) return;
+                      setSelectedCampaign(campaign);
+                    }}
                     type="button"
                   >
-                    {isSoldOut ? (
+                    {isPaused ? (
+                      "⏸ 已暂停发放"
+                    ) : isSoldOut ? (
                       <>
                         <Timer className="h-4 w-4" />
                         已抢空

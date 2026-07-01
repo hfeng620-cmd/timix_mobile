@@ -1,7 +1,7 @@
 "use client";
 
 import { Check, Copy, ExternalLink, Gift, Loader2, PartyPopper, X } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { claimPromoCode, type Campaign } from "@/lib/drop-storage";
 import { useForumAuth } from "@/lib/forum-auth";
@@ -18,6 +18,8 @@ const RATINGS = [
   { value: "NPC", label: "🤖 NPC" },
   { value: "拉完了", label: "💩 拉完了" },
 ] as const;
+
+const DEFAULT_QUESTION = "你觉得 TiMix 收集站目前的 UI 界面怎么样？";
 
 export function DropClaimModal({ campaign, onClaimed, open, onClose }: DropClaimModalProps) {
   const { user } = useForumAuth();
@@ -37,6 +39,21 @@ export function DropClaimModal({ campaign, onClaimed, open, onClose }: DropClaim
   const accountRef = useRef<HTMLInputElement>(null);
   const favoriteStationRef = useRef<HTMLTextAreaElement>(null);
   const timixFeedbackRef = useRef<HTMLTextAreaElement>(null);
+
+  const questionnaire = useMemo(() => {
+    const customQuestion = campaign?.custom_question?.trim();
+    const customOptions = campaign?.custom_options
+      ?.split(/[,，]/)
+      .map((option) => option.trim())
+      .filter(Boolean);
+
+    return {
+      question: customQuestion || DEFAULT_QUESTION,
+      options: customOptions && customOptions.length > 0
+        ? customOptions.map((option) => ({ value: option, label: option }))
+        : [...RATINGS],
+    };
+  }, [campaign?.custom_options, campaign?.custom_question]);
 
   // ── Reset on open / campaign change ──
   useEffect(() => {
@@ -85,7 +102,7 @@ export function DropClaimModal({ campaign, onClaimed, open, onClose }: DropClaim
       return;
     }
     if (!uiRating) {
-      setError("请选择对 TiMix UI 界面的评价。");
+      setError(`请选择：${questionnaire.question}`);
       return;
     }
     const trimmedTimixFeedback = timixFeedback.trim();
@@ -112,7 +129,7 @@ export function DropClaimModal({ campaign, onClaimed, open, onClose }: DropClaim
     } else {
       setError(result.error);
     }
-  }, [campaign, user, registeredAccount, favoriteStation, uiRating, timixFeedback, onClaimed]);
+  }, [campaign, user, registeredAccount, favoriteStation, uiRating, timixFeedback, onClaimed, questionnaire.question]);
 
   // ── Copy to clipboard ──
   const handleCopy = useCallback(async () => {
@@ -292,19 +309,15 @@ export function DropClaimModal({ campaign, onClaimed, open, onClose }: DropClaim
                   {/* UI rating pills */}
                   <fieldset>
                     <legend className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-zinc-400">
-                      第三步：你觉得 TiMix 收集站目前的 UI 界面怎么样？
+                      第三步：{questionnaire.question}
                     </legend>
                     <div className="flex flex-wrap gap-2">
-                      {RATINGS.map((item) => (
+                      {questionnaire.options.map((item) => (
                         <button
                           key={item.value}
                           className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
                             uiRating === item.value
-                              ? item.value === "夯爆了"
-                                ? "border-orange-400/50 bg-orange-400/10 text-orange-200 shadow-[0_0_20px_rgba(249,115,22,0.12)]"
-                                : item.value === "NPC"
-                                  ? "border-zinc-400/50 bg-zinc-500/10 text-zinc-200 shadow-[0_0_20px_rgba(113,113,122,0.12)]"
-                                  : "border-amber-900/50 bg-amber-900/20 text-amber-200 shadow-[0_0_20px_rgba(120,53,15,0.18)]"
+                              ? "border-cyan-300/60 bg-cyan-300/10 text-cyan-100 shadow-[0_0_20px_rgba(34,211,238,0.12)]"
                               : "border-white/10 bg-white/5 text-zinc-400 hover:border-white/20 hover:text-zinc-200"
                           }`}
                           disabled={submitting}

@@ -126,7 +126,7 @@ export function NotificationBell({
     // Delay subscription to avoid race condition with auth state
     const timer = setTimeout(() => {
       unsubRef.current = subscribeNotifications(user.id, (newNotification) => {
-        setNotifications((prev) => [newNotification, ...prev.slice(0, 49)]);
+        setNotifications((prev) => [newNotification, ...prev.slice(0, 29)]);
       });
     }, 500);
 
@@ -177,18 +177,6 @@ export function NotificationBell({
       router.push("/community");
     }
   }
-
-  // Auto-mark visible notifications as read when modal opens
-  useEffect(() => {
-    if (!open || notifications.length === 0) return;
-    const unreadIds = notifications.filter((n) => !n.read).map((n) => n.id);
-    if (unreadIds.length === 0) return;
-    const timer = setTimeout(() => {
-      setNotifications((prev) => prev.map((n) => (unreadIds.includes(n.id) ? { ...n, read: true } : n)));
-      markAllNotificationsRead().catch(() => {});
-    }, 1500);
-    return () => clearTimeout(timer);
-  }, [open]);
 
   if (!mounted) {
     return (
@@ -280,7 +268,7 @@ export function NotificationBell({
                     <div
                       key={item.id}
                       className={`flex w-full items-start gap-4 border-b border-[var(--color-line)] px-6 py-4 transition last:border-b-0 hover:bg-[var(--color-soft)] ${
-                        !item.read ? "bg-[var(--color-brand-soft)]/20" : ""
+                        !item.read ? "bg-white/5" : "opacity-60"
                       }`}
                     >
                       <button
@@ -295,10 +283,10 @@ export function NotificationBell({
 
                         <div className="min-w-0 flex-1">
                           <p className="text-xs font-semibold text-[var(--color-brand-deep)]">{getTypeLabel(item.type)}</p>
-                          <p className="mt-1 text-sm leading-relaxed text-[var(--color-ink)]">{item.message}</p>
+                          <p className={`mt-1 text-sm leading-relaxed ${item.read ? "text-[var(--color-muted)]" : "text-white"}`}>{item.message}</p>
                           <div className="mt-2 flex items-center gap-2">
                             <span className="text-[11px] text-[var(--color-muted)]">{formatRelativeTime(item.createdAt)}</span>
-                            {!item.read && <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-brand)]" />}
+                            {!item.read && <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />}
                             {(item.type === "new_reply" || item.type === "new_like" || item.type === "post_approved") && (
                               <span className="ml-auto text-[11px] font-semibold text-[var(--color-brand)]">查看帖子 →</span>
                             )}

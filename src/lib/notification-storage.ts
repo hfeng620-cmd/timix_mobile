@@ -75,7 +75,7 @@ export async function loadNotifications(): Promise<NotificationItem[]> {
       .select("*")
       .eq("user_id", userData.user.id)
       .order("created_at", { ascending: false })
-      .limit(50);
+      .limit(30);
 
     if (error) throw error;
     return ((data ?? []) as SupabaseNotificationRow[]).map(mapNotification);

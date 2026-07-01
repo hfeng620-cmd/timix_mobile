@@ -17,6 +17,8 @@ const initialForm = {
   sponsorName: "",
   sponsorUrl: "",
   description: "",
+  customQuestion: "",
+  customOptions: "",
   codeCount: "10",
 };
 
@@ -190,6 +192,29 @@ export function CampaignAdmin() {
               placeholder="说明兑换码权益、使用方式和注意事项。"
             />
           </label>
+          <div className="mt-4 rounded-2xl border border-cyan-300/10 bg-cyan-300/[0.03] p-4">
+            <p className="text-sm font-semibold text-cyan-100">附加互动问卷 (可选)</p>
+            <div className="mt-4 grid gap-4 md:grid-cols-2">
+              <label className="space-y-1 text-sm text-zinc-300">
+                <span>自定义问题</span>
+                <input
+                  value={form.customQuestion}
+                  onChange={(event) => setForm((next) => ({ ...next, customQuestion: event.target.value }))}
+                  className="w-full rounded-2xl border border-white/10 bg-zinc-900 px-4 py-3 text-white outline-none transition focus:border-cyan-300/60"
+                  placeholder="例如：你觉得本次活动的UI怎么样？"
+                />
+              </label>
+              <label className="space-y-1 text-sm text-zinc-300">
+                <span>自定义选项</span>
+                <input
+                  value={form.customOptions}
+                  onChange={(event) => setForm((next) => ({ ...next, customOptions: event.target.value }))}
+                  className="w-full rounded-2xl border border-white/10 bg-zinc-900 px-4 py-3 text-white outline-none transition focus:border-cyan-300/60"
+                  placeholder="例如：🔥 夯爆了, 🤖 NPC, 💩 拉完了 (请用逗号分隔)"
+                />
+              </label>
+            </div>
+          </div>
           <button
             type="button"
             onClick={handleCreate}
@@ -230,7 +255,7 @@ export function CampaignAdmin() {
                     领取记录
                   </button>
                   <button type="button" onClick={() => handleToggle(campaign)} className="rounded-full border border-white/10 px-4 py-2 text-sm text-zinc-200 transition hover:border-amber-300/50">
-                    {campaign.is_active ? "暂停" : "启用"}
+                    {campaign.is_active ? "暂停" : "▶ 恢复"}
                   </button>
                   <button type="button" onClick={() => handleDelete(campaign)} className="rounded-full border border-red-400/30 px-4 py-2 text-sm text-red-300 transition hover:bg-red-400/10">
                     删除

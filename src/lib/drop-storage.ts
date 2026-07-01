@@ -14,6 +14,8 @@ export type Campaign = {
   is_active: boolean;
   starts_at: string | null;
   ends_at: string | null;
+  custom_question: string | null;
+  custom_options: string | null;
   created_at: string;
   updated_at: string;
   remaining_codes: number;
@@ -45,7 +47,6 @@ export async function loadCampaigns(): Promise<Campaign[]> {
     const { data, error } = await getSupabaseClient()
       .from("campaign_summary")
       .select("*")
-      .eq("is_active", true)
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -185,6 +186,8 @@ export async function createCampaign(params: {
   sponsorUrl: string;
   description: string;
   codeCount: number;
+  customQuestion?: string;
+  customOptions?: string;
 }): Promise<{ ok: true } | { ok: false; error: string }> {
   if (!isSupabaseConfigured()) {
     return { ok: false, error: "Supabase 未配置。" };
@@ -196,6 +199,8 @@ export async function createCampaign(params: {
     const sponsorName = params.sponsorName.trim();
     const sponsorUrl = params.sponsorUrl.trim();
     const description = params.description.trim();
+    const customQuestion = params.customQuestion?.trim() || null;
+    const customOptions = params.customOptions?.trim() || null;
     const codeCount = Math.max(1, Math.min(1000, Math.floor(params.codeCount)));
 
     const { data: campaign, error: campaignError } = await supabase
@@ -205,6 +210,8 @@ export async function createCampaign(params: {
         sponsor_name: sponsorName,
         sponsor_url: sponsorUrl,
         description,
+        custom_question: customQuestion,
+        custom_options: customOptions,
         total_codes: codeCount,
         is_active: true,
       })
@@ -269,6 +276,8 @@ export async function createCampaignWithBulkCodes(params: {
   sponsorName: string;
   sponsorUrl: string;
   description: string;
+  customQuestion?: string;
+  customOptions?: string;
   codeList: string[];
 }): Promise<{ ok: true; campaignId: string } | { ok: false; error: string }> {
   if (!isSupabaseConfigured()) {
@@ -281,6 +290,8 @@ export async function createCampaignWithBulkCodes(params: {
     const sponsorName = params.sponsorName.trim();
     const sponsorUrl = params.sponsorUrl.trim();
     const description = params.description.trim();
+    const customQuestion = params.customQuestion?.trim() || null;
+    const customOptions = params.customOptions?.trim() || null;
     const codeList = params.codeList.map((c) => c.trim()).filter(Boolean);
 
     if (!title) return { ok: false, error: "请填写活动标题。" };
@@ -296,6 +307,8 @@ export async function createCampaignWithBulkCodes(params: {
         sponsor_name: sponsorName,
         sponsor_url: sponsorUrl,
         description,
+        custom_question: customQuestion,
+        custom_options: customOptions,
         total_codes: codeList.length,
         is_active: true,
       })
