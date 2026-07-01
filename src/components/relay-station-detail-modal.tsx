@@ -100,7 +100,12 @@ function DashboardCard({
 }
 
 export function RelayStationDetailModal({ station, open, onClose }: RelayStationDetailModalProps) {
+  const [mounted, setMounted] = useState(false);
   const [metrics, setMetrics] = useState<StationMonitorMetric[]>([]);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -137,7 +142,7 @@ export function RelayStationDetailModal({ station, open, onClose }: RelayStation
     return metrics.find((metric) => metric.stationId === station.id) ?? metrics.find((metric) => metric.stationName === station.name);
   }, [metrics, station]);
 
-  if (!open || !station) return null;
+  if (!open || !station || !mounted) return null;
 
   const status = normalizeStatus(liveMetric?.status, station.status);
   const priceValue = liveMetric?.priceLabel || station.price || "--";
@@ -149,11 +154,9 @@ export function RelayStationDetailModal({ station, open, onClose }: RelayStation
   const statusBars = stableSeries(`${station.id}:modal-status`, 40, status === "normal" ? 58 : 30, status === "offline" ? 64 : 100);
   const checkedAt = liveMetric?.checkedAt ? new Date(liveMetric.checkedAt).toLocaleString("zh-CN") : "刚刚";
 
-  if (typeof document === "undefined") return null;
-
   return createPortal(
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm overscroll-none p-4 md:p-8"
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 sm:p-6"
       onClick={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
@@ -168,19 +171,19 @@ export function RelayStationDetailModal({ station, open, onClose }: RelayStation
       </style>
 
       <div
-        className="relative grid h-[90vh] w-full max-w-6xl overflow-hidden rounded-2xl border border-white/10 bg-zinc-950/95 shadow-2xl md:h-[85vh] md:grid-cols-12"
+        className="relative flex h-[90vh] w-full max-w-[1200px] flex-col overflow-hidden rounded-2xl border border-white/10 bg-zinc-950/95 shadow-2xl md:h-[85vh] md:grid md:grid-cols-12"
         onClick={(event) => event.stopPropagation()}
       >
         <button
           aria-label="关闭"
-          className="absolute top-4 right-4 z-50 rounded-full bg-zinc-900/50 p-2 text-zinc-400 transition hover:text-white"
+          className="absolute right-4 top-4 z-50 rounded-full bg-zinc-900/80 p-2 text-zinc-400 backdrop-blur-sm transition-colors hover:text-white"
           onClick={onClose}
           type="button"
         >
           <X className="h-5 w-5" />
         </button>
 
-        <section className="custom-scrollbar flex flex-col gap-6 overflow-y-auto p-6 md:col-span-7 md:p-8 lg:col-span-8">
+        <section className="hide-scrollbar flex flex-col gap-6 overflow-y-auto p-6 md:col-span-7 md:p-8 lg:col-span-8">
           <div className="flex items-center justify-between gap-4">
             <div className="min-w-0">
               <h2 className="flex items-center gap-2 text-2xl font-bold text-white">
@@ -261,7 +264,7 @@ export function RelayStationDetailModal({ station, open, onClose }: RelayStation
           </div>
         </section>
 
-        <section className="flex min-h-0 flex-col border-t border-white/10 bg-zinc-950 md:col-span-5 md:border-l md:border-t-0 lg:col-span-4">
+        <section className="flex h-[50vh] min-h-0 flex-col border-t border-white/10 bg-zinc-950 md:col-span-5 md:h-full md:border-l md:border-t-0 lg:col-span-4">
           <div className="shrink-0 border-b border-white/5 px-6 py-3 text-sm font-medium tracking-widest text-zinc-400">
             用户评价与反馈
           </div>
