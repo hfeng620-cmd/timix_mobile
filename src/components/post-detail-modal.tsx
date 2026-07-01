@@ -739,6 +739,7 @@ export function PostDetailModal({ post, onClose, onEdit }: Props) {
   const rootComments = comments.filter((c) => c.parentId === null);
   const getReplies = (rootId: string) => comments.filter((c) => c.parentId === rootId);
   const postLink = post.link || post.url || "";
+  const linkSegments = postLink.split(/;|；/).map((segment) => segment.trim()).filter(Boolean);
 
   /* 当前打开的楼中楼 */
   const activeRoot = rootComments.find((c) => c.id === nestedRootId);
@@ -911,30 +912,46 @@ export function PostDetailModal({ post, onClose, onEdit }: Props) {
               <p className="mt-5 text-sm leading-relaxed text-white/50 font-body">{post.summary}</p>
 
               <div className="my-6">
-                {postLink ? (
-                  <div className="flex items-center justify-between rounded-xl border border-emerald-500/20 bg-zinc-900/60 p-4 transition-colors hover:bg-zinc-900/80">
-                    <div className="flex min-w-0 flex-col overflow-hidden pr-4">
-                      <span className="mb-1 text-xs font-semibold uppercase tracking-wider text-emerald-500">🔗 项目直达链接</span>
-                      <a
-                        className="truncate text-sm font-medium text-white transition-colors hover:text-emerald-400"
-                        href={postLink}
-                        onClick={(event) => event.stopPropagation()}
-                        rel="noopener noreferrer"
-                        target="_blank"
-                      >
-                        {postLink}
-                      </a>
-                    </div>
-                    <a
-                      aria-label="打开项目链接"
-                      className="shrink-0 rounded-lg bg-emerald-500/10 p-3 text-emerald-400 shadow-lg shadow-emerald-500/10 transition-all hover:bg-emerald-500 hover:text-white"
-                      href={postLink}
-                      onClick={(event) => event.stopPropagation()}
-                      rel="noopener noreferrer"
-                      target="_blank"
-                    >
-                      <ExternalLink className="h-5 w-5" />
-                    </a>
+                {linkSegments.length > 0 ? (
+                  <div className="flex flex-col gap-3">
+                    {linkSegments.map((segment, index) => {
+                      const urlMatch = segment.match(/(https?:\/\/[^\s]+)/);
+                      const actualUrl = urlMatch ? urlMatch[0] : "#";
+
+                      return (
+                        <div
+                          key={`${segment}-${index}`}
+                          className="flex items-center justify-between rounded-xl border border-emerald-500/20 bg-zinc-900/60 p-4 transition-colors hover:bg-zinc-900/80"
+                        >
+                          <div className="flex min-w-0 flex-col overflow-hidden pr-4">
+                            <span className="mb-1 text-xs font-semibold uppercase tracking-wider text-emerald-500">
+                              🔗 项目链接 {linkSegments.length > 1 ? index + 1 : ""}
+                            </span>
+                            <a
+                              className="truncate text-sm text-white transition-colors hover:text-emerald-400"
+                              href={actualUrl}
+                              onClick={(event) => event.stopPropagation()}
+                              rel="noopener noreferrer"
+                              target={actualUrl !== "#" ? "_blank" : "_self"}
+                            >
+                              {segment}
+                            </a>
+                          </div>
+                          {actualUrl !== "#" && (
+                            <a
+                              aria-label={`打开项目链接 ${index + 1}`}
+                              className="shrink-0 rounded-lg bg-emerald-500/10 p-3 text-emerald-400 shadow-lg shadow-emerald-500/10 transition-all hover:bg-emerald-500 hover:text-white"
+                              href={actualUrl}
+                              onClick={(event) => event.stopPropagation()}
+                              rel="noopener noreferrer"
+                              target="_blank"
+                            >
+                              <ExternalLink className="h-5 w-5" />
+                            </a>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 ) : (
                   <div className="flex items-center gap-3 rounded-xl border border-white/5 bg-zinc-900/30 p-4 text-sm text-zinc-500">

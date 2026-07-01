@@ -2,44 +2,42 @@
 
 import type { Liker } from "@/lib/share-storage";
 
-function isPrivilegedLiker(liker: Liker) {
-  return liker.role === "owner" || liker.role === "admin";
+function isOwnerLiker(liker: Liker) {
+  return liker.role === "owner";
 }
 
-function LikerName({ liker }: { liker: Liker }) {
-  const nickname = liker.displayName || "未知用户";
-  if (isPrivilegedLiker(liker)) {
-    return <span className="font-bold text-red-500">TiMix站主 {nickname}</span>;
-  }
-
-  return <span className="text-zinc-300">{nickname}</span>;
+function isAdminLiker(liker: Liker) {
+  return liker.role === "admin";
 }
 
 export function LikeIndicator({ likers }: { likers: Liker[] }) {
   if (!likers || likers.length === 0) return null;
 
-  const firstLiker = likers[0];
+  const vipLikers = likers.filter((liker) => isOwnerLiker(liker) || isAdminLiker(liker));
+  const normalLikesCount = Math.max(likers.length - vipLikers.length, 0);
 
   return (
-    <span className="ml-2 inline-flex items-center gap-1 text-xs text-zinc-500 font-body">
-      <svg
-        aria-hidden="true"
-        className="h-3.5 w-3.5 shrink-0"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-        strokeWidth="2"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-        />
-      </svg>
-      <span>
-        <LikerName liker={firstLiker} />
-        {likers.length === 1 ? " 赞过" : ` 等 ${likers.length} 人赞过`}
-      </span>
-    </span>
+    <div className="ml-2 flex flex-wrap items-center gap-2 text-xs font-body">
+      {vipLikers.map((liker) => {
+        const isOwner = isOwnerLiker(liker);
+        return (
+          <span
+            key={liker.userId}
+            className={`rounded-md border px-2 py-1 font-bold ${
+              isOwner
+                ? "border-red-500/20 bg-red-500/10 text-red-500"
+                : "border-blue-500/20 bg-blue-500/10 text-blue-400"
+            }`}
+          >
+            {isOwner ? "👑 站主赞过" : `🛡️ 管理员 ${liker.displayName || ""} 赞过`}
+          </span>
+        );
+      })}
+      {normalLikesCount > 0 && (
+        <span className="text-zinc-500">
+          {vipLikers.length > 0 ? "等 " : ""}{normalLikesCount} 位普通用户赞过
+        </span>
+      )}
+    </div>
   );
 }
