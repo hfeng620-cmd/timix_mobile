@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState, useCallback } from "react";
 import {
   Heart, MessageCircle, Bookmark, X,
@@ -7,8 +8,11 @@ import {
 } from "lucide-react";
 import { lockBodyScroll } from "@/lib/body-scroll-lock";
 import { useForumAuth } from "@/lib/forum-auth";
+import { useToast } from "@/lib/toast-context";
+import { getUserProfileHref } from "@/lib/user-profile-url";
 import { EmojiPickerButton } from "@/components/emoji-picker-button";
 import { ImageLightbox } from "@/components/image-lightbox";
+import { LikeIndicator } from "@/components/like-indicator";
 import { MarkdownContent } from "@/components/markdown-content";
 import { uploadPostImage } from "@/lib/post-image-upload";
 import {
@@ -32,7 +36,7 @@ type CommentItem = {
   authorAvatar: string | null;
   content: string;
   createdAt: string;
-  likes: Liker[];
+  likedBy: Set<string>;
 };
 
 type PostNode = {
@@ -40,7 +44,7 @@ type PostNode = {
   title: string;
   summary: string;
   tag: string;
-  likes: Liker[];
+  likes: number | Liker[];
   comments: number;
   bookmarks: number;
   authorId: string;
@@ -50,6 +54,14 @@ type PostNode = {
   authorAvatar?: string | null;
   createdAt?: string;
 };
+
+function normalizePostLikers(likes: PostNode["likes"]): Liker[] {
+  return Array.isArray(likes) ? likes : [];
+}
+
+function getPostLikesCount(likes: PostNode["likes"]): number {
+  return Array.isArray(likes) ? likes.length : likes;
+}
 
 type SlashEmojiItem = {
   aliases: string[];
@@ -148,17 +160,6 @@ function SlashEmojiSuggestions({
       ))}
     </div>
   );
-}
-
-/* ═══════════════════════════════════════════
-   LikeIndicator — 点赞用户文案
-   ═══════════════════════════════════════════ */
-
-function LikeIndicator({ likers }: { likers: Liker[] }) {
-  if (likers.length === 0) return null;
-  if (likers.length === 1) return <span className="text-xs text-zinc-500 ml-1.5">{likers[0].displayName} 赞过</span>;
-  if (likers.length === 2) return <span className="text-xs text-zinc-500 ml-1.5">{likers[0].displayName}、{likers[1].displayName} 赞过</span>;
-  return <span className="text-xs text-zinc-500 ml-1.5">{likers[0].displayName}、{likers[1].displayName} 等 {likers.length} 人赞过</span>;
 }
 
 /* ═══════════════════════════════════════════
@@ -360,11 +361,10 @@ function NestedReplyModal({
                 />
               </div>
               <div className="mt-2 flex items-center gap-4">
-                <button onClick={() => onToggleLike(rootComment.id)} className={`text-xs transition font-body ${rootComment.likes.some(l => l.userId === currentUserId) ? "text-rose-400" : "text-gray-500 hover:text-gray-300"}`} type="button">
-                  <Heart className={`h-3.5 w-3.5 inline mr-1 ${rootComment.likes.some(l => l.userId === currentUserId) ? "fill-current" : ""}`} />
-                  {rootComment.likes.length > 0 ? rootComment.likes.length : ""}
+                <button onClick={() => onToggleLike(rootComment.id)} className={`text-xs transition font-body ${rootComment.likedBy.has(currentUserId ?? "") ? "text-rose-400" : "text-gray-500 hover:text-gray-300"}`} type="button">
+                  <Heart className={`h-3.5 w-3.5 inline mr-1 ${rootComment.likedBy.has(currentUserId ?? "") ? "fill-current" : ""}`} />
+                  {rootComment.likedBy.size > 0 ? rootComment.likedBy.size : ""}
                 </button>
-                <LikeIndicator likers={rootComment.likes} />
                 <button onClick={() => focusReplyTo(rootComment.authorName)} className="text-xs text-gray-500 hover:text-gray-300 transition font-body" type="button">
                   <MessageCircle className="h-3.5 w-3.5 inline mr-1" />回复
                 </button>
@@ -400,11 +400,10 @@ function NestedReplyModal({
                     />
                   </div>
                   <div className="mt-1.5 flex items-center gap-4">
-                    <button onClick={() => onToggleLike(reply.id)} className={`text-xs transition font-body ${reply.likes.some(l => l.userId === currentUserId) ? "text-rose-400" : "text-gray-500 hover:text-gray-300"}`} type="button">
-                      <Heart className={`h-3 w-3 inline mr-1 ${reply.likes.some(l => l.userId === currentUserId) ? "fill-current" : ""}`} />
-                      {reply.likes.length > 0 ? reply.likes.length : ""}
+                    <button onClick={() => onToggleLike(reply.id)} className={`text-xs transition font-body ${reply.likedBy.has(currentUserId ?? "") ? "text-rose-400" : "text-gray-500 hover:text-gray-300"}`} type="button">
+                      <Heart className={`h-3 w-3 inline mr-1 ${reply.likedBy.has(currentUserId ?? "") ? "fill-current" : ""}`} />
+                      {reply.likedBy.size > 0 ? reply.likedBy.size : ""}
                     </button>
-                    <LikeIndicator likers={reply.likes} />
                     <button onClick={() => focusReplyTo(reply.authorName)} className="text-xs text-gray-500 hover:text-gray-300 transition font-body" type="button">
                       <MessageCircle className="h-3 w-3 inline mr-1" />回复
                     </button>
@@ -496,7 +495,8 @@ type Props = {
 };
 
 export function PostDetailModal({ post, onClose, onEdit }: Props) {
-  const { user, displayName, isAdmin, isOwner, showAuthModal } = useForumAuth();
+  const { user, isAdmin, isOwner, showAuthModal } = useForumAuth();
+  const { addToast } = useToast();
   const canEdit = !!(user && (isAdmin || isOwner || user.id === post.authorId));
 
   /* ── 评论状态 ── */
@@ -519,7 +519,7 @@ export function PostDetailModal({ post, onClose, onEdit }: Props) {
           authorAvatar: r.authorAvatar,
           content: r.body,
           createdAt: r.createdAt,
-          likes: r.likes ?? [],
+          likedBy: new Set<string>(),
         }));
         setComments(mapped);
       } catch {
@@ -535,20 +535,23 @@ export function PostDetailModal({ post, onClose, onEdit }: Props) {
   const [commentText, setCommentText] = useState("");
   const [commentUploading, setCommentUploading] = useState(false);
   const [showCommentEmojiPicker, setShowCommentEmojiPicker] = useState(false);
+  const [commentCursor, setCommentCursor] = useState(0);
   const commentTextareaRef = useRef<HTMLTextAreaElement>(null);
   const commentFileInputRef = useRef<HTMLInputElement>(null);
-  const [postIsLiked, setPostIsLiked] = useState(post.likes.some((l) => l.userId === user?.id));
-  const [postLikers, setPostLikers] = useState<Liker[]>(post.likes);
-  const [postLikesCount, setPostLikesCount] = useState(post.likes.length);
+  const initialPostLikers = normalizePostLikers(post.likes);
+  const [postIsLiked, setPostIsLiked] = useState(initialPostLikers.some((l) => l.userId === user?.id));
+  const [postLikers, setPostLikers] = useState<Liker[]>(initialPostLikers);
+  const [postLikesCount, setPostLikesCount] = useState(getPostLikesCount(post.likes));
   const [postLikePending, setPostLikePending] = useState(false);
   const [saved, setSaved] = useState(false);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
 
   useEffect(() => {
     if (postLikePending) return;
-    setPostLikers(post.likes);
-    setPostLikesCount(post.likes.length);
-    setPostIsLiked(post.likes.some((l) => l.userId === user?.id));
+    const nextLikers = normalizePostLikers(post.likes);
+    setPostLikers(nextLikers);
+    setPostLikesCount(getPostLikesCount(post.likes));
+    setPostIsLiked(nextLikers.some((l) => l.userId === user?.id));
   }, [post.id, post.likes, postLikePending, user?.id]);
 
   /* ── 编辑日志 ── */
@@ -615,10 +618,11 @@ export function PostDetailModal({ post, onClose, onEdit }: Props) {
         authorAvatar: saved.authorAvatar,
         content: saved.body,
         createdAt: saved.createdAt,
-        likes: [],
+        likedBy: new Set(),
       };
       setComments((prev) => [...prev, newComment]);
       setCommentText("");
+      setCommentCursor(0);
     } catch (err: unknown) {
       console.error("[评论] 发送失败:", err);
       alert("评论发送失败: " + (err instanceof Error ? err.message : String(err)));
@@ -653,7 +657,7 @@ export function PostDetailModal({ post, onClose, onEdit }: Props) {
           authorAvatar: saved.authorAvatar,
           content: saved.body,
           createdAt: saved.createdAt,
-          likes: [],
+          likedBy: new Set(),
         };
         setComments((prev) => [...prev, newReply]);
       } catch (err: unknown) {
@@ -664,38 +668,18 @@ export function PostDetailModal({ post, onClose, onEdit }: Props) {
     [user, showAuthModal, post.id],
   );
 
-  /* ── 点赞切换 (乐观 UI + toggleCommentLike) ── */
-  async function handleToggleCommentLike(commentId: string) {
+  /* ── 点赞切换 ── */
+  function handleToggleCommentLike(commentId: string) {
     if (!user) { showAuthModal(); return; }
-    const userId = user.id;
-    const profile: Liker = {
-      userId,
-      displayName: displayName ?? (user.user_metadata?.full_name as string) ?? user.email ?? "",
-      avatarUrl: (user.user_metadata?.avatar_url as string) ?? null,
-    };
-    let previousLikes: Liker[] = [];
-    setComments((prev) => {
-      const next = prev.map((c) => {
+    setComments((prev) =>
+      prev.map((c) => {
         if (c.id !== commentId) return c;
-        previousLikes = c.likes;
-        const alreadyLiked = c.likes.some((l) => l.userId === userId);
-        if (alreadyLiked) {
-          return { ...c, likes: c.likes.filter((l) => l.userId !== userId) };
-        }
-        return { ...c, likes: [...c.likes, profile] };
-      });
-      return next;
-    });
-    try {
-      const latestLikes = await toggleCommentLike(commentId, userId);
-      setComments((prev) =>
-        prev.map((c) => (c.id === commentId ? { ...c, likes: latestLikes } : c)),
-      );
-    } catch {
-      setComments((prev) =>
-        prev.map((c) => (c.id === commentId ? { ...c, likes: previousLikes } : c)),
-      );
-    }
+        const next = new Set(c.likedBy);
+        if (next.has(user.id)) next.delete(user.id);
+        else next.add(user.id);
+        return { ...c, likedBy: next };
+      }),
+    );
   }
 
   /* ── 删除评论 ── */
@@ -714,10 +698,12 @@ export function PostDetailModal({ post, onClose, onEdit }: Props) {
     if (!user) { showAuthModal(); return; }
 
     setPostLikePending(true);
+    const userMetadata = user.user_metadata ?? {};
     const profile: Liker = {
       userId: user.id,
-      displayName: displayName ?? (user.user_metadata?.full_name as string) ?? user.email ?? "",
-      avatarUrl: (user.user_metadata?.avatar_url as string) ?? null,
+      displayName: (userMetadata.display_name as string) ?? (userMetadata.full_name as string) ?? user.email ?? "",
+      avatarUrl: (userMetadata.avatar_url as string) ?? null,
+      role: isOwner ? "owner" : isAdmin ? "admin" : "user",
     };
 
     const prev = postIsLiked;
@@ -737,11 +723,11 @@ export function PostDetailModal({ post, onClose, onEdit }: Props) {
       setPostLikers(result);
       setPostLikesCount(result.length);
       setPostIsLiked(result.some((l: Liker) => l.userId === user.id));
-    } catch {
+    } catch (error) {
       setPostIsLiked(prev);
       setPostLikesCount(prevCount);
       setPostLikers(prevLikers);
-      alert("点赞失败，请稍后重试");
+      addToast(error instanceof Error ? error.message : "点赞失败，请稍后重试", "error");
     } finally {
       setPostLikePending(false);
     }
@@ -769,6 +755,7 @@ export function PostDetailModal({ post, onClose, onEdit }: Props) {
         const cursor = start + markdown.length;
         commentTextareaRef.current?.focus();
         commentTextareaRef.current?.setSelectionRange(cursor, cursor);
+        setCommentCursor(cursor);
       });
     } finally {
       setCommentUploading(false);
@@ -786,6 +773,7 @@ export function PostDetailModal({ post, onClose, onEdit }: Props) {
     requestAnimationFrame(() => {
       commentTextareaRef.current?.focus();
       commentTextareaRef.current?.setSelectionRange(nextCursor, nextCursor);
+      setCommentCursor(nextCursor);
     });
   }
 
@@ -806,6 +794,7 @@ export function PostDetailModal({ post, onClose, onEdit }: Props) {
     requestAnimationFrame(() => {
       commentTextareaRef.current?.focus();
       commentTextareaRef.current?.setSelectionRange(nextCursor, nextCursor);
+      setCommentCursor(nextCursor);
     });
   }
 
@@ -828,7 +817,7 @@ export function PostDetailModal({ post, onClose, onEdit }: Props) {
     }
   }
 
-  const activeCommentSlashEmoji = getActiveSlashEmoji(commentText, commentTextareaRef.current?.selectionStart ?? commentText.length);
+  const activeCommentSlashEmoji = getActiveSlashEmoji(commentText, Math.min(commentCursor, commentText.length));
 
   return (
     <>
@@ -869,7 +858,26 @@ export function PostDetailModal({ post, onClose, onEdit }: Props) {
               <div className="flex items-center gap-3 mt-4 text-sm text-white/40 font-body">
                 {(post.authorName || post.authorAvatar) ? (
                   <>
-                    {post.authorAvatar ? (
+                    {post.authorId ? (
+                      <Link
+                        className="shrink-0 cursor-pointer transition hover:opacity-80"
+                        href={getUserProfileHref(post.authorId)}
+                        onClick={(event) => event.stopPropagation()}
+                        title="查看公开主页"
+                      >
+                        {post.authorAvatar ? (
+                          <img
+                            src={post.authorAvatar}
+                            className="h-6 w-6 flex-shrink-0 rounded-full object-cover"
+                            alt={post.authorName ?? "作者头像"}
+                          />
+                        ) : post.authorName ? (
+                          <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-white/10 text-[10px] text-white/50">
+                            {post.authorName.charAt(0)}
+                          </span>
+                        ) : null}
+                      </Link>
+                    ) : post.authorAvatar ? (
                       <img
                         src={post.authorAvatar}
                         className="h-6 w-6 flex-shrink-0 rounded-full object-cover"
@@ -880,7 +888,17 @@ export function PostDetailModal({ post, onClose, onEdit }: Props) {
                         {post.authorName.charAt(0)}
                       </span>
                     ) : null}
-                    {post.authorName ? <span className="text-white/60">{post.authorName}</span> : null}
+                    {post.authorName ? post.authorId ? (
+                      <Link
+                        className="text-white/60 transition hover:text-white"
+                        href={getUserProfileHref(post.authorId)}
+                        onClick={(event) => event.stopPropagation()}
+                      >
+                        {post.authorName}
+                      </Link>
+                    ) : (
+                      <span className="text-white/60">{post.authorName}</span>
+                    ) : null}
                     {post.createdAt ? <span>·</span> : null}
                   </>
                 ) : null}
@@ -939,21 +957,37 @@ export function PostDetailModal({ post, onClose, onEdit }: Props) {
                     rootComments.map((root) => {
                       const replies = getReplies(root.id);
                       const previewReplies = replies.slice(0, 2);
-                      const isRootLiked = root.likes.some((l) => l.userId === (user?.id ?? ""));
+                      const isRootLiked = root.likedBy.has(user?.id ?? "");
                       return (
                         <div key={root.id} className="group">
                           {/* 根评论 */}
                           <div className="flex gap-3">
-                            {root.authorAvatar ? (
-                              <img src={root.authorAvatar} className="h-7 w-7 rounded-full object-cover shrink-0 mt-0.5" alt="" />
-                            ) : (
-                              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/10 text-[10px] text-white/50 mt-0.5">
-                                {root.authorName.charAt(0)}
-                              </span>
-                            )}
+                              {root.authorAvatar ? (
+                                <Link
+                                  className="shrink-0 cursor-pointer transition hover:opacity-80"
+                                  href={getUserProfileHref(root.authorId)}
+                                  onClick={(event) => event.stopPropagation()}
+                                >
+                                  <img src={root.authorAvatar} className="h-7 w-7 rounded-full object-cover shrink-0 mt-0.5" alt="" />
+                                </Link>
+                              ) : (
+                                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/10 text-[10px] text-white/50 mt-0.5">
+                                  {root.authorName.charAt(0)}
+                                </span>
+                              )}
                             <div className="min-w-0 flex-1">
                               <div className="flex items-center gap-2">
-                                <span className="text-sm font-medium text-white/70 font-body">{root.authorName}</span>
+                                {root.authorId ? (
+                                  <Link
+                                    className="text-sm font-medium text-white/70 font-body transition hover:text-white"
+                                    href={getUserProfileHref(root.authorId)}
+                                    onClick={(event) => event.stopPropagation()}
+                                  >
+                                    {root.authorName}
+                                  </Link>
+                                ) : (
+                                  <span className="text-sm font-medium text-white/70 font-body">{root.authorName}</span>
+                                )}
                                 <span className="text-[11px] text-gray-500 font-body">{formatRelativeTime(root.createdAt)}</span>
                               </div>
                               <div className="mt-1 whitespace-pre-wrap break-words text-sm leading-relaxed text-white/45 font-body">
@@ -966,9 +1000,8 @@ export function PostDetailModal({ post, onClose, onEdit }: Props) {
                               <div className="mt-1.5 flex items-center gap-4">
                                 <button onClick={() => handleToggleCommentLike(root.id)} className={`cursor-pointer text-xs transition font-body ${isRootLiked ? "text-rose-400" : "text-gray-500 hover:text-gray-300"}`} type="button">
                                   <Heart className={`h-3.5 w-3.5 inline mr-1 ${isRootLiked ? "fill-current" : ""}`} />
-                                  {root.likes.length > 0 ? root.likes.length : ""}
+                                  {root.likedBy.size > 0 ? root.likedBy.size : ""}
                                 </button>
-                                <LikeIndicator likers={root.likes} />
                                 <button onClick={() => setNestedRootId(root.id)} className="cursor-pointer text-xs text-gray-500 hover:text-gray-300 transition font-body" type="button">
                                   <MessageCircle className="h-3.5 w-3.5 inline mr-1" />回复
                                 </button>
@@ -986,18 +1019,34 @@ export function PostDetailModal({ post, onClose, onEdit }: Props) {
                           {previewReplies.length > 0 && (
                             <div className="mt-2 ml-10 pl-3 border-l-2 border-white/5 space-y-2">
                               {previewReplies.map((reply) => {
-                                const isReplyLiked = reply.likes.some((l) => l.userId === (user?.id ?? ""));
+                                const isReplyLiked = reply.likedBy.has(user?.id ?? "");
                                 return (
                                   <div key={reply.id} className="flex gap-2">
                                     {reply.authorAvatar ? (
-                                      <img src={reply.authorAvatar} className="h-6 w-6 rounded-full object-cover shrink-0 mt-0.5" alt="" />
+                                      <Link
+                                        className="shrink-0 cursor-pointer transition hover:opacity-80"
+                                        href={getUserProfileHref(reply.authorId)}
+                                        onClick={(event) => event.stopPropagation()}
+                                      >
+                                        <img src={reply.authorAvatar} className="h-6 w-6 rounded-full object-cover shrink-0 mt-0.5" alt="" />
+                                      </Link>
                                     ) : (
                                       <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/10 text-[9px] text-white/50 mt-0.5">
                                         {reply.authorName.charAt(0)}
                                       </span>
                                     )}
                                     <div className="min-w-0">
-                                      <span className="text-xs font-medium text-white/60 font-body">{reply.authorName}</span>
+                                      {reply.authorId ? (
+                                        <Link
+                                          className="text-xs font-medium text-white/60 font-body transition hover:text-white"
+                                          href={getUserProfileHref(reply.authorId)}
+                                          onClick={(event) => event.stopPropagation()}
+                                        >
+                                          {reply.authorName}
+                                        </Link>
+                                      ) : (
+                                        <span className="text-xs font-medium text-white/60 font-body">{reply.authorName}</span>
+                                      )}
                                       <span className="ml-1.5 text-[10px] text-gray-500 font-body">{formatRelativeTime(reply.createdAt)}</span>
                                       <div className="mt-0.5 whitespace-pre-wrap break-words text-xs leading-relaxed text-white/35 font-body">
                                         <MarkdownContent
@@ -1008,9 +1057,8 @@ export function PostDetailModal({ post, onClose, onEdit }: Props) {
                                       </div>
                                       <button onClick={() => handleToggleCommentLike(reply.id)} className={`cursor-pointer text-[10px] transition font-body mt-0.5 ${isReplyLiked ? "text-rose-400" : "text-gray-600 hover:text-gray-400"}`} type="button">
                                         <Heart className={`h-3 w-3 inline mr-0.5 ${isReplyLiked ? "fill-current" : ""}`} />
-                                        {reply.likes.length > 0 ? reply.likes.length : ""}
+                                        {reply.likedBy.size > 0 ? reply.likedBy.size : ""}
                                       </button>
-                                      <LikeIndicator likers={reply.likes} />
                                     </div>
                                   </div>
                                 );
@@ -1052,7 +1100,7 @@ export function PostDetailModal({ post, onClose, onEdit }: Props) {
                       placeholder="说点什么... (Enter 发送, Shift+Enter 换行)"
                       onKeyDown={(e) => {
                         if (e.nativeEvent.isComposing) return;
-                        const activeSlash = getActiveSlashEmoji(commentText, commentTextareaRef.current?.selectionStart ?? commentText.length);
+                        const activeSlash = getActiveSlashEmoji(commentText, e.currentTarget.selectionStart ?? commentText.length);
                         if (activeSlash?.matches.length) {
                           if (e.key === "Tab" || (e.key === "Enter" && !e.shiftKey)) {
                             e.preventDefault();
@@ -1070,8 +1118,12 @@ export function PostDetailModal({ post, onClose, onEdit }: Props) {
                         if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSendComment(); }
                       }}
                       value={commentText}
-                      onChange={(e) => setCommentText(e.target.value)}
+                      onChange={(e) => {
+                        setCommentText(e.target.value);
+                        setCommentCursor(e.currentTarget.selectionStart ?? e.target.value.length);
+                      }}
                       onPaste={handleCommentPaste}
+                      onSelect={(e) => setCommentCursor(e.currentTarget.selectionStart ?? commentText.length)}
                       rows={2}
                     />
                     <input

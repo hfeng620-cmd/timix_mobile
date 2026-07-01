@@ -13,8 +13,6 @@ type DropClaimModalProps = {
   onClose: () => void;
 };
 
-type ModalView = "form" | "loading" | "success" | "error";
-
 const RATINGS = [
   { value: "神级体验", label: "🌟 神级体验" },
   { value: "非常实用", label: "👍 非常实用" },
@@ -24,33 +22,29 @@ const RATINGS = [
 export function DropClaimModal({ campaign, onClaimed, open, onClose }: DropClaimModalProps) {
   const { user } = useForumAuth();
 
-  // ── State machine ──
-  const [view, setView] = useState<ModalView>("form");
-  const [claimedCode, setClaimedCode] = useState<string | null>(null);
-  const [errorCode, setErrorCode] = useState<string | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
-
-  // ── Form state (preserved across view transitions) ──
+  // ── Form state ──
   const [account, setAccount] = useState("");
   const [rating, setRating] = useState("");
   const [suggestion, setSuggestion] = useState("");
-  const [validationError, setValidationError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // ── Success state ──
+  const [claimedCode, setClaimedCode] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const accountRef = useRef<HTMLInputElement>(null);
 
   // ── Reset on open / campaign change ──
   useEffect(() => {
     if (!open) return;
-    setView("form");
     setAccount("");
     setRating("");
     setSuggestion("");
-    setValidationError(null);
+    setError(null);
     setClaimedCode(null);
-    setErrorCode(null);
-    setErrorMessage(null);
     setCopied(false);
+    setSubmitting(false);
   }, [open, campaign?.id]);
 
   // ── Body scroll lock + Esc ──
@@ -72,22 +66,20 @@ export function DropClaimModal({ campaign, onClaimed, open, onClose }: DropClaim
   const handleSubmit = useCallback(async () => {
     if (!campaign || !user?.id) return;
 
-    setValidationError(null);
+    setError(null);
 
     const trimmedAccount = account.trim();
     if (!trimmedAccount) {
-      setValidationError("请填写您在赞助商平台注册的账号。");
+      setError("请填写您在赞助商平台注册的账号。");
       accountRef.current?.focus();
       return;
     }
     if (!rating) {
-      setValidationError("请选择一个使用体验评价。");
+      setError("请选择一个使用体验评价。");
       return;
     }
 
-    // Transition to loading state
-    setView("loading");
-
+    setSubmitting(true);
     const result = await claimPromoCode(
       campaign.id,
       user.id,
@@ -95,15 +87,13 @@ export function DropClaimModal({ campaign, onClaimed, open, onClose }: DropClaim
       rating,
       suggestion,
     );
+    setSubmitting(false);
 
     if (result.ok) {
       setClaimedCode(result.code);
       onClaimed?.();
-      setView("success");
     } else {
-      setErrorCode(result.errorCode ?? null);
-      setErrorMessage(result.error);
-      setView("error");
+      setError(result.error);
     }
   }, [campaign, user, account, rating, suggestion, onClaimed]);
 
@@ -122,7 +112,14 @@ export function DropClaimModal({ campaign, onClaimed, open, onClose }: DropClaim
   if (!open || !campaign) return null;
 
   const isLoggedIn = Boolean(user?.id);
-  const isLoading = view === "loading";
+  const isSuccess = Boolean(claimedCode);
+  const isSoldOut = error?.includes("SOLD_OUT") || error?.includes("抢空") || error?.includes("已被抢空");
+  const isAlreadyClaimed = error?.includes("ALREADY_CLAIMED") || error?.includes("领取过") || error?.includes("参与过");
+  const displayError = isAlreadyClaimed
+    ? "您已经参与过本次活动啦！把机会留给其他人吧。"
+    : isSoldOut
+      ? "手慢了，本次福利已经被抢空啦！下次记得早点来~"
+      : error;
 
   return (
     <div
@@ -146,9 +143,9 @@ export function DropClaimModal({ campaign, onClaimed, open, onClose }: DropClaim
         </button>
 
         {/* ═══════════════════════════════════════
-            STATE 4: Success
+            STATE 2: Magic Moment (领取成功)
             ═══════════════════════════════════════ */}
-        {view === "success" && (
+        {isSuccess ? (
           <div className="flex flex-col items-center px-8 py-12 text-center">
             <div className="flex h-20 w-20 items-center justify-center rounded-full border border-emerald-400/30 bg-emerald-400/10 shadow-[0_0_60px_rgba(52,211,153,0.15)]">
               <PartyPopper className="h-10 w-10 text-emerald-300" />
@@ -167,16 +164,12 @@ export function DropClaimModal({ campaign, onClaimed, open, onClose }: DropClaim
               </code>
               <button
                 aria-label={copied ? "已复制" : "复制兑换码"}
-                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border transition ${
-                  copied
-                    ? "border-emerald-400/30 bg-emerald-400/10 text-emerald-400"
-                    : "border-white/10 bg-white/5 text-zinc-300 hover:bg-white/10 hover:text-white"
-                }`}
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-zinc-300 transition hover:bg-white/10 hover:text-white"
                 onClick={handleCopy}
                 type="button"
               >
                 {copied ? (
-                  <Check className="h-4 w-4 animate-in" />
+                  <Check className="h-4 w-4 text-emerald-400" />
                 ) : (
                   <Copy className="h-4 w-4" />
                 )}
@@ -195,79 +188,11 @@ export function DropClaimModal({ campaign, onClaimed, open, onClose }: DropClaim
               完成
             </button>
           </div>
-        )}
-
-        {/* ═══════════════════════════════════════
-            STATE 3: Error
-            ═══════════════════════════════════════ */}
-        {view === "error" && (
-          <div className="flex flex-col items-center px-8 py-12 text-center">
-            {/* Icon varies by error type */}
-            {errorCode === "ALREADY_CLAIMED" ? (
-              <div className="flex h-20 w-20 items-center justify-center rounded-full border border-amber-400/30 bg-amber-400/10 shadow-[0_0_60px_rgba(251,191,36,0.1)]">
-                <span className="text-4xl">🎁</span>
-              </div>
-            ) : errorCode === "SOLD_OUT" ? (
-              <div className="flex h-20 w-20 items-center justify-center rounded-full border border-rose-400/30 bg-rose-400/10 shadow-[0_0_60px_rgba(251,113,133,0.1)]">
-                <span className="text-4xl">😢</span>
-              </div>
-            ) : (
-              <div className="flex h-20 w-20 items-center justify-center rounded-full border border-rose-400/30 bg-rose-400/10">
-                <X className="h-10 w-10 text-rose-300" />
-              </div>
-            )}
-
-            <h2 className="mt-6 text-xl font-bold text-white">
-              {errorCode === "ALREADY_CLAIMED"
-                ? "已经领取过啦"
-                : errorCode === "SOLD_OUT"
-                  ? "来晚了一步"
-                  : "领取失败"}
-            </h2>
-
-            <p className="mt-2 max-w-sm text-sm leading-relaxed text-zinc-400">
-              {errorCode === "ALREADY_CLAIMED"
-                ? "您已经参与过本次活动啦！把机会留给其他人吧。"
-                : errorCode === "SOLD_OUT"
-                  ? "手慢了，本次福利已经被抢空啦！下次记得早点来~"
-                  : errorMessage ?? "发生未知错误，请稍后重试。"}
-            </p>
-
-            <div className="mt-8 flex gap-3">
-              <button
-                className="rounded-full border border-white/10 bg-white/5 px-6 py-3 text-sm font-medium text-zinc-300 transition hover:bg-white/10 hover:text-white"
-                onClick={onClose}
-                type="button"
-              >
-                关闭
-              </button>
-              {errorCode !== "ALREADY_CLAIMED" && (
-                <button
-                  className="rounded-full bg-white px-6 py-3 text-sm font-bold text-black transition hover:bg-zinc-200"
-                  onClick={() => {
-                    setView("form");
-                    setErrorCode(null);
-                    setErrorMessage(null);
-                  }}
-                  type="button"
-                >
-                  返回重试
-                </button>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* ═══════════════════════════════════════
-            STATE 1: Form + STATE 2: Loading
-            (shared layout, loading overlays opacity)
-            ═══════════════════════════════════════ */}
-        {(view === "form" || view === "loading") && (
-          <div
-            className={`overflow-y-auto px-6 py-8 sm:px-8 transition-opacity duration-300 ${
-              isLoading ? "opacity-50 pointer-events-none" : ""
-            }`}
-          >
+        ) : (
+          /* ═══════════════════════════════════════
+             STATE 1: Form View
+             ═══════════════════════════════════════ */
+          <div className="overflow-y-auto px-6 py-8 sm:px-8">
             <div className="pr-6">
               <h2 className="text-xl font-bold text-white">领取 {campaign.sponsor_name} 专属福利</h2>
               <p className="mt-1 text-sm text-zinc-400">
@@ -302,7 +227,7 @@ export function DropClaimModal({ campaign, onClaimed, open, onClose }: DropClaim
 
               {!isLoggedIn ? (
                 <p className="mt-4 text-sm text-amber-400">
-                  请先登录后再领取福利。
+                  ⚠️ 请先登录后再领取福利。
                 </p>
               ) : (
                 <div className="mt-4 space-y-5">
@@ -318,7 +243,7 @@ export function DropClaimModal({ campaign, onClaimed, open, onClose }: DropClaim
                       ref={accountRef}
                       autoFocus
                       className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-zinc-500 focus:border-white/30 focus:outline-none"
-                      disabled={isLoading}
+                      disabled={submitting}
                       id="drop-account"
                       onChange={(e) => setAccount(e.target.value)}
                       placeholder="例如 yourname@email.com"
@@ -341,7 +266,7 @@ export function DropClaimModal({ campaign, onClaimed, open, onClose }: DropClaim
                               ? "border-cyan-400/50 bg-cyan-400/10 text-cyan-200 shadow-[0_0_20px_rgba(34,211,238,0.08)]"
                               : "border-white/10 bg-white/5 text-zinc-400 hover:border-white/20 hover:text-zinc-200"
                           }`}
-                          disabled={isLoading}
+                          disabled={submitting}
                           onClick={() => setRating(item.value)}
                           type="button"
                         >
@@ -361,7 +286,7 @@ export function DropClaimModal({ campaign, onClaimed, open, onClose }: DropClaim
                     </label>
                     <textarea
                       className="w-full resize-none rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-zinc-500 focus:border-white/30 focus:outline-none"
-                      disabled={isLoading}
+                      disabled={submitting}
                       id="drop-suggestion"
                       onChange={(e) => setSuggestion(e.target.value)}
                       placeholder="对这次体验有什么想法？"
@@ -370,23 +295,30 @@ export function DropClaimModal({ campaign, onClaimed, open, onClose }: DropClaim
                     />
                   </div>
 
-                  {/* Validation Error */}
-                  {validationError && (
-                    <p className="rounded-xl border border-rose-400/20 bg-rose-400/5 px-4 py-3 text-sm text-rose-300">
-                      {validationError}
-                    </p>
+                  {/* Error */}
+                  {displayError && (
+                    <div className={`rounded-xl border px-4 py-3 text-sm ${
+                      isSoldOut
+                        ? "border-zinc-700 bg-zinc-900/70 text-zinc-300"
+                        : "border-rose-400/20 bg-rose-400/5 text-rose-300"
+                    }`}>
+                      <div className="flex items-start gap-3">
+                        {isSoldOut ? <Gift className="mt-0.5 h-4 w-4 shrink-0 text-zinc-500" /> : null}
+                        <p>{displayError}</p>
+                      </div>
+                    </div>
                   )}
 
-                  {/* Submit button */}
+                  {/* Submit */}
                   <button
                     className="flex w-full items-center justify-center gap-2 rounded-full bg-white py-3 text-sm font-bold text-black transition hover:bg-zinc-200 disabled:opacity-40"
-                    disabled={isLoading}
+                    disabled={submitting}
                     onClick={handleSubmit}
                     type="button"
                   >
-                    {isLoading ? (
+                    {submitting ? (
                       <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        <Loader2 className="h-4 w-4 animate-spin" />
                         正在开启盲盒...
                       </>
                     ) : (
@@ -402,13 +334,6 @@ export function DropClaimModal({ campaign, onClaimed, open, onClose }: DropClaim
                 {campaign.description}
               </p>
             )}
-          </div>
-        )}
-
-        {/* ── Loading overlay backdrop animation ── */}
-        {isLoading && (
-          <div className="absolute inset-0 pointer-events-none rounded-2xl">
-            <div className="absolute inset-0 animate-pulse rounded-2xl bg-gradient-to-b from-cyan-400/5 via-transparent to-cyan-400/5" />
           </div>
         )}
       </div>

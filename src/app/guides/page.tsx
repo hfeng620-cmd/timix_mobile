@@ -9,8 +9,10 @@ import {
 import { Navbar } from "@/components/navbar";
 import { lockBodyScroll } from "@/lib/body-scroll-lock";
 import { useForumAuth } from "@/lib/forum-auth";
+import { useToast } from "@/lib/toast-context";
 import { loadFolders, loadAllPosts, createFolder, createSharePost, deleteSharePost, deleteFolder, updateFolder, updateSharePost, getFolderCreator, getFolderContributors, loadEditLogs, toggleHot, togglePostLike, type ShareFolder, type SharePost, type Contributor, type EditLogEntry, type Liker } from "@/lib/share-storage";
 import { EditPanelModal } from "@/components/edit-panel-modal";
+import { LikeIndicator } from "@/components/like-indicator";
 import { ShareCreateModal, type CreateMode } from "@/components/share-create-modal";
 import { PostDetailModal } from "@/components/post-detail-modal";
 
@@ -132,15 +134,6 @@ const OLD_MOCK: FolderNode = {
   ],
 };
 
-/* ── Like indicator ── */
-
-function LikeIndicator({ likers }: { likers: { displayName: string }[] }) {
-  if (likers.length === 0) return null;
-  if (likers.length === 1) return <span className="text-xs text-zinc-500 ml-1">{likers[0].displayName} 赞过</span>;
-  if (likers.length === 2) return <span className="text-xs text-zinc-500 ml-1">{likers[0].displayName}、{likers[1].displayName} 赞过</span>;
-  return <span className="text-xs text-zinc-500 ml-1">{likers[0].displayName}、{likers[1].displayName} 等 {likers.length} 人赞过</span>;
-}
-
 /* ── Helpers ── */
 
 type Breadcrumb = { name: string; index: number }[];
@@ -180,6 +173,7 @@ function getBreadcrumb(tree: FolderNode, indices: number[]): Breadcrumb {
 
 function PostCard({ post, onClick, onEdit, onDelete, onToggleHot }: { post: PostNode; onClick: () => void; onEdit?: () => void; onDelete?: () => void; onToggleHot?: () => void }) {
   const { user, isAdmin, isOwner, displayName } = useForumAuth();
+  const { addToast } = useToast();
   const canEdit = !!(user && (isAdmin || isOwner || user.id === post.authorId));
   const [likers, setLikers] = useState(post.likes);
   const [likePending, setLikePending] = useState(false);
@@ -190,15 +184,22 @@ function PostCard({ post, onClick, onEdit, onDelete, onToggleHot }: { post: Post
     if (!user || likePending) return;
     setLikePending(true);
     const optimisticName = displayName ?? user.email?.split("@")[0] ?? "我";
+    const optimisticLiker: Liker = {
+      userId: user.id,
+      displayName: optimisticName,
+      avatarUrl: (user.user_metadata?.avatar_url as string) ?? null,
+      role: isOwner ? "owner" : isAdmin ? "admin" : "user",
+    };
     const next = liked
       ? likers.filter((l) => l.userId !== user!.id)
-      : [...likers, { userId: user!.id, displayName: optimisticName, avatarUrl: (user!.user_metadata?.avatar_url as string) ?? null }];
+      : [...likers, optimisticLiker];
     setLikers(next);
     try {
       const fresh = await togglePostLike(post.id, user.id);
       setLikers(fresh);
-    } catch {
+    } catch (error) {
       setLikers(likers);
+      addToast(error instanceof Error ? error.message : "点赞失败，请稍后重试", "error");
     } finally {
       setLikePending(false);
     }

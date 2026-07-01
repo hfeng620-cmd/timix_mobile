@@ -24,6 +24,7 @@ export type Liker = {
   userId: string;
   displayName: string;
   avatarUrl: string | null;
+  role?: "owner" | "admin" | "user";
 };
 
 export type SharePost = {
@@ -65,6 +66,44 @@ async function loadProfilesById(authorIds: string[]) {
   }
 
   return profiles;
+}
+
+async function loadUserRoles(userIds: string[]) {
+  const roles = new Map<string, "owner" | "admin" | "user">();
+  const uniqueIds = [...new Set(userIds.filter(Boolean))];
+  uniqueIds.forEach((id) => roles.set(id, "user"));
+  if (uniqueIds.length === 0 || !isSupabaseConfigured()) return roles;
+
+  const supabase = getSupabaseClient();
+
+  try {
+    const { data } = await supabase.from("site_owners").select("user_id").in("user_id", uniqueIds);
+    for (const row of (data ?? []) as { user_id: string }[]) {
+      roles.set(row.user_id, "owner");
+    }
+  } catch {
+    // Role badges should not break the feed if role tables are blocked by RLS.
+  }
+
+  try {
+    const { data } = await supabase.from("forum_admins").select("user_id").in("user_id", uniqueIds);
+    for (const row of (data ?? []) as { user_id: string }[]) {
+      if (roles.get(row.user_id) !== "owner") roles.set(row.user_id, "admin");
+    }
+  } catch {
+    // Role badges should not break the feed if role tables are blocked by RLS.
+  }
+
+  return roles;
+}
+
+async function withUserRoles(likers: Liker[]): Promise<Liker[]> {
+  if (likers.length === 0) return likers;
+  const roles = await loadUserRoles(likers.map((liker) => liker.userId));
+  return likers.map((liker) => ({
+    ...liker,
+    role: roles.get(liker.userId) ?? liker.role ?? "user",
+  }));
 }
 
 export async function loadFolders(): Promise<ShareFolder[]> {
@@ -111,16 +150,28 @@ export async function getFolderContributors(folderId: string): Promise<Contribut
 export async function loadAllPosts(): Promise<SharePost[]> {
   if (!isSupabaseConfigured()) return [];
   try {
-    const { data, error } = await getSupabaseClient()
+    const supabase = getSupabaseClient();
+    let { data, error } = await supabase
       .from("shared_posts")
-      .select("id, title, summary, body, folder_id, author_id, likes_count, comments_count, created_at, is_hot, hot_until, likes:share_post_likes(user_id, profiles:forum_profiles(display_name, avatar_url))")
+      .select("id, title, summary, body, folder_id, author_id, likes_count, comments_count, created_at, is_hot, hot_until, likes:share_post_likes(user_id, profiles:forum_profiles(display_name, nickname, avatar_url, role))")
       .order("created_at", { ascending: false })
       .limit(100);
+
+    if (error) {
+      const fallback = await supabase
+        .from("shared_posts")
+        .select("id, title, summary, body, folder_id, author_id, likes_count, comments_count, created_at, is_hot, hot_until, likes:share_post_likes(user_id, profiles:forum_profiles(display_name, avatar_url))")
+        .order("created_at", { ascending: false })
+        .limit(100);
+      data = fallback.data;
+      error = fallback.error;
+    }
+
     if (error) throw error;
     const rows = (data ?? []) as Record<string, unknown>[];
     const profiles = await loadProfilesById(rows.map((r) => r.author_id as string));
-    return rows.map((row) => {
-      const uniqueLikers = parseLikers((row.likes as unknown[]) ?? []);
+    return Promise.all(rows.map(async (row) => {
+      const uniqueLikers = await withUserRoles(parseLikers((row.likes as unknown[]) ?? []));
 
       return {
         id: row.id as string, title: row.title as string, summary: row.summary as string,
@@ -134,7 +185,7 @@ export async function loadAllPosts(): Promise<SharePost[]> {
         isHot: (row.is_hot as boolean) ?? false,
         hotUntil: (row.hot_until as string) ?? null,
       };
-    });
+    }));
   } catch { return []; }
 }
 
@@ -291,11 +342,18 @@ export type SharedComment = {
 function parseLikers(likesRaw: unknown[]): Liker[] {
   const seen = new Set<string>();
   return likesRaw
-    .map((like: any) => ({
-      userId: like.user_id as string,
-      displayName: (like.profiles as any)?.display_name ?? "未知用户",
-      avatarUrl: (like.profiles as any)?.avatar_url ?? null,
-    }))
+    .map((like: any) => {
+      const profile = (like.profiles ?? like.forum_profiles) as Record<string, unknown> | null | undefined;
+      return {
+        userId: like.user_id as string,
+        displayName:
+          (profile?.nickname as string | undefined) ??
+          (profile?.display_name as string | undefined) ??
+          "未知用户",
+        avatarUrl: (profile?.avatar_url as string | null | undefined) ?? null,
+        role: (profile?.role as Liker["role"] | undefined) ?? "user",
+      };
+    })
     .filter((l) => {
       if (seen.has(l.userId)) return false;
       seen.add(l.userId);
@@ -433,7 +491,7 @@ export async function togglePostLike(
     .select("id")
     .eq("post_id", postId)
     .eq("user_id", userId)
-    .single();
+    .maybeSingle();
 
   if (existing) {
     // 已赞 → 取消
@@ -500,7 +558,7 @@ export async function loadPostLikers(postId: string): Promise<Liker[]> {
       .select("user_id, profiles:forum_profiles(display_name, avatar_url)")
       .eq("post_id", postId)
       .order("created_at", { ascending: true });
-    return parseLikers((data ?? []) as unknown[]);
+    return withUserRoles(parseLikers((data ?? []) as unknown[]));
   } catch { return []; }
 }
 
@@ -513,6 +571,6 @@ export async function loadCommentLikers(commentId: string): Promise<Liker[]> {
       .select("user_id, profiles:forum_profiles(display_name, avatar_url)")
       .eq("comment_id", commentId)
       .order("created_at", { ascending: true });
-    return parseLikers((data ?? []) as unknown[]);
+    return withUserRoles(parseLikers((data ?? []) as unknown[]));
   } catch { return []; }
 }

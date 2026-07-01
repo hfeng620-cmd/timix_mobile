@@ -110,6 +110,14 @@ function ActivityEmptyCard({
   );
 }
 
+function EmptyRecordsState() {
+  return (
+    <div className="flex flex-col items-center justify-center py-12 text-zinc-500">
+      <p className="text-sm">暂无记录</p>
+    </div>
+  );
+}
+
 function formatDateLabel(value?: string | null) {
   if (!value) return "暂无记录";
 
@@ -252,7 +260,7 @@ function pickTopStation(posts: DiscussionPost[]) {
 }
 
 export default function ProfilePage() {
-  const { isConnected, user, email, displayName, showAuthModal, setDisplayName } = useForumAuth();
+  const { isConnected, user, email, displayName, isAdmin, isOwner, showAuthModal, setDisplayName } = useForumAuth();
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const [posts, setPosts] = useState<DiscussionPost[]>([]);
   const [likedPosts, setLikedPosts] = useState<DiscussionPost[]>([]);
@@ -752,7 +760,7 @@ export default function ProfilePage() {
               </div>
             </div>
           ) : (
-            <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+            <div className={editingName ? "mx-auto grid max-w-2xl gap-6" : "grid gap-6 xl:grid-cols-[1.2fr_0.8fr]"}>
               <div
                 ref={heroSectionRef}
                 className="overflow-hidden rounded-[28px] border border-[var(--color-line)] bg-[var(--color-panel)] shadow-[0_24px_80px_rgba(15,23,42,0.08)] transition-[transform,box-shadow] duration-700 hover:-translate-y-0.5 hover:shadow-[0_28px_92px_rgba(15,23,42,0.12)]"
@@ -792,9 +800,15 @@ export default function ProfilePage() {
                         <div>
                           <div className="flex flex-wrap items-center gap-3">
                             <h1 className="text-3xl font-black tracking-tight sm:text-4xl">{name}</h1>
-                            <span className="rounded-full bg-[var(--color-brand-soft)] px-3 py-1 text-xs font-bold text-[var(--color-brand-deep)]">
-                              Timix 观察成员
-                            </span>
+                            {isOwner || isAdmin ? (
+                              <span className="ml-3 rounded px-2 py-0.5 text-xs font-bold bg-red-500/10 text-red-500 border border-red-500/20">
+                                TiMix 站主
+                              </span>
+                            ) : (
+                              <span className="rounded-full bg-[var(--color-brand-soft)] px-3 py-1 text-xs font-bold text-[var(--color-brand-deep)]">
+                                Timix 观察成员
+                              </span>
+                            )}
                           </div>
                           {email ? (
                             <p className="mt-3 text-sm text-[var(--color-muted)]">{email}</p>
@@ -1101,7 +1115,7 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              <aside className="space-y-6">
+              {!editingName ? <aside className="space-y-6">
                 <div
                   ref={quickActionsRef}
                   className="rounded-[28px] border border-[var(--color-line)] bg-[var(--color-panel)] p-5 shadow-[0_24px_80px_rgba(15,23,42,0.08)] sm:p-6"
@@ -1165,7 +1179,7 @@ export default function ProfilePage() {
                     </div>
                   </div>
                 </div>
-              </aside>
+              </aside> : null}
             </div>
           )}
         </div>
@@ -1333,13 +1347,7 @@ export default function ProfilePage() {
               <div key={activeTab} className="profile-tab-panel">
                 {activeTab === "posts" ? (
                   posts.length === 0 ? (
-                    <div className="px-4 py-8 sm:px-6 sm:py-10">
-                      <ActivityEmptyCard
-                        metrics={activeEmptyStateMetrics}
-                        state={activeEmptyState}
-                        style={createRevealStyle(archiveVisible, 120, 22, 0.992)}
-                      />
-                    </div>
+                    <EmptyRecordsState />
                   ) : (
                     <div className="divide-y divide-[var(--color-line)]">
                       {posts.slice(0, 10).map((post) => (
@@ -1375,13 +1383,7 @@ export default function ProfilePage() {
 
                 {activeTab === "replies" ? (
                   replies.length === 0 ? (
-                    <div className="px-4 py-8 sm:px-6 sm:py-10">
-                      <ActivityEmptyCard
-                        metrics={activeEmptyStateMetrics}
-                        state={activeEmptyState}
-                        style={createRevealStyle(archiveVisible, 120, 22, 0.992)}
-                      />
-                    </div>
+                    <EmptyRecordsState />
                   ) : (
                     <div className="divide-y divide-[var(--color-line)]">
                       {replies.map((item) => (
@@ -1407,13 +1409,7 @@ export default function ProfilePage() {
 
                 {activeTab === "likes" ? (
                   likedPosts.length === 0 ? (
-                    <div className="px-4 py-8 sm:px-6 sm:py-10">
-                      <ActivityEmptyCard
-                        metrics={activeEmptyStateMetrics}
-                        state={activeEmptyState}
-                        style={createRevealStyle(archiveVisible, 120, 22, 0.992)}
-                      />
-                    </div>
+                    <EmptyRecordsState />
                   ) : (
                     <div className="divide-y divide-[var(--color-line)]">
                       {likedPosts.map((post) => (

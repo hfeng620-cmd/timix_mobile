@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 
 import {
@@ -26,6 +27,7 @@ import {
 } from "@/lib/discussion-storage";
 import { FORUM_IMAGE_ACCEPT } from "@/lib/forum-image-safety";
 import { useForumAuth } from "@/lib/forum-auth";
+import { getUserProfileHref } from "@/lib/user-profile-url";
 import { ForumPostModal } from "@/components/forum-post-modal";
 import { ImageLightbox } from "@/components/image-lightbox";
 import { MarkdownContent } from "@/components/markdown-content";
@@ -891,17 +893,15 @@ export function DiscussionFeed({
 
   function handleAvatarClick(userId: string | undefined, event: React.MouseEvent) {
     if (!userId) return;
-    event.preventDefault();
     event.stopPropagation();
+    if (event.type !== "contextmenu") return;
+    event.preventDefault();
     const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
-    const isContextMenu = event.type === "contextmenu";
     profileCardSequenceRef.current += 1;
     setActiveProfileCard({
       id: profileCardSequenceRef.current,
       userId,
-      position: isContextMenu
-        ? { x: event.clientX, y: event.clientY }
-        : { x: rect.left, y: rect.bottom + 8 },
+      position: { x: event.clientX || rect.left, y: event.clientY || rect.bottom + 8 },
     });
   }
 
@@ -1312,47 +1312,49 @@ export function DiscussionFeed({
                 type="button"
               />
               <div className="relative z-[1] flex items-start gap-3 sm:gap-4">
-                {post.authorAvatarUrl ? (
-                  <img
-                    alt={post.author}
-                    aria-haspopup="dialog"
-                    className="h-10 w-10 shrink-0 cursor-pointer rounded-full border border-[var(--color-line)] object-cover transition hover:ring-2 hover:ring-[var(--color-brand)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)]"
-                    src={post.authorAvatarUrl}
-                    onClick={(e) => handleAvatarClick(post.authorId, e)}
-                    onContextMenu={(e) => handleAvatarClick(post.authorId, e)}
-                    onKeyDown={(e) => handleProfileKeyDown(post.authorId, e)}
-                    role="button"
-                    tabIndex={0}
-                    title="查看公开主页"
-                  />
-                ) : (
-                  <div
-                    aria-haspopup="dialog"
-                    className="flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full border border-[var(--color-line)] bg-[var(--color-soft)] text-sm font-bold text-[var(--color-muted)] transition hover:ring-2 hover:ring-[var(--color-brand)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)]"
-                    onClick={(e) => handleAvatarClick(post.authorId, e)}
-                    onContextMenu={(e) => handleAvatarClick(post.authorId, e)}
-                    onKeyDown={(e) => handleProfileKeyDown(post.authorId, e)}
-                    role="button"
-                    tabIndex={0}
+                {post.authorId ? (
+                  <Link
+                    aria-label={`打开 ${post.author} 的公开主页`}
+                    className="shrink-0 cursor-pointer transition hover:opacity-80"
+                    href={getUserProfileHref(post.authorId)}
+                    onClick={(event) => event.stopPropagation()}
+                    onContextMenu={(event) => handleAvatarClick(post.authorId, event)}
                     title="查看公开主页"
                   >
+                    {post.authorAvatarUrl ? (
+                      <img
+                        alt={post.author}
+                        className="h-10 w-10 rounded-full border border-[var(--color-line)] object-cover transition hover:ring-2 hover:ring-[var(--color-brand)]"
+                        src={post.authorAvatarUrl}
+                      />
+                    ) : (
+                      <span className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--color-line)] bg-[var(--color-soft)] text-sm font-bold text-[var(--color-muted)] transition hover:ring-2 hover:ring-[var(--color-brand)]">
+                        {post.author.charAt(0)}
+                      </span>
+                    )}
+                  </Link>
+                ) : post.authorAvatarUrl ? (
+                  <img alt={post.author} className="h-10 w-10 shrink-0 rounded-full border border-[var(--color-line)] object-cover" src={post.authorAvatarUrl} />
+                ) : (
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[var(--color-line)] bg-[var(--color-soft)] text-sm font-bold text-[var(--color-muted)]">
                     {post.author.charAt(0)}
                   </div>
                 )}
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                    <h3
-                      aria-haspopup="dialog"
-                      className="cursor-pointer rounded-md text-base font-black text-[var(--color-ink)] transition hover:text-[var(--color-brand)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)]"
-                      onClick={(e) => handleAvatarClick(post.authorId, e)}
-                      onContextMenu={(e) => handleAvatarClick(post.authorId, e)}
-                      onKeyDown={(e) => handleProfileKeyDown(post.authorId, e)}
-                      role="button"
-                      tabIndex={0}
-                      title="查看公开主页"
-                    >
-                      {post.author}
-                    </h3>
+                    {post.authorId ? (
+                      <Link
+                        className="cursor-pointer rounded-md text-base font-black text-[var(--color-ink)] transition hover:text-[var(--color-brand)]"
+                        href={getUserProfileHref(post.authorId)}
+                        onClick={(event) => event.stopPropagation()}
+                        onContextMenu={(event) => handleAvatarClick(post.authorId, event)}
+                        title="查看公开主页"
+                      >
+                        {post.author}
+                      </Link>
+                    ) : (
+                      <h3 className="text-base font-black text-[var(--color-ink)]">{post.author}</h3>
+                    )}
                     {post.authorId && ownerUserIds.has(post.authorId) ? (
                       <span className="rounded-full border border-[var(--color-brand)]/25 bg-[var(--color-brand-soft)] px-2 py-0.5 text-[10px] font-bold text-[var(--color-brand-deep)]">
                         站主

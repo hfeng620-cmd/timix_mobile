@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Bookmark, Heart, ImageIcon, Loader2, MessageCircle, Send, X } from "lucide-react";
@@ -8,6 +9,7 @@ import { EmojiPickerButton } from "@/components/emoji-picker-button";
 import { MarkdownContent } from "@/components/markdown-content";
 import { lockBodyScroll } from "@/lib/body-scroll-lock";
 import { uploadForumImage, type DiscussionPost, type DiscussionReply } from "@/lib/discussion-storage";
+import { getUserProfileHref } from "@/lib/user-profile-url";
 
 type ReplyQuote = {
   author: string;
@@ -125,6 +127,7 @@ export function ForumPostModal({
   const [replyQuote, setReplyQuote] = useState<ReplyQuote | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [composerCursor, setComposerCursor] = useState(0);
 
   useEffect(() => {
     const unlock = lockBodyScroll();
@@ -146,6 +149,7 @@ export function ForumPostModal({
 
   useEffect(() => {
     setComposerValue("");
+    setComposerCursor(0);
     setReplyTarget(null);
     setReplyQuote(null);
     setShowEmojiPicker(false);
@@ -167,6 +171,7 @@ export function ForumPostModal({
       node.focus();
       const end = node.value.length;
       node.setSelectionRange(end, end);
+      setComposerCursor(end);
     });
   }
 
@@ -186,6 +191,7 @@ export function ForumPostModal({
         const cursor = start + markdown.length;
         node.focus();
         node.setSelectionRange(cursor, cursor);
+        setComposerCursor(cursor);
       });
     } finally {
       setUploadingImage(false);
@@ -205,6 +211,7 @@ export function ForumPostModal({
       if (!node) return;
       node.focus();
       node.setSelectionRange(nextCursor, nextCursor);
+      setComposerCursor(nextCursor);
     });
   }
 
@@ -227,6 +234,7 @@ export function ForumPostModal({
       if (!node) return;
       node.focus();
       node.setSelectionRange(nextCursor, nextCursor);
+      setComposerCursor(nextCursor);
     });
 
     return true;
@@ -275,7 +283,7 @@ export function ForumPostModal({
   }
 
   const renderedComments = comments ?? [];
-  const activeSlashEmoji = getActiveSlashEmoji(composerValue, composerRef.current?.selectionStart ?? composerValue.length);
+  const activeSlashEmoji = getActiveSlashEmoji(composerValue, Math.min(composerCursor, composerValue.length));
 
   return createPortal(
     <div
@@ -326,12 +334,27 @@ export function ForumPostModal({
           </h2>
 
           <div className="mt-5 flex items-center gap-3 text-sm text-zinc-400">
-            {post.authorAvatarUrl ? (
-              <img
-                alt={post.author}
-                className="h-10 w-10 rounded-full border border-white/10 object-cover"
-                src={post.authorAvatarUrl}
-              />
+            {post.authorId ? (
+              <Link
+                className="shrink-0 cursor-pointer transition hover:opacity-80"
+                href={getUserProfileHref(post.authorId)}
+                onClick={(event) => event.stopPropagation()}
+                title="查看公开主页"
+              >
+                {post.authorAvatarUrl ? (
+                  <img
+                    alt={post.author}
+                    className="h-10 w-10 rounded-full border border-white/10 object-cover"
+                    src={post.authorAvatarUrl}
+                  />
+                ) : (
+                  <span className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-sm font-semibold text-zinc-300">
+                    {post.author.charAt(0)}
+                  </span>
+                )}
+              </Link>
+            ) : post.authorAvatarUrl ? (
+              <img alt={post.author} className="h-10 w-10 rounded-full border border-white/10 object-cover" src={post.authorAvatarUrl} />
             ) : (
               <div className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-sm font-semibold text-zinc-300">
                 {post.author.charAt(0)}
@@ -339,7 +362,17 @@ export function ForumPostModal({
             )}
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="font-medium text-zinc-200">{post.author}</span>
+                {post.authorId ? (
+                  <Link
+                    className="font-medium text-zinc-200 transition hover:text-white"
+                    href={getUserProfileHref(post.authorId)}
+                    onClick={(event) => event.stopPropagation()}
+                  >
+                    {post.author}
+                  </Link>
+                ) : (
+                  <span className="font-medium text-zinc-200">{post.author}</span>
+                )}
                 {post.authorId && ownerUserIds.has(post.authorId) ? (
                   <span className="rounded-full border border-sky-400/20 bg-sky-500/10 px-2 py-0.5 text-[10px] font-semibold text-sky-200">
                     站主
@@ -411,12 +444,23 @@ export function ForumPostModal({
                   return (
                     <div key={reply.id} className="rounded-2xl border border-white/6 bg-white/[0.03] p-3.5">
                       <div className="flex gap-3">
-                        {reply.avatar ? (
-                          <img
-                            alt={reply.author}
-                            className="h-8 w-8 shrink-0 rounded-full object-cover"
-                            src={reply.avatar}
-                          />
+                        {reply.authorId ? (
+                          <Link
+                            className="shrink-0 cursor-pointer transition hover:opacity-80"
+                            href={getUserProfileHref(reply.authorId)}
+                            onClick={(event) => event.stopPropagation()}
+                            title="查看公开主页"
+                          >
+                            {reply.avatar ? (
+                              <img alt={reply.author} className="h-8 w-8 rounded-full object-cover" src={reply.avatar} />
+                            ) : (
+                              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-[11px] font-semibold text-zinc-300">
+                                {reply.author.charAt(0)}
+                              </span>
+                            )}
+                          </Link>
+                        ) : reply.avatar ? (
+                          <img alt={reply.author} className="h-8 w-8 shrink-0 rounded-full object-cover" src={reply.avatar} />
                         ) : (
                           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/10 text-[11px] font-semibold text-zinc-300">
                             {reply.author.charAt(0)}
@@ -424,7 +468,17 @@ export function ForumPostModal({
                         )}
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-500">
-                            <span className="font-medium text-zinc-200">{reply.author}</span>
+                            {reply.authorId ? (
+                              <Link
+                                className="font-medium text-zinc-200 transition hover:text-white"
+                                href={getUserProfileHref(reply.authorId)}
+                                onClick={(event) => event.stopPropagation()}
+                              >
+                                {reply.author}
+                              </Link>
+                            ) : (
+                              <span className="font-medium text-zinc-200">{reply.author}</span>
+                            )}
                             {reply.authorId && ownerUserIds.has(reply.authorId) ? (
                               <span className="rounded-full border border-sky-400/20 bg-sky-500/10 px-2 py-0.5 text-[10px] font-semibold text-sky-200">
                                 站主
@@ -514,10 +568,13 @@ export function ForumPostModal({
                 <textarea
                   ref={composerRef}
                   className="min-h-[88px] w-full resize-none rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 pr-32 text-sm leading-6 text-zinc-100 outline-none transition placeholder:text-zinc-500 focus:border-white/25"
-                  onChange={(event) => setComposerValue(event.target.value)}
+                  onChange={(event) => {
+                    setComposerValue(event.target.value);
+                    setComposerCursor(event.currentTarget.selectionStart ?? event.target.value.length);
+                  }}
                   onKeyDown={(event) => {
                     if (event.nativeEvent.isComposing) return;
-                    const activeSlash = getActiveSlashEmoji(composerValue, composerRef.current?.selectionStart ?? composerValue.length);
+                    const activeSlash = getActiveSlashEmoji(composerValue, event.currentTarget.selectionStart ?? composerValue.length);
                     if (activeSlash?.matches.length) {
                       if (event.key === "Tab" || (event.key === "Enter" && !event.shiftKey)) {
                         event.preventDefault();
@@ -538,6 +595,7 @@ export function ForumPostModal({
                     }
                   }}
                   onPaste={handlePaste}
+                  onSelect={(event) => setComposerCursor(event.currentTarget.selectionStart ?? composerValue.length)}
                   placeholder={replyTarget ? `回复 @${replyTarget}...` : "说点什么... (Enter 发送, Shift+Enter 换行)"}
                   rows={3}
                   value={composerValue}

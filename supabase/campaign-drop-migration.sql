@@ -167,7 +167,7 @@ begin
       and (c.starts_at is null or c.starts_at <= now())
       and (c.ends_at is null or c.ends_at > now())
   ) then
-    raise exception 'CAMPAIGN_NOT_FOUND';
+    raise exception '该活动不存在或已结束';
   end if;
 
   if exists (
@@ -176,7 +176,7 @@ begin
     where ds.campaign_id = p_campaign_id
       and ds.user_id = v_auth_user_id
   ) then
-    raise exception 'ALREADY_CLAIMED';
+    raise exception '您已经领取过该福利';
   end if;
 
   select pc.id, pc.code
@@ -189,7 +189,7 @@ begin
   limit 1;
 
   if v_code_id is null then
-    raise exception 'SOLD_OUT';
+    raise exception '手慢了，兑换码已被抢空';
   end if;
 
   update public.promo_codes
@@ -232,9 +232,45 @@ create policy "Campaigns are publicly readable" on public.campaigns
   for select
   using (true);
 
+drop policy if exists "Admins can manage campaigns" on public.campaigns;
+create policy "Admins can manage campaigns" on public.campaigns
+  for all
+  using (
+    exists (
+      select 1
+      from public.forum_admins fa
+      where fa.user_id = auth.uid()
+    )
+  )
+  with check (
+    exists (
+      select 1
+      from public.forum_admins fa
+      where fa.user_id = auth.uid()
+    )
+  );
+
 drop policy if exists "Anyone can read unclaimed code existence" on public.promo_codes;
 drop policy if exists "Claimed users can read own promo code row" on public.promo_codes;
 -- 不创建 promo_codes select policy：码明文只能通过 claim_promo_code 的返回值获得。
+
+drop policy if exists "Admins can manage promo codes" on public.promo_codes;
+create policy "Admins can manage promo codes" on public.promo_codes
+  for all
+  using (
+    exists (
+      select 1
+      from public.forum_admins fa
+      where fa.user_id = auth.uid()
+    )
+  )
+  with check (
+    exists (
+      select 1
+      from public.forum_admins fa
+      where fa.user_id = auth.uid()
+    )
+  );
 
 drop policy if exists "Users can read own submissions" on public.drop_submissions;
 create policy "Users can read own submissions" on public.drop_submissions
@@ -246,6 +282,8 @@ drop policy if exists "Users can insert own submissions" on public.drop_submissi
 
 grant select on public.campaigns to anon, authenticated;
 grant select on public.campaign_summary to anon, authenticated;
+grant insert, update, delete on public.campaigns to authenticated;
+grant insert, update, delete on public.promo_codes to authenticated;
 grant select on public.drop_submissions to authenticated;
 grant execute on function public.claim_promo_code(uuid, uuid, text, text, text) to authenticated;
 

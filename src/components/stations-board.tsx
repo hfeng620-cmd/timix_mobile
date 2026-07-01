@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { stationComparisonRows, stationLinkMap } from "@/lib/site-data";
-import { StationDetailModal } from "@/components/station-detail-modal";
+import { RelayStationDetailModal } from "@/components/relay-station-detail-modal";
 import { DiscussionFeed } from "@/components/discussion-feed";
 import { SubmissionPanel } from "@/components/submission-panel";
 import { useForumAuth } from "@/lib/forum-auth";
@@ -1210,7 +1210,10 @@ export function StationsBoard() {
 
                 return (
                   <div key={station.id}>
-                    <div className="rounded-[20px] border border-[var(--color-line)] bg-[var(--color-panel)] p-4 shadow-[var(--shadow-card)] sm:p-5">
+                    <div
+                      className="relative z-10 cursor-pointer rounded-[20px] border border-[var(--color-line)] bg-[var(--color-panel)] p-4 shadow-[var(--shadow-card)] transition-colors hover:bg-white/5 sm:p-5"
+                      onClick={() => setDetailStation(station)}
+                    >
                       {/* Header row: rank + name + badge */}
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0 flex-1">
@@ -1219,7 +1222,10 @@ export function StationsBoard() {
                           </p>
                           <button
                             className="mt-1 cursor-pointer text-xl font-black transition hover:text-[var(--color-brand)] break-words text-left"
-                            onClick={() => setDetailStation(station)}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              setDetailStation(station);
+                            }}
                             type="button"
                           >
                             {station.name}
@@ -1281,6 +1287,7 @@ export function StationsBoard() {
                             rel="noopener noreferrer"
                             target="_blank"
                             className="rounded-full bg-[var(--color-brand-soft)] px-3 py-2 text-sm font-semibold text-[var(--color-brand-deep)] transition hover:text-[var(--color-brand)]"
+                            onClick={(event) => event.stopPropagation()}
                           >
                             打开站点 →
                           </a>
@@ -1292,7 +1299,10 @@ export function StationsBoard() {
                         {/* Discussion button */}
                         <button
                           className="inline-flex items-center gap-1.5 rounded-full border border-[var(--color-line)] px-3 py-2 text-sm text-[var(--color-muted)] transition hover:text-[var(--color-brand-deep)]"
-                          onClick={() => setDiscussionStation(station)}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            setDiscussionStation(station);
+                          }}
                           title="查看站点讨论"
                           type="button"
                         >
@@ -1305,7 +1315,10 @@ export function StationsBoard() {
                           {isConnected && (
                             <button
                               className="rounded-full px-2 py-2 text-sm text-[var(--color-muted)] transition hover:bg-[var(--color-soft)] hover:text-[var(--color-brand-deep)]"
-                              onClick={() => startEdit(station)}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                startEdit(station);
+                              }}
                               title="编辑此站点"
                               type="button"
                             >
@@ -1314,7 +1327,10 @@ export function StationsBoard() {
                           )}
                           <button
                             className="rounded-full px-2 py-2 text-sm text-[var(--color-muted)] underline underline-offset-2 transition hover:bg-[var(--color-soft)] hover:text-[var(--color-brand-deep)]"
-                            onClick={() => toggleHistory(station.id)}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              toggleHistory(station.id);
+                            }}
                             type="button"
                           >
                             {isShowingHistory ? "收起历史" : "历史"}
@@ -1396,7 +1412,8 @@ export function StationsBoard() {
                 return (
                   <div key={station.id}>
                     <article
-                      className="grid grid-cols-[0.48fr_1.32fr_0.78fr_0.96fr_0.82fr_0.68fr_1.28fr] items-start gap-x-3 border-l-2 border-l-transparent px-5 py-4 transition-all duration-300 hover:border-l-[var(--color-brand)] hover:bg-[var(--color-hover)]"
+                      className="relative z-10 grid cursor-pointer grid-cols-[0.48fr_1.32fr_0.78fr_0.96fr_0.82fr_0.68fr_1.28fr] items-start gap-x-3 border-l-2 border-l-transparent px-5 py-4 transition-all duration-300 hover:border-l-[var(--color-brand)] hover:bg-white/5"
+                      onClick={() => setDetailStation(station)}
                     >
                       {/* 排序 */}
                       <div className="font-bold text-[var(--color-muted)]">
@@ -1408,7 +1425,10 @@ export function StationsBoard() {
                         <div className="flex flex-wrap items-center gap-3">
                           <button
                             className="cursor-pointer font-bold transition hover:text-[var(--color-brand)]"
-                            onClick={() => setDetailStation(station)}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              setDetailStation(station);
+                            }}
                             type="button"
                           >
                             {station.name}
@@ -1452,6 +1472,7 @@ export function StationsBoard() {
                             rel="noopener noreferrer"
                             target="_blank"
                             className="font-semibold text-[var(--color-brand-deep)] transition hover:text-[var(--color-brand)]"
+                            onClick={(event) => event.stopPropagation()}
                           >
                             打开 →
                           </a>
@@ -1461,7 +1482,10 @@ export function StationsBoard() {
                         {/* Discussion button */}
                         <button
                           className="mt-2 flex items-center gap-1.5 text-xs text-[var(--color-muted)] transition hover:text-[var(--color-brand-deep)]"
-                          onClick={() => setDiscussionStation(station)}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            setDiscussionStation(station);
+                          }}
                           title="查看站点讨论"
                           type="button"
                         >
@@ -1498,7 +1522,10 @@ export function StationsBoard() {
                           {isConnected && (
                             <button
                               className="shrink-0 text-[var(--color-muted)] hover:text-[var(--color-brand-deep)] transition"
-                              onClick={() => startEdit(station)}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                startEdit(station);
+                              }}
                               title="编辑此站点"
                               type="button"
                             >
@@ -1508,7 +1535,10 @@ export function StationsBoard() {
                         </div>
                         <button
                           className="mt-2 text-xs text-[var(--color-muted)] hover:text-[var(--color-brand-deep)] transition underline underline-offset-2"
-                          onClick={() => toggleHistory(station.id)}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            toggleHistory(station.id);
+                          }}
                           type="button"
                         >
                           {isShowingHistory ? "收起历史" : "历史"}
@@ -1689,7 +1719,7 @@ export function StationsBoard() {
       </section>
 
       {/* ---- Station Detail Modal ---- */}
-      <StationDetailModal
+      <RelayStationDetailModal
         station={detailStation}
         open={detailStation !== null}
         onClose={() => setDetailStation(null)}
