@@ -37,6 +37,7 @@ type PostNode = {
   id: string;
   title: string;
   summary: string;
+  link: string | null;
   tag: string;
   likes: import('@/lib/share-storage').Liker[];
   comments: number;
@@ -68,6 +69,7 @@ function buildTreeFromDb(dbFolders: ShareFolder[], dbPosts: SharePost[]): Folder
     const childFolders = (childrenMap.get(f.id) ?? []).map(convertFolder);
     const childPosts: PostNode[] = (postsByFolder.get(f.id) ?? []).map((p) => ({
       type: "post", id: p.id, title: p.title, summary: p.summary,
+      link: p.link,
       tag: f.name, likes: p.likes, comments: p.commentsCount, bookmarks: 0,
       authorId: p.authorId, authorName: p.authorName, authorAvatar: p.authorAvatar,
       createdAt: p.createdAt, body: p.body, isHot: p.isHot,
@@ -77,6 +79,7 @@ function buildTreeFromDb(dbFolders: ShareFolder[], dbPosts: SharePost[]): Folder
   const rootFolders = (childrenMap.get(null) ?? []).map(convertFolder);
   const rootPosts: PostNode[] = (postsByFolder.get("__root__") ?? []).map((p) => ({
     type: "post", id: p.id, title: p.title, summary: p.summary,
+    link: p.link,
     tag: "root", likes: p.likes, comments: p.commentsCount, bookmarks: 0,
     authorId: p.authorId, authorName: p.authorName, authorAvatar: p.authorAvatar,
     createdAt: p.createdAt, body: p.body, isHot: p.isHot,
@@ -94,7 +97,7 @@ const OLD_MOCK: FolderNode = {
             {
               type: "post", id: "p1", title: "Codex CLI 实战：用自然语言操控终端",
               summary: "OpenAI Codex 命令行工具深度体验，附常用 prompt 模板和避坑记录。",
-              tag: "Codex", likes: [], comments: 156, bookmarks: 892, authorId: "",
+              link: null, tag: "Codex", likes: [], comments: 156, bookmarks: 892, authorId: "",
               authorName: null, authorAvatar: null, createdAt: "", body: "", isHot: false,
             },
           ],
@@ -104,7 +107,7 @@ const OLD_MOCK: FolderNode = {
             {
               type: "post", id: "p2", title: "Claude Code 终极配置指南",
               summary: "从零搭建 Claude Code 开发环境，MCP 插件、自定义 hooks 与快捷键映射。",
-              tag: "ClaudeCode", likes: [], comments: 98, bookmarks: 654, authorId: "",
+              link: null, tag: "ClaudeCode", likes: [], comments: 98, bookmarks: 654, authorId: "",
               authorName: null, authorAvatar: null, createdAt: "", body: "", isHot: false,
             },
           ],
@@ -121,7 +124,7 @@ const OLD_MOCK: FolderNode = {
             {
               type: "post", id: "p3", title: "Tauri 2.0 桌面应用开发指南",
               summary: "基于 Rust 的轻量级跨平台桌面应用框架，替代 Electron 的首选方案。",
-              tag: "前端", likes: [], comments: 187, bookmarks: 940, authorId: "",
+              link: null, tag: "前端", likes: [], comments: 187, bookmarks: 940, authorId: "",
               authorName: null, authorAvatar: null, createdAt: "", body: "", isHot: false,
             },
           ],
