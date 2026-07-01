@@ -2,6 +2,7 @@
 
 import { Activity, Clock3, Signal, TrendingUp, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 
 import { DiscussionFeed } from "@/components/discussion-feed";
 import {
@@ -135,9 +136,11 @@ export function RelayStationDetailModal({ station, open, onClose }: RelayStation
   const statusValue = statusLabel(status, liveMetric?.statusMessage || station.status);
   const tags = [station.badge, liveMetric?.providerLabel, liveMetric?.stationGroup].filter(Boolean);
 
-  return (
+  if (typeof document === "undefined") return null;
+
+  return createPortal(
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center overscroll-none bg-black/85 backdrop-blur-xl"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md p-4"
       onClick={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
@@ -152,7 +155,7 @@ export function RelayStationDetailModal({ station, open, onClose }: RelayStation
       </style>
 
       <div
-        className="relative flex h-[85vh] w-[90vw] max-w-4xl flex-col overflow-hidden rounded-2xl border border-white/10 bg-zinc-950/90 shadow-2xl"
+        className="custom-scrollbar relative flex w-full max-w-4xl max-h-[90vh] flex-col overflow-y-auto bg-zinc-950/90 border border-white/10 rounded-2xl shadow-2xl p-6"
         onClick={(event) => event.stopPropagation()}
       >
         <button
@@ -164,7 +167,7 @@ export function RelayStationDetailModal({ station, open, onClose }: RelayStation
           <X className="h-5 w-5" />
         </button>
 
-        <section className="shrink-0 border-b border-white/10 bg-zinc-900/40 p-6">
+        <section className="shrink-0 border-b border-white/10 bg-zinc-900/40 pb-6">
           <div className="pr-12">
             <div className="flex flex-wrap items-center gap-2">
               <h2 className="text-2xl font-bold text-white">{station.name}</h2>
@@ -235,7 +238,7 @@ export function RelayStationDetailModal({ station, open, onClose }: RelayStation
           </div>
         </section>
 
-        <section className="flex flex-1 flex-col overflow-hidden bg-zinc-950">
+        <section className="flex min-h-[420px] flex-1 flex-col overflow-hidden bg-zinc-950 pt-6">
           <div className="border-b border-white/5 px-6 py-3 text-sm font-medium tracking-widest text-zinc-400">
             用户评价与反馈
           </div>
@@ -249,6 +252,7 @@ export function RelayStationDetailModal({ station, open, onClose }: RelayStation
           </div>
         </section>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

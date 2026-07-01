@@ -945,7 +945,7 @@ export function DiscussionFeed({
   return (
     <section
       ref={sectionRef}
-      className={`card-lift overflow-hidden rounded-[28px] border border-[var(--color-line)] bg-[var(--color-panel)] shadow-[0_20px_60px_rgba(15,23,42,0.08)] transition-[opacity,transform,box-shadow] duration-700 ease-out motion-reduce:translate-y-0 motion-reduce:opacity-100 ${
+      className={`card-lift overflow-hidden rounded-[28px] border border-[var(--color-line)] bg-[var(--color-panel)] pb-24 shadow-[0_20px_60px_rgba(15,23,42,0.08)] transition-[opacity,transform,box-shadow] duration-700 ease-out motion-reduce:translate-y-0 motion-reduce:opacity-100 ${
         isSectionRevealed ? "translate-y-0 opacity-100" : "translate-y-2 opacity-70"
       }`}
       data-selection-comments="off"
@@ -1558,9 +1558,9 @@ export function DiscussionFeed({
 
       {/* Load more button */}
       {hasMore && !compact ? (
-        <div className="border-t border-[var(--color-line)] px-5 py-4 text-center">
+        <div className="relative z-20 border-t border-[var(--color-line)] px-5 py-4 text-center">
           <button
-            className="rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] px-6 py-3 text-sm font-bold text-[var(--color-brand-deep)] transition hover:bg-[var(--color-brand-soft)] hover:border-[var(--color-brand)] disabled:opacity-50"
+            className="pointer-events-auto relative z-20 rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] px-6 py-3 text-sm font-bold text-[var(--color-brand-deep)] transition hover:border-[var(--color-brand)] hover:bg-[var(--color-brand-soft)] disabled:opacity-50"
             disabled={loadingMore}
             onClick={handleLoadMore}
             type="button"
