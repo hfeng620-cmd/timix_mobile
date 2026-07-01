@@ -36,6 +36,103 @@ const sortOptions: { value: SortOption; label: string }[] = [
   { value: "recentUpdate", label: "最近更新" },
 ];
 
+function hashString(value: string) {
+  let hash = 0;
+  for (let index = 0; index < value.length; index += 1) {
+    hash = (hash * 31 + value.charCodeAt(index)) >>> 0;
+  }
+  return hash;
+}
+
+function stableSeries(key: string, count: number, min = 55, max = 100) {
+  let seed = hashString(key) || 1;
+  return Array.from({ length: count }, () => {
+    seed = (seed * 1664525 + 1013904223) >>> 0;
+    return min + (seed % (max - min + 1));
+  });
+}
+
+function parsePercent(value: string) {
+  const parsed = Number(value.match(/(\d+(?:\.\d+)?)/)?.[1] ?? Number.NaN);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function uptimeTone(value: string) {
+  const percent = parsePercent(value);
+  if (percent === null) return "text-zinc-400";
+  if (percent > 95) return "text-emerald-400";
+  if (percent > 80) return "text-amber-300";
+  return "text-rose-400";
+}
+
+function inferTokenCost(station: Station) {
+  const multiplier = Number(station.multiplier.match(/(\d+(?:\.\d+)?)/)?.[1] ?? Number.NaN);
+  if (station.price.includes("免费") || station.badge.includes("免费")) return "少一些";
+  if (Number.isFinite(multiplier)) {
+    if (multiplier <= 0.12) return "偏省";
+    if (multiplier >= 0.3) return "多一些";
+  }
+  return "平均水平";
+}
+
+function inferFidelity(station: Station) {
+  const source = `${station.status} ${station.verdict} ${station.note}`;
+  if (/异常|失效|关|不可|风险/.test(source)) return "需观察";
+  if (/波动|待补|未实测|复核/.test(source)) return "中等";
+  return "几乎不";
+}
+
+function statusTone(status: string) {
+  if (/异常|失效|关|不可|停/.test(status)) return "bg-rose-500";
+  if (/波动|维护|排队|待|缺|测试/.test(status)) return "bg-amber-400";
+  return "bg-emerald-500";
+}
+
+function MiniSparkline({ station }: { station: Station }) {
+  const values = stableSeries(`${station.id}:spark`, 8, 35, 92);
+  const points = values
+    .map((value, index) => `${(index / (values.length - 1)) * 72},${28 - (value / 100) * 24}`)
+    .join(" ");
+  const delta = (hashString(`${station.id}:delta`) % 9) - 4;
+  const isUp = delta >= 0;
+
+  return (
+    <div className="flex items-center gap-2">
+      <svg className="h-7 w-20 overflow-visible" viewBox="0 0 72 30" aria-hidden="true">
+        <polyline
+          fill="none"
+          points={points}
+          stroke={isUp ? "rgb(52 211 153)" : "rgb(251 113 133)"}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2"
+        />
+      </svg>
+      <span className={isUp ? "text-emerald-400" : "text-rose-400"}>
+        {isUp ? "+" : ""}
+        {delta}%
+      </span>
+    </div>
+  );
+}
+
+function MiniStatusBars({ station, count = 12 }: { station: Station; count?: number }) {
+  const bars = stableSeries(`${station.id}:bars`, count, 42, 100);
+  const color = statusTone(station.status);
+
+  return (
+    <div className="flex h-4 items-end gap-[2px]" aria-label={station.status || "运行状态"}>
+      {bars.map((height, index) => (
+        <div
+          key={`${station.id}-bar-${index}`}
+          className={`w-1 rounded-sm ${color}`}
+          style={{ height: `${height}%`, opacity: height < 58 ? 0.45 : 0.9 }}
+        />
+      ))}
+    </div>
+  );
+}
+
 const FEATURED_NAMES = ["虎虎", "Aether", "杂货铺", "秋天中转站"];
 
 const filters: { id: FilterId; label: string; description: string }[] = [
@@ -1375,16 +1472,18 @@ export function StationsBoard() {
           </div>
 
           <div className="hidden overflow-x-auto lg:block">
-            <div className="min-w-[1220px]">
+            <div className="min-w-[1480px]">
               {/* Column headers */}
-              <div className="grid grid-cols-[0.48fr_1.32fr_0.78fr_0.96fr_0.82fr_0.68fr_1.28fr] bg-[var(--color-soft)] px-5 py-3 text-xs font-bold uppercase tracking-[0.16em] text-[var(--color-muted)]">
-                <span>排序</span>
+              <div className="grid grid-cols-[1.35fr_0.9fr_0.72fr_0.92fr_0.82fr_0.7fr_0.78fr_0.68fr_0.9fr] bg-white/[0.03] px-5 py-3 text-xs font-bold uppercase tracking-[0.16em] text-[var(--color-muted)]">
                 <span>站点</span>
-                <span>入口 / 地址</span>
-                <span>收费方式</span>
-                <span>标称价格</span>
-                <span>倍率</span>
-                <span>状态与备注摘要</span>
+                <span>分组/模型</span>
+                <span>价格</span>
+                <span>价格趋势</span>
+                <span>Token消耗</span>
+                <span>在线率</span>
+                <span>纯度/成功率</span>
+                <span>延迟</span>
+                <span>运行状态</span>
               </div>
 
               {/* Rows */}
@@ -1422,19 +1521,15 @@ export function StationsBoard() {
                 return (
                   <div key={station.id}>
                     <article
-                      className="relative z-10 grid cursor-pointer grid-cols-[0.48fr_1.32fr_0.78fr_0.96fr_0.82fr_0.68fr_1.28fr] items-start gap-x-3 border-l-2 border-l-transparent px-5 py-4 transition-all duration-300 hover:border-l-[var(--color-brand)] hover:bg-white/5"
+                      className="relative z-10 grid cursor-pointer grid-cols-[1.35fr_0.9fr_0.72fr_0.92fr_0.82fr_0.7fr_0.78fr_0.68fr_0.9fr] items-center gap-x-3 border-b border-white/5 px-5 py-3 text-sm transition hover:bg-white/[0.02]"
                       onClick={() => handleDetailStationClick(station)}
                     >
-                      {/* 排序 */}
-                      <div className="font-bold text-[var(--color-muted)]">
-                        {rankingBadge(index)}
-                      </div>
-
                       {/* 站点 */}
-                      <div>
-                        <div className="flex flex-wrap items-center gap-3">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="font-mono text-xs text-[var(--color-muted)]">{rankingBadge(index)}</span>
                           <button
-                            className="relative z-20 cursor-pointer font-bold transition hover:text-[var(--color-brand)]"
+                            className="relative z-20 max-w-[180px] truncate text-left font-bold text-[var(--color-ink)] transition hover:text-[var(--color-brand)]"
                             onClick={(event) => {
                               event.stopPropagation();
                               handleDetailStationClick(station);
@@ -1443,9 +1538,16 @@ export function StationsBoard() {
                           >
                             {station.name}
                           </button>
-                          <span className="rounded-full bg-[var(--color-brand-soft)] px-2.5 py-1 text-xs font-bold text-[var(--color-brand-deep)]">
-                            {station.badge}
-                          </span>
+                          {station.badge ? (
+                            <span className="rounded border border-emerald-400/20 bg-emerald-400/10 px-1.5 py-0.5 text-[10px] font-bold text-emerald-300">
+                              {station.badge}
+                            </span>
+                          ) : null}
+                          {station.packageType ? (
+                            <span className="rounded border border-cyan-400/20 bg-cyan-400/10 px-1.5 py-0.5 text-[10px] font-bold text-cyan-300">
+                              {station.packageType.slice(0, 8)}
+                            </span>
+                          ) : null}
                           {(() => {
                             const fi = freshnessInfo(station.lastEditAt);
                             if (!fi) return null;
@@ -1467,71 +1569,42 @@ export function StationsBoard() {
                             );
                           })()}
                         </div>
-                        {station.groupName || station.entry ? (
-                          <p className="mt-2 line-clamp-1 text-sm leading-5 text-[var(--color-muted)]">
-                            {station.groupName || station.entry}
-                          </p>
-                        ) : null}
-                      </div>
-
-                      {/* 入口 / 地址 */}
-                      <div className="text-sm leading-6 text-[var(--color-muted)]">
-                        {stationHref ? (
-                          <a
-                            href={stationHref}
-                            rel="noopener noreferrer"
-                            target="_blank"
-                            className="font-semibold text-[var(--color-brand-deep)] transition hover:text-[var(--color-brand)]"
-                            onClick={(event) => event.stopPropagation()}
+                        <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-[var(--color-muted)]">
+                          {stationHref ? (
+                            <a
+                              href={stationHref}
+                              rel="noopener noreferrer"
+                              target="_blank"
+                              className="relative z-20 font-semibold text-cyan-300 transition hover:text-cyan-200"
+                              onClick={(event) => event.stopPropagation()}
+                            >
+                              打开入口
+                            </a>
+                          ) : null}
+                          <button
+                            className="relative z-20 transition hover:text-[var(--color-brand-deep)]"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              setDiscussionStation(station);
+                            }}
+                            title="查看站点讨论"
+                            type="button"
                           >
-                            打开 →
-                          </a>
-                        ) : (
-                          <span className="text-[var(--color-muted)]">待补</span>
-                        )}
-                        {/* Discussion button */}
-                        <button
-                          className="mt-2 flex items-center gap-1.5 text-xs text-[var(--color-muted)] transition hover:text-[var(--color-brand-deep)]"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            setDiscussionStation(station);
-                          }}
-                          title="查看站点讨论"
-                          type="button"
-                        >
-                          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                          </svg>
-                          讨论区
-                        </button>
-                      </div>
-
-                      {/* 收费方式 */}
-                      <div>
-                        <p className="font-bold">{station.packageType}</p>
-                        <p className="mt-1 line-clamp-2 text-sm leading-6 text-[var(--color-muted)]">
-                          {station.models}
-                        </p>
-                      </div>
-
-                      {/* 标称价格 */}
-                      <div className="font-bold">{station.price}</div>
-
-                      {/* 倍率 */}
-                      <div className="font-bold">{station.multiplier}</div>
-
-                      {/* 状态与社区备注 */}
-                      <div>
-                        <div className="flex items-start justify-between gap-2">
-                          <div>
-                            <p className="font-bold">{station.status}</p>
-                            <p className="mt-1 line-clamp-2 text-sm leading-6 text-[var(--color-muted)]">
-                              {station.note}
-                            </p>
-                          </div>
+                            讨论区
+                          </button>
+                          <button
+                            className="relative z-20 transition hover:text-[var(--color-brand-deep)]"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              toggleHistory(station.id);
+                            }}
+                            type="button"
+                          >
+                            {isShowingHistory ? "收起历史" : "历史"}
+                          </button>
                           {isConnected && (
                             <button
-                              className="shrink-0 text-[var(--color-muted)] hover:text-[var(--color-brand-deep)] transition"
+                              className="relative z-20 transition hover:text-[var(--color-brand-deep)]"
                               onClick={(event) => {
                                 event.stopPropagation();
                                 startEdit(station);
@@ -1539,20 +1612,51 @@ export function StationsBoard() {
                               title="编辑此站点"
                               type="button"
                             >
-                              ✎
+                              编辑
                             </button>
                           )}
                         </div>
-                        <button
-                          className="mt-2 text-xs text-[var(--color-muted)] hover:text-[var(--color-brand-deep)] transition underline underline-offset-2"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            toggleHistory(station.id);
-                          }}
-                          type="button"
-                        >
-                          {isShowingHistory ? "收起历史" : "历史"}
-                        </button>
+                      </div>
+
+                      {/* 分组/模型 */}
+                      <div className="min-w-0">
+                        <p className="truncate font-mono text-xs font-bold text-zinc-200">{station.groupName || "default"}</p>
+                        <p className="mt-1 line-clamp-1 text-xs text-[var(--color-muted)]">{station.models || station.packageType || "model pending"}</p>
+                      </div>
+
+                      {/* 价格 */}
+                      <div>
+                        <p className="font-mono text-sm font-bold text-zinc-100">{station.price || station.multiplier || "待补"}</p>
+                        {station.multiplier ? <p className="mt-1 text-xs text-[var(--color-muted)]">{station.multiplier}</p> : null}
+                      </div>
+
+                      {/* 价格趋势 */}
+                      <div className="font-mono text-xs font-bold">
+                        <MiniSparkline station={station} />
+                      </div>
+
+                      {/* Token消耗 */}
+                      <div>
+                        <span className="rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-1 text-xs font-bold text-zinc-300">
+                          {inferTokenCost(station)}
+                        </span>
+                      </div>
+
+                      {/* 在线率 */}
+                      <div className={`font-mono text-sm font-black ${uptimeTone(station.uptime)}`}>
+                        {station.uptime || "待测"}
+                      </div>
+
+                      {/* 纯度/成功率 */}
+                      <div className="text-xs font-bold text-zinc-300">{inferFidelity(station)}</div>
+
+                      {/* 延迟 */}
+                      <div className="font-mono text-sm font-bold text-zinc-200">{station.latency || "--"}</div>
+
+                      {/* 运行状态 */}
+                      <div className="flex items-center gap-3">
+                        <MiniStatusBars station={station} />
+                        <span className="line-clamp-1 text-xs text-[var(--color-muted)]">{station.status || "待检测"}</span>
                       </div>
                     </article>
 

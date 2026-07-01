@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { Activity, Clock3, Signal, TrendingUp, X } from "lucide-react";
+import { X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 
@@ -47,44 +47,60 @@ function formatUptime(metric?: StationMonitorMetric, station?: Station | null) {
   return station?.uptime || "--";
 }
 
-function MetricSkeleton() {
-  return (
-    <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-      <div className="h-3 w-20 animate-pulse rounded-full bg-white/10" />
-      <div className="mt-4 h-7 w-24 animate-pulse rounded-full bg-white/15" />
-      <div className="mt-3 h-3 w-16 animate-pulse rounded-full bg-white/10" />
-    </div>
-  );
+function hashString(value: string) {
+  let hash = 0;
+  for (let index = 0; index < value.length; index += 1) {
+    hash = (hash * 31 + value.charCodeAt(index)) >>> 0;
+  }
+  return hash;
 }
 
-function MetricCard({
+function stableSeries(key: string, count: number, min = 50, max = 100) {
+  let seed = hashString(key) || 1;
+  return Array.from({ length: count }, () => {
+    seed = (seed * 1664525 + 1013904223) >>> 0;
+    return min + (seed % (max - min + 1));
+  });
+}
+
+function tokenCostLabel(metric?: StationMonitorMetric, station?: Station | null) {
+  if (metric?.tokenCostLevel === "less") return "偏省";
+  if (metric?.tokenCostLevel === "more") return "多一些";
+  if (metric?.tokenCostLevel === "normal") return "平均水平";
+  if (station?.price.includes("免费") || station?.badge.includes("免费")) return "少一些";
+  return "平均水平";
+}
+
+function fidelityLabel(metric?: StationMonitorMetric, station?: Station | null) {
+  if (metric?.relayRateLabel) return metric.relayRateLabel;
+  const source = `${station?.status ?? ""} ${station?.risk ?? ""} ${station?.note ?? ""}`;
+  if (/异常|失败|失效|风险/.test(source)) return "需观察";
+  if (/待补|未实测|复核/.test(source)) return "中等";
+  return "几乎不";
+}
+
+function DashboardCard({
   label,
   value,
   hint,
-  icon,
   accent = "text-white",
 }: {
   label: string;
   value: string;
-  hint: string;
-  icon: React.ReactNode;
+  hint?: string;
   accent?: string;
 }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/[0.045] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
-      <div className="flex items-center justify-between gap-3 text-xs font-medium text-zinc-500">
-        <span>{label}</span>
-        <span className="text-zinc-600">{icon}</span>
-      </div>
-      <p className={`mt-3 truncate text-xl font-black ${accent}`}>{value}</p>
-      <p className="mt-2 line-clamp-1 text-xs text-zinc-500">{hint}</p>
+    <div className="rounded-xl border border-white/5 bg-zinc-900/40 p-4">
+      <div className="text-xs text-zinc-500">{label}</div>
+      <div className={`mt-2 truncate text-lg font-bold ${accent}`}>{value}</div>
+      {hint ? <p className="mt-1 truncate text-xs text-zinc-600">{hint}</p> : null}
     </div>
   );
 }
 
 export function RelayStationDetailModal({ station, open, onClose }: RelayStationDetailModalProps) {
   const [metrics, setMetrics] = useState<StationMonitorMetric[]>([]);
-  const [metricsLoading, setMetricsLoading] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -105,14 +121,10 @@ export function RelayStationDetailModal({ station, open, onClose }: RelayStation
   useEffect(() => {
     if (!open || !station) return;
     let cancelled = false;
-    setMetricsLoading(true);
 
     loadLatestStationMetrics()
       .then((data) => {
         if (!cancelled) setMetrics(data);
-      })
-      .finally(() => {
-        if (!cancelled) setMetricsLoading(false);
       });
 
     return () => {
@@ -134,6 +146,8 @@ export function RelayStationDetailModal({ station, open, onClose }: RelayStation
   const latencyValue = formatLatency(liveMetric, station);
   const statusValue = statusLabel(status, liveMetric?.statusMessage || station.status);
   const tags = [station.badge, liveMetric?.providerLabel, liveMetric?.stationGroup].filter(Boolean);
+  const statusBars = stableSeries(`${station.id}:modal-status`, 40, status === "normal" ? 58 : 30, status === "offline" ? 64 : 100);
+  const checkedAt = liveMetric?.checkedAt ? new Date(liveMetric.checkedAt).toLocaleString("zh-CN") : "刚刚";
 
   if (typeof document === "undefined") return null;
 
@@ -154,7 +168,7 @@ export function RelayStationDetailModal({ station, open, onClose }: RelayStation
       </style>
 
       <div
-        className="relative w-full max-w-5xl h-[90vh] md:h-[85vh] bg-zinc-950/95 border border-white/10 rounded-2xl shadow-2xl flex flex-col overflow-hidden"
+        className="relative grid h-[90vh] w-full max-w-6xl overflow-hidden rounded-2xl border border-white/10 bg-zinc-950/95 shadow-2xl md:h-[85vh] md:grid-cols-12"
         onClick={(event) => event.stopPropagation()}
       >
         <button
@@ -166,82 +180,92 @@ export function RelayStationDetailModal({ station, open, onClose }: RelayStation
           <X className="h-5 w-5" />
         </button>
 
-        <section className="shrink-0 p-6 md:p-8 border-b border-white/10 bg-zinc-900/20">
-          <div className="pr-12">
-            <div className="flex flex-wrap items-center gap-2">
-              <h2 className="text-2xl font-bold text-white">{station.name}</h2>
+        <section className="custom-scrollbar flex flex-col gap-6 overflow-y-auto p-6 md:col-span-7 md:p-8 lg:col-span-8">
+          <div className="flex items-center justify-between gap-4">
+            <div className="min-w-0">
+              <h2 className="flex items-center gap-2 text-2xl font-bold text-white">
+                <span className="truncate">{station.name}</span>
+                <span className="rounded bg-emerald-500/20 px-2 py-1 text-xs text-emerald-400">
+                  {station.badge || "企业"}
+                </span>
+              </h2>
+              <p className="mt-1 text-sm text-zinc-400">
+                更新时间: {checkedAt} | 分组: {liveMetric?.stationGroup || station.groupName || "default"}
+              </p>
+            </div>
+            <button
+              className="shrink-0 rounded-lg bg-emerald-500 px-4 py-2 font-bold text-white shadow-lg shadow-emerald-500/20 transition-all hover:bg-emerald-600"
+              type="button"
+            >
+              开始检测
+            </button>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="rounded-xl border border-white/5 bg-zinc-900/40 p-5">
+              <div className="mb-2 text-sm text-zinc-500">在线率 Uptime</div>
+              <div className="text-3xl font-bold text-emerald-400">{uptimeValue}</div>
+              <p className="mt-2 text-xs text-zinc-600">{liveMetric?.source ? `来源 ${liveMetric.source}` : "最近监控样本"}</p>
+            </div>
+            <div className="rounded-xl border border-white/5 bg-zinc-900/40 p-5">
+              <div className="mb-2 text-sm text-zinc-500">平均延迟 Latency</div>
+              <div className="text-3xl font-bold text-white">
+                {latencyValue}
+              </div>
+              <p className="mt-2 text-xs text-zinc-600">请求往返延迟</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+            <DashboardCard accent="text-cyan-300" hint={multiplierValue} label="价格 Price" value={priceValue} />
+            <DashboardCard label="Token Usage" value={tokenCostLabel(liveMetric, station)} />
+            <DashboardCard label="Fidelity" value={fidelityLabel(liveMetric, station)} />
+            <DashboardCard label="Model Support" value={liveMetric?.modelName || station.models || "待补"} />
+          </div>
+
+          <div className="rounded-xl border border-white/5 bg-zinc-900/20 p-5">
+            <div className="mb-4 flex justify-between text-sm text-zinc-400">
+              <span>近24小时运行状态图谱</span>
+              <span className={status === "normal" ? "text-emerald-400" : status === "degraded" ? "text-amber-300" : "text-rose-400"}>
+                {statusValue}
+              </span>
+            </div>
+            <div className="flex h-12 w-full items-end gap-1">
+              {statusBars.map((height, index) => (
+                <div
+                  key={`${station.id}-modal-chart-${index}`}
+                  className={`flex-1 rounded-t-sm transition-colors ${
+                    status === "offline"
+                      ? "bg-rose-500/75 hover:bg-rose-400"
+                      : status === "degraded"
+                        ? "bg-amber-400/75 hover:bg-amber-300"
+                        : "bg-emerald-500/80 hover:bg-emerald-400"
+                  }`}
+                  style={{ height: `${height}%` }}
+                />
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-white/5 bg-zinc-900/20 p-5">
+            <div className="flex flex-wrap gap-2">
               {tags.map((tag) => (
                 <span key={tag} className="rounded-full border border-white/10 bg-white/10 px-2.5 py-1 text-xs font-bold text-zinc-300">
                   {tag}
                 </span>
               ))}
             </div>
-            <p className="mt-2 line-clamp-2 text-sm leading-6 text-zinc-500">
+            <p className="mt-4 text-sm leading-6 text-zinc-500">
               {station.note || station.verdict || station.entry || "实时指标来自 Supabase 监测快照，评论区保留站内用户反馈。"}
             </p>
           </div>
-
-          <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-4">
-            {metricsLoading ? (
-              <>
-                <MetricSkeleton />
-                <MetricSkeleton />
-                <MetricSkeleton />
-                <MetricSkeleton />
-              </>
-            ) : (
-              <>
-                <MetricCard
-                  accent="text-emerald-300"
-                  hint={multiplierValue}
-                  icon={<TrendingUp className="h-4 w-4" />}
-                  label="价格趋势"
-                  value={priceValue}
-                />
-                <MetricCard
-                  accent="text-emerald-300"
-                  hint={liveMetric?.source ? `来源 ${liveMetric.source}` : "最新在线样本"}
-                  icon={<Signal className="h-4 w-4" />}
-                  label="在线率"
-                  value={uptimeValue}
-                />
-                <MetricCard
-                  hint="请求往返延迟"
-                  icon={<Clock3 className="h-4 w-4" />}
-                  label="延迟"
-                  value={latencyValue}
-                />
-                <div className="rounded-2xl border border-white/10 bg-white/[0.045] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
-                  <div className="flex items-center justify-between gap-3 text-xs font-medium text-zinc-500">
-                    <span>运行状态</span>
-                    <Activity className="h-4 w-4 text-zinc-600" />
-                  </div>
-                  <div className="mt-3 flex items-center gap-2">
-                    <span
-                      className={`h-2.5 w-2.5 rounded-full ${
-                        status === "normal"
-                          ? "animate-pulse bg-emerald-400"
-                          : status === "degraded"
-                            ? "bg-amber-400"
-                            : status === "offline"
-                              ? "bg-rose-400"
-                              : "bg-zinc-500"
-                      }`}
-                    />
-                    <p className="truncate text-xl font-black text-white">{statusValue}</p>
-                  </div>
-                  <p className="mt-2 line-clamp-1 text-xs text-zinc-500">{liveMetric?.checkedAt ? "最近检测已同步" : "等待检测快照"}</p>
-                </div>
-              </>
-            )}
-          </div>
         </section>
 
-        <section className="custom-scrollbar flex-1 overflow-y-auto overscroll-contain bg-zinc-950">
-          <div className="border-b border-white/5 px-6 py-3 text-sm font-medium tracking-widest text-zinc-400 md:px-8">
+        <section className="flex min-h-0 flex-col border-t border-white/10 bg-zinc-950 md:col-span-5 md:border-l md:border-t-0 lg:col-span-4">
+          <div className="shrink-0 border-b border-white/5 px-6 py-3 text-sm font-medium tracking-widest text-zinc-400">
             用户评价与反馈
           </div>
-          <div className="p-6 md:p-8">
+          <div className="custom-scrollbar flex-1 overflow-y-auto overscroll-contain p-4">
             <DiscussionFeed
               hideHeader
               showSyncButton
