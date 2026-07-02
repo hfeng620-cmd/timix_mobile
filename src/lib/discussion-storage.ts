@@ -251,6 +251,41 @@ function reserveRateLimitSlot(userId: string, table: RateLimitedTable) {
   };
 }
 
+function createNoopRateLimitSlot() {
+  return {
+    commit() {},
+    rollback() {},
+  };
+}
+
+async function isRateLimitExempt(userId: string) {
+  try {
+    const { data, error } = await getSupabaseClient().rpc("is_forum_admin", {
+      check_user_id: userId,
+    });
+
+    if (!error && data !== null) {
+      return Boolean(data);
+    }
+  } catch {
+    // Fall through to profile-role fallback.
+  }
+
+  try {
+    const { data, error } = await getSupabaseClient()
+      .from("forum_profiles")
+      .select("role")
+      .eq("id", userId)
+      .maybeSingle();
+
+    if (error || !data) return false;
+    const role = String((data as Record<string, unknown>).role ?? "").toLowerCase();
+    return role === "admin" || role === "owner";
+  } catch {
+    return false;
+  }
+}
+
 async function getDiscussionPostLikeCount(postId: string, fallback: number) {
   const { data, error } = await getSupabaseClient()
     .from(FORUM_POSTS_PUBLIC_VIEW)
@@ -625,10 +660,15 @@ export async function createDiscussionPost(
   const authorName = input.author?.trim() || "噜噜";
   const trimmedBody = normalizeRequiredText(input.body, "先写点内容再发帖。");
   const authorId = await ensureProfile(authorName);
-  const rateLimitSlot = reserveRateLimitSlot(authorId, "forum_posts");
+  const skipRateLimit = await isRateLimitExempt(authorId);
+  const rateLimitSlot = skipRateLimit
+    ? createNoopRateLimitSlot()
+    : reserveRateLimitSlot(authorId, "forum_posts");
 
   try {
-    await checkRateLimit(authorId, "forum_posts", { skipLocalCache: true });
+    if (!skipRateLimit) {
+      await checkRateLimit(authorId, "forum_posts", { skipLocalCache: true });
+    }
 
     const isSpam = await checkSpam(trimmedBody);
     if (isSpam) {
@@ -690,10 +730,15 @@ export async function replyDiscussionPost(
 ): Promise<DiscussionReply> {
   const trimmedBody = normalizeRequiredText(body, "先写一点回复内容。");
   const authorId = await ensureProfile();
-  const rateLimitSlot = reserveRateLimitSlot(authorId, "forum_replies");
+  const skipRateLimit = await isRateLimitExempt(authorId);
+  const rateLimitSlot = skipRateLimit
+    ? createNoopRateLimitSlot()
+    : reserveRateLimitSlot(authorId, "forum_replies");
 
   try {
-    await checkRateLimit(authorId, "forum_replies", { skipLocalCache: true });
+    if (!skipRateLimit) {
+      await checkRateLimit(authorId, "forum_replies", { skipLocalCache: true });
+    }
 
     const isSpam = await checkSpam(trimmedBody);
     if (isSpam) {
@@ -1197,14 +1242,18 @@ export async function checkSpam(body: string): Promise<boolean> {
   return Boolean(data) || fallbackResult;
 }
 
-const RATE_LIMIT_SECONDS = 60;
-const RATE_LIMIT_MESSAGE = "请稍后再提交（每分钟限1条）";
+const RATE_LIMIT_SECONDS = 3;
+const RATE_LIMIT_MESSAGE = "发言太快啦，请休息几秒钟再试";
 
 export async function checkRateLimit(
   userId: string,
   table: RateLimitedTable,
   options?: { skipLocalCache?: boolean },
 ): Promise<void> {
+  if (await isRateLimitExempt(userId)) {
+    return;
+  }
+
   if (!options?.skipLocalCache) {
     const cached = localRateLimitCache.get(getRateLimitCacheKey(userId, table));
     if (cached !== undefined && isRateLimitedAt(cached)) {

@@ -4,6 +4,7 @@ import { useRef, useState, useEffect, useMemo } from "react";
 
 import { createDiscussionPost, uploadForumImage, loadAllTags, loadDiscussionPosts } from "@/lib/discussion-storage";
 import { useForumAuth } from "@/lib/forum-auth";
+import { useToast } from "@/lib/toast-context";
 import { CATEGORIES, DEFAULT_CATEGORY, isCategoryTag, type CategoryInfo } from "@/lib/categories";
 import { FORUM_IMAGE_ACCEPT } from "@/lib/forum-image-safety";
 
@@ -20,6 +21,7 @@ export function CommunityPostPanel({ onPostCreated }: CommunityPostPanelProps) {
   const [selectedCategory, setSelectedCategory] = useState<CategoryInfo>(DEFAULT_CATEGORY);
 
   const { isConnected, displayName, showAuthModal } = useForumAuth();
+  const { addToast } = useToast();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -179,7 +181,7 @@ export function CommunityPostPanel({ onPostCreated }: CommunityPostPanelProps) {
       const msg = err instanceof Error ? err.message : "发布失败，请检查网络后重试。";
       console.error("[发帖] 发送失败:", err);
       setStatus(msg);
-      alert("发送失败: " + msg);
+      addToast(msg, "error");
     } finally {
       setSubmitting(false);
     }

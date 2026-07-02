@@ -175,6 +175,7 @@ function NestedReplyModal({
   onSendReply,
   onToggleLike,
   onOpenLightbox,
+  onNotify,
   onClose,
 }: {
   rootComment: CommentItem;
@@ -183,6 +184,7 @@ function NestedReplyModal({
   onSendReply: (parentId: string, text: string) => void;
   onToggleLike: (commentId: string) => void;
   onOpenLightbox: (src: string) => void;
+  onNotify: (message: string, type?: "success" | "error" | "info" | "warning") => void;
   onClose: () => void;
 }) {
   const [replyText, setReplyText] = useState("");
@@ -311,7 +313,7 @@ function NestedReplyModal({
         try {
           await uploadAndInsertReplyImage(file);
         } catch (err) {
-          alert(err instanceof Error ? err.message : "粘贴图片上传失败，请稍后重试。");
+          onNotify(err instanceof Error ? err.message : "粘贴图片上传失败，请稍后重试。", "error");
         }
         return;
       }
@@ -447,7 +449,7 @@ function NestedReplyModal({
                 try {
                   await uploadAndInsertReplyImage(file);
                 } catch (err) {
-                  alert(err instanceof Error ? err.message : "图片上传失败，请稍后重试。");
+                  onNotify(err instanceof Error ? err.message : "图片上传失败，请稍后重试。", "error");
                 } finally {
                   if (replyFileInputRef.current) replyFileInputRef.current.value = "";
                 }
@@ -598,7 +600,7 @@ export function PostDetailModal({ post, onClose, onEdit }: Props) {
      ═══════════════════════════════════════════ */
   async function handleSendComment() {
     if (!user) {
-      alert("请先登录后再发表评论。");
+      addToast("请先登录后再发表评论。", "warning");
       showAuthModal();
       return;
     }
@@ -627,7 +629,7 @@ export function PostDetailModal({ post, onClose, onEdit }: Props) {
       setCommentCursor(0);
     } catch (err: unknown) {
       console.error("[评论] 发送失败:", err);
-      alert("评论发送失败: " + (err instanceof Error ? err.message : String(err)));
+      addToast(err instanceof Error ? err.message : "评论发送失败，请稍后重试。", "error");
     }
   }
 
@@ -637,7 +639,7 @@ export function PostDetailModal({ post, onClose, onEdit }: Props) {
   const handleSendReply = useCallback(
     async (parentId: string, text: string) => {
       if (!user) {
-        alert("请先登录后再发表回复。");
+        addToast("请先登录后再发表回复。", "warning");
         showAuthModal();
         return;
       }
@@ -664,10 +666,10 @@ export function PostDetailModal({ post, onClose, onEdit }: Props) {
         setComments((prev) => [...prev, newReply]);
       } catch (err: unknown) {
         console.error("[评论] 回复发送失败:", err);
-        alert("回复发送失败: " + (err instanceof Error ? err.message : String(err)));
+        addToast(err instanceof Error ? err.message : "回复发送失败，请稍后重试。", "error");
       }
     },
-    [user, showAuthModal, post.id],
+    [addToast, user, showAuthModal, post.id],
   );
 
   /* ── 点赞切换 ── */
@@ -691,7 +693,7 @@ export function PostDetailModal({ post, onClose, onEdit }: Props) {
       await deleteSharedComment(commentId);
       setComments((prev) => prev.filter((c) => c.id !== commentId));
     } catch (err) {
-      alert("删除失败: " + (err instanceof Error ? err.message : "未知错误"));
+      addToast(err instanceof Error ? err.message : "删除失败，请稍后重试。", "error");
     }
   }
 
@@ -814,7 +816,7 @@ export function PostDetailModal({ post, onClose, onEdit }: Props) {
         try {
           await uploadAndInsertCommentImage(file);
         } catch (err) {
-          alert(err instanceof Error ? err.message : "粘贴图片上传失败，请稍后重试。");
+          addToast(err instanceof Error ? err.message : "粘贴图片上传失败，请稍后重试。", "error");
         }
         return;
       }
@@ -1191,7 +1193,7 @@ export function PostDetailModal({ post, onClose, onEdit }: Props) {
                         try {
                           await uploadAndInsertCommentImage(file);
                         } catch (err) {
-                          alert(err instanceof Error ? err.message : "图片上传失败，请稍后重试。");
+                          addToast(err instanceof Error ? err.message : "图片上传失败，请稍后重试。", "error");
                         } finally {
                           if (commentFileInputRef.current) commentFileInputRef.current.value = "";
                         }
@@ -1268,6 +1270,7 @@ export function PostDetailModal({ post, onClose, onEdit }: Props) {
           onSendReply={handleSendReply}
           onToggleLike={handleToggleCommentLike}
           onOpenLightbox={setLightboxImage}
+          onNotify={addToast}
           onClose={() => setNestedRootId(null)}
         />
       )}

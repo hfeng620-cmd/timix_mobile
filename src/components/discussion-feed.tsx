@@ -28,6 +28,7 @@ import {
 import { FORUM_IMAGE_ACCEPT } from "@/lib/forum-image-safety";
 import { useForumAuth } from "@/lib/forum-auth";
 import { getStation } from "@/lib/station-storage";
+import { useToast } from "@/lib/toast-context";
 import { getUserProfileHref } from "@/lib/user-profile-url";
 import { ForumPostModal } from "@/components/forum-post-modal";
 import { ImageLightbox } from "@/components/image-lightbox";
@@ -262,6 +263,7 @@ export function DiscussionFeed({
   showSyncButton = false,
 }: DiscussionFeedProps) {
   const { isConnected, displayName, adminUserIds, ownerUserIds, showAuthModal, user, isAdmin } = useForumAuth();
+  const { addToast } = useToast();
 
   const [posts, setPosts] = useState<DiscussionPost[]>([]);
   const [commentsMap, setCommentsMap] = useState<Record<string, DiscussionReply[]>>({});
@@ -712,7 +714,7 @@ export function DiscussionFeed({
       const msg = err instanceof Error ? err.message : "发布失败，请检查网络后重试。";
       console.error("[讨论] 发送帖子失败:", err);
       setStatus(msg);
-      alert("发送失败: " + msg);
+      addToast(msg, "error");
     } finally {
       setSubmitting(false);
     }
@@ -793,7 +795,7 @@ export function DiscussionFeed({
       const msg = err instanceof Error ? err.message : "回复失败，请检查网络后重试。";
       console.error("[讨论] 发送回复失败:", err);
       setStatus(msg);
-      alert("回复失败: " + msg);
+      addToast(msg, "error");
     } finally {
       setReplySubmitting(null);
     }
