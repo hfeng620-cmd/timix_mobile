@@ -2,7 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
+import { MessageCircle } from "lucide-react";
 import { AuthButton } from "@/components/auth-button";
+import { GlobalInboxModal } from "@/components/global-inbox-modal";
 import { NotificationBell } from "@/components/notification-bell";
 import { OnlineIndicator } from "@/components/online-indicator";
 
@@ -17,6 +20,7 @@ const links = [
 
 export function Navbar() {
   const pathname = usePathname();
+  const [isInboxOpen, setIsInboxOpen] = useState(false);
 
   return (
     <nav className="fixed top-4 left-0 right-0 z-[100] px-4 sm:px-8 lg:px-16">
@@ -84,9 +88,19 @@ export function Navbar() {
           </Link>
           <OnlineIndicator />
           <NotificationBell />
+          <button
+            aria-label="我的私信"
+            className="relative flex h-10 w-10 items-center justify-center rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] text-[var(--color-muted)] transition hover:border-emerald-500/40 hover:bg-emerald-500/10 hover:text-emerald-300"
+            onClick={() => setIsInboxOpen(true)}
+            title="我的私信"
+            type="button"
+          >
+            <MessageCircle className="h-5 w-5" />
+          </button>
           <AuthButton />
         </div>
       </div>
+      {isInboxOpen ? <GlobalInboxModal onClose={() => setIsInboxOpen(false)} /> : null}
     </nav>
   );
 }
