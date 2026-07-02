@@ -9,6 +9,7 @@ import { EmojiPickerButton } from "@/components/emoji-picker-button";
 import { MarkdownContent } from "@/components/markdown-content";
 import { lockBodyScroll } from "@/lib/body-scroll-lock";
 import { uploadForumImage, type DiscussionPost, type DiscussionReply } from "@/lib/discussion-storage";
+import { useToast } from "@/lib/toast-context";
 import { getUserProfileHref } from "@/lib/user-profile-url";
 
 type ReplyQuote = {
@@ -118,6 +119,7 @@ export function ForumPostModal({
   onToggleReplyLike,
   onSendComment,
 }: ForumPostModalProps) {
+  const { addToast } = useToast();
   const overlayRef = useRef<HTMLDivElement | null>(null);
   const composerRef = useRef<HTMLTextAreaElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -252,7 +254,7 @@ export function ForumPostModal({
       try {
         await insertImage(file);
       } catch (error) {
-        alert(error instanceof Error ? error.message : "图片上传失败，请稍后重试。");
+        addToast(error instanceof Error ? error.message : "图片上传失败，请稍后重试。", "error");
       }
       return;
     }
@@ -274,7 +276,7 @@ export function ForumPostModal({
     try {
       await insertImage(file);
     } catch (error) {
-      alert(error instanceof Error ? error.message : "图片上传失败，请稍后重试。");
+      addToast(error instanceof Error ? error.message : "图片上传失败，请稍后重试。", "error");
     } finally {
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
@@ -374,12 +376,18 @@ export function ForumPostModal({
                   <span className="font-medium text-zinc-200">{post.author}</span>
                 )}
                 {post.authorId && ownerUserIds.has(post.authorId) ? (
-                  <span className="rounded-full border border-sky-400/20 bg-sky-500/10 px-2 py-0.5 text-[10px] font-semibold text-sky-200">
-                    站主
+                  <span className="rounded border border-red-500/20 bg-red-500/10 px-2 py-0.5 text-xs font-bold text-red-500">
+                    TiMix 站主
                   </span>
-                ) : post.authorId && adminUserIds.has(post.authorId) ? (
-                  <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] font-semibold text-zinc-300">
+                ) : null}
+                {post.authorId && !ownerUserIds.has(post.authorId) && adminUserIds.has(post.authorId) ? (
+                  <span className="rounded border border-blue-500/20 bg-blue-500/10 px-2 py-0.5 text-xs font-bold text-blue-400">
                     管理员
+                  </span>
+                ) : null}
+                {post.authorCustomTitle ? (
+                  <span className="rounded-md border border-purple-500/20 bg-purple-500/10 px-2 py-0.5 text-xs font-bold text-purple-400">
+                    {post.authorCustomTitle}
                   </span>
                 ) : null}
               </div>
@@ -480,12 +488,18 @@ export function ForumPostModal({
                               <span className="font-medium text-zinc-200">{reply.author}</span>
                             )}
                             {reply.authorId && ownerUserIds.has(reply.authorId) ? (
-                              <span className="rounded-full border border-sky-400/20 bg-sky-500/10 px-2 py-0.5 text-[10px] font-semibold text-sky-200">
-                                站主
+                              <span className="rounded border border-red-500/20 bg-red-500/10 px-2 py-0.5 text-[10px] font-bold text-red-500">
+                                TiMix 站主
                               </span>
-                            ) : reply.authorId && adminUserIds.has(reply.authorId) ? (
-                              <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] font-semibold text-zinc-300">
+                            ) : null}
+                            {reply.authorId && !ownerUserIds.has(reply.authorId) && adminUserIds.has(reply.authorId) ? (
+                              <span className="rounded border border-blue-500/20 bg-blue-500/10 px-2 py-0.5 text-[10px] font-bold text-blue-400">
                                 管理员
+                              </span>
+                            ) : null}
+                            {reply.authorCustomTitle ? (
+                              <span className="rounded-md border border-purple-500/20 bg-purple-500/10 px-2 py-0.5 text-[10px] font-bold text-purple-400">
+                                {reply.authorCustomTitle}
                               </span>
                             ) : null}
                             <span>{formatRelativeTime(reply.postedAt)}</span>

@@ -16,6 +16,7 @@ import {
 import { FORUM_IMAGE_ACCEPT } from "@/lib/forum-image-safety";
 import { useForumAuth } from "@/lib/forum-auth";
 import { getSupabaseClient } from "@/lib/supabase";
+import { useToast } from "@/lib/toast-context";
 
 type ActivityTab = "posts" | "replies" | "likes";
 type ReplyWithPost = { reply: DiscussionReply; postTitle: string; postId: string };
@@ -261,6 +262,7 @@ function pickTopStation(posts: DiscussionPost[]) {
 
 export default function ProfilePage() {
   const { isConnected, user, email, displayName, isAdmin, isOwner, showAuthModal, setDisplayName } = useForumAuth();
+  const { addToast } = useToast();
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const [posts, setPosts] = useState<DiscussionPost[]>([]);
   const [likedPosts, setLikedPosts] = useState<DiscussionPost[]>([]);
@@ -277,6 +279,7 @@ export default function ProfilePage() {
   const [tags, setTags] = useState<string[]>([]);
   const [newTags, setNewTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState<string>("");
+  const [customTitle, setCustomTitle] = useState("");
 
   const loadPosts = useCallback(async () => {
     if (!isConnected || !user) return;
@@ -308,17 +311,30 @@ export default function ProfilePage() {
     (async () => {
       try {
         // Load avatar separately to avoid one failing column breaking everything
-        const { data: profileData, error: profileError } = await getSupabaseClient()
+        const profileResult = await getSupabaseClient()
           .from("forum_profiles")
-          .select("avatar_url, bio")
+          .select("avatar_url, bio, custom_title")
           .eq("id", user.id)
           .single();
+        let profileData: any = profileResult.data;
+        let profileError = profileResult.error;
+
+        if (profileError) {
+          const fallback = await getSupabaseClient()
+            .from("forum_profiles")
+            .select("avatar_url, bio")
+            .eq("id", user.id)
+            .single();
+          profileData = fallback.data;
+          profileError = fallback.error;
+        }
 
         if (profileError) {
           console.error("[Profile] Load avatar/bio error:", profileError.message);
         } else if (profileData) {
           if (profileData.avatar_url) setAvatarUrl(profileData.avatar_url);
           if (profileData.bio) setBio(profileData.bio);
+          setCustomTitle(((profileData as { custom_title?: string | null }).custom_title ?? "").trim());
         }
 
         // Try loading tags separately (column may not exist if migration not run)
@@ -800,15 +816,26 @@ export default function ProfilePage() {
                         <div>
                           <div className="flex flex-wrap items-center gap-3">
                             <h1 className="text-3xl font-black tracking-tight sm:text-4xl">{name}</h1>
-                            {isOwner || isAdmin ? (
+                            {isOwner ? (
                               <span className="ml-3 rounded px-2 py-0.5 text-xs font-bold bg-red-500/10 text-red-500 border border-red-500/20">
                                 TiMix 站主
                               </span>
-                            ) : (
+                            ) : null}
+                            {!isOwner && isAdmin ? (
+                              <span className="rounded px-2 py-0.5 text-xs font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                                管理员
+                              </span>
+                            ) : null}
+                            {customTitle ? (
+                              <span className="rounded-md px-2 py-0.5 text-xs font-bold bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                                {customTitle}
+                              </span>
+                            ) : null}
+                            {!isOwner && !isAdmin && !customTitle ? (
                               <span className="rounded-full bg-[var(--color-brand-soft)] px-3 py-1 text-xs font-bold text-[var(--color-brand-deep)]">
                                 Timix 观察成员
                               </span>
-                            )}
+                            ) : null}
                           </div>
                           {email ? (
                             <p className="mt-3 text-sm text-[var(--color-muted)]">{email}</p>
@@ -1042,7 +1069,7 @@ export default function ProfilePage() {
                               setBio(newBio.trim());
                               setTags(nextTags);
                             } else {
-                              alert("保存失败，请检查网络后重试。");
+                              addToast("保存失败，请检查网络后重试。", "error");
                             }
                             setNameSaving(false);
                             setEditingName(false);

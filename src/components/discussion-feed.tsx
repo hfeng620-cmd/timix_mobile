@@ -1382,12 +1382,18 @@ export function DiscussionFeed({
                       <h3 className="text-base font-black text-[var(--color-ink)]">{post.author}</h3>
                     )}
                     {post.authorId && ownerUserIds.has(post.authorId) ? (
-                      <span className="rounded-full border border-[var(--color-brand)]/25 bg-[var(--color-brand-soft)] px-2 py-0.5 text-[10px] font-bold text-[var(--color-brand-deep)]">
-                        站主
+                      <span className="rounded border border-red-500/20 bg-red-500/10 px-2 py-0.5 text-xs font-bold text-red-500">
+                        TiMix 站主
                       </span>
-                    ) : post.authorId && adminUserIds.has(post.authorId) ? (
-                      <span className="rounded-full border border-[var(--color-line)] bg-[var(--color-soft)] px-2 py-0.5 text-[10px] font-bold text-[var(--color-muted)]">
+                    ) : null}
+                    {post.authorId && !ownerUserIds.has(post.authorId) && adminUserIds.has(post.authorId) ? (
+                      <span className="rounded border border-blue-500/20 bg-blue-500/10 px-2 py-0.5 text-xs font-bold text-blue-400">
                         管理员
+                      </span>
+                    ) : null}
+                    {post.authorCustomTitle ? (
+                      <span className="rounded-md border border-purple-500/20 bg-purple-500/10 px-2 py-0.5 text-xs font-bold text-purple-400">
+                        {post.authorCustomTitle}
                       </span>
                     ) : null}
                     {post.is_pinned ? (

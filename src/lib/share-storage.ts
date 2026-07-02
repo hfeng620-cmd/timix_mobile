@@ -25,6 +25,7 @@ export type Liker = {
   displayName: string;
   avatarUrl: string | null;
   role?: "owner" | "admin" | "user";
+  customTitle?: string | null;
 };
 
 export type SharePost = {
@@ -334,6 +335,8 @@ export type SharedComment = {
   authorId: string;
   authorName: string;
   authorAvatar: string | null;
+  authorRole?: "owner" | "admin" | "user";
+  authorCustomTitle?: string | null;
   body: string;
   parentCommentId: string | null;
   isHidden: boolean;
@@ -355,6 +358,7 @@ function parseLikers(likesRaw: unknown[]): Liker[] {
           "未知用户",
         avatarUrl: (profile?.avatar_url as string | null | undefined) ?? null,
         role: (profile?.role as Liker["role"] | undefined) ?? "user",
+        customTitle: (profile?.custom_title as string | null | undefined) ?? null,
       };
     })
     .filter((l) => {
@@ -381,18 +385,32 @@ export async function loadSharedComments(postId: string): Promise<SharedComment[
     const authorIds = [...new Set(rows.map((r) => r.author_id as string).filter(Boolean))];
     const nameMap = new Map<string, string>();
     const avatarMap = new Map<string, string | null>();
+    const customTitleMap = new Map<string, string | null>();
     if (authorIds.length > 0) {
       try {
-        const { data: profiles } = await getSupabaseClient()
+        const profilesResult = await getSupabaseClient()
           .from("forum_profiles")
-          .select("id, display_name, avatar_url")
+          .select("id, display_name, avatar_url, custom_title")
           .in("id", authorIds);
+        let profiles: any = profilesResult.data;
+        const profileError = profilesResult.error;
+
+        if (profileError) {
+          const fallback = await getSupabaseClient()
+            .from("forum_profiles")
+            .select("id, display_name, avatar_url")
+            .in("id", authorIds);
+          profiles = fallback.data;
+        }
+
         for (const p of profiles ?? []) {
           nameMap.set((p as any).id, (p as any).display_name);
           avatarMap.set((p as any).id, (p as any).avatar_url ?? null);
+          customTitleMap.set((p as any).id, (p as any).custom_title ?? null);
         }
       } catch { /* 静默降级 */ }
     }
+    const roles = await loadUserRoles(authorIds);
 
     return rows.map((row) => ({
       id: row.id as string,
@@ -400,6 +418,8 @@ export async function loadSharedComments(postId: string): Promise<SharedComment[
       authorId: row.author_id as string,
       authorName: nameMap.get(row.author_id as string) ?? "未知用户",
       authorAvatar: avatarMap.get(row.author_id as string) ?? null,
+      authorRole: roles.get(row.author_id as string) ?? "user",
+      authorCustomTitle: customTitleMap.get(row.author_id as string) ?? null,
       body: row.body as string,
       parentCommentId: (row.parent_comment_id as string) ?? null,
       isHidden: (row.is_hidden as boolean) ?? false,
@@ -440,17 +460,32 @@ export async function createSharedComment(
   /* 获取作者显示名 */
   let authorName = "用户";
   let authorAvatar: string | null = null;
+  let authorCustomTitle: string | null = null;
   try {
-    const { data: profile } = await supabase
+    const profileResult = await supabase
       .from("forum_profiles")
-      .select("display_name, avatar_url")
+      .select("display_name, avatar_url, custom_title")
       .eq("id", authorId)
       .maybeSingle();
+    let profile: any = profileResult.data;
+    const profileError = profileResult.error;
+
+    if (profileError) {
+      const fallback = await supabase
+        .from("forum_profiles")
+        .select("display_name, avatar_url")
+        .eq("id", authorId)
+        .maybeSingle();
+      profile = fallback.data;
+    }
+
     if (profile) {
       authorName = (profile as any).display_name ?? authorName;
       authorAvatar = (profile as any).avatar_url ?? null;
+      authorCustomTitle = (profile as any).custom_title ?? null;
     }
   } catch { /* 降级 */ }
+  const authorRole = (await loadUserRoles([authorId])).get(authorId) ?? "user";
 
   return {
     id: row.id as string,
@@ -458,6 +493,8 @@ export async function createSharedComment(
     authorId,
     authorName,
     authorAvatar,
+    authorRole,
+    authorCustomTitle,
     body: row.body as string,
     parentCommentId: (row.parent_comment_id as string) ?? null,
     isHidden: (row.is_hidden as boolean) ?? false,

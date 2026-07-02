@@ -23,6 +23,7 @@ export type DiscussionPost = {
   author: string;
   authorId?: string;
   authorAvatarUrl?: string;
+  authorCustomTitle?: string;
   handle: string;
   postedAt: string;
   createdAt: string;
@@ -40,6 +41,7 @@ export type DiscussionReply = {
   author: string;
   authorId?: string;
   avatar: string;
+  authorCustomTitle?: string;
   postedAt: string;
   body: string;
   likes: number;
@@ -58,6 +60,7 @@ type ForumPostRow = {
   author_id?: string;
   author_display_name?: string | null;
   author_avatar_url?: string | null;
+  author_custom_title?: string | null;
   title?: string | null;
   body: string;
   station?: string | null;
@@ -77,6 +80,7 @@ type ForumReplyRow = {
   author_id?: string;
   author_display_name?: string | null;
   author_avatar_url?: string | null;
+  author_custom_title?: string | null;
   body: string;
   created_at: string;
   like_count?: number | null;
@@ -113,6 +117,7 @@ function postFromRow(row: ForumPostRow): DiscussionPost {
     author: row.author_display_name || "噜噜",
     authorId: row.author_id || undefined,
     authorAvatarUrl: row.author_avatar_url || undefined,
+    authorCustomTitle: row.author_custom_title || undefined,
     handle: "@forum",
     postedAt: formatDate(row.posted_at ?? row.created_at),
     createdAt: row.created_at ?? "",
@@ -132,6 +137,7 @@ function replyFromRow(row: ForumReplyRow): DiscussionReply {
     author: row.author_display_name || "噜噜",
     authorId: row.author_id || undefined,
     avatar: row.author_avatar_url || "",
+    authorCustomTitle: row.author_custom_title || undefined,
     postedAt: formatDate(row.created_at),
     body: row.body,
     likes: Number(row.like_count ?? 0),
@@ -308,6 +314,47 @@ async function getDiscussionReplyLikeCount(replyId: string, fallback: number) {
   return (data as { like_count?: number | null } | null)?.like_count ?? fallback;
 }
 
+async function loadProfileCustomTitles(userIds: string[]) {
+  const titles = new Map<string, string>();
+  const uniqueIds = [...new Set(userIds.filter(Boolean))];
+  if (uniqueIds.length === 0 || !isSupabaseConfigured()) return titles;
+
+  try {
+    const { data, error } = await getSupabaseClient()
+      .from("forum_profiles")
+      .select("id, custom_title")
+      .in("id", uniqueIds);
+
+    if (error) return titles;
+    for (const row of (data ?? []) as Array<{ id?: string; custom_title?: string | null }>) {
+      const title = row.custom_title?.trim();
+      if (row.id && title) titles.set(row.id, title);
+    }
+  } catch {
+    // The migration may not be applied yet; title badges are optional.
+  }
+
+  return titles;
+}
+
+async function hydratePostCustomTitles(posts: DiscussionPost[]) {
+  const titles = await loadProfileCustomTitles(posts.map((post) => post.authorId ?? ""));
+  if (titles.size === 0) return posts;
+  return posts.map((post) => ({
+    ...post,
+    authorCustomTitle: post.authorId ? titles.get(post.authorId) ?? post.authorCustomTitle : post.authorCustomTitle,
+  }));
+}
+
+async function hydrateReplyCustomTitles(replies: DiscussionReply[]) {
+  const titles = await loadProfileCustomTitles(replies.map((reply) => reply.authorId ?? ""));
+  if (titles.size === 0) return replies;
+  return replies.map((reply) => ({
+    ...reply,
+    authorCustomTitle: reply.authorId ? titles.get(reply.authorId) ?? reply.authorCustomTitle : reply.authorCustomTitle,
+  }));
+}
+
 async function ensureProfile(displayName = "噜噜") {
   assertConfigured();
   const supabase = getSupabaseClient();
@@ -345,7 +392,7 @@ export async function getUserPosts(userId: string): Promise<DiscussionPost[]> {
       .limit(20);
 
     if (error) throw error;
-    return ((data ?? []) as ForumPostRow[]).map(postFromRow);
+    return hydratePostCustomTitles(((data ?? []) as ForumPostRow[]).map(postFromRow));
   } catch {
     return [];
   }
@@ -375,7 +422,7 @@ export async function getUserLikedPosts(userId: string): Promise<DiscussionPost[
       .in("id", postIds);
 
     if (error) throw error;
-    return ((data ?? []) as ForumPostRow[]).map(postFromRow);
+    return hydratePostCustomTitles(((data ?? []) as ForumPostRow[]).map(postFromRow));
   } catch {
     return [];
   }
@@ -459,7 +506,7 @@ export async function loadDiscussionPosts(): Promise<DiscussionPost[]> {
       .limit(50);
 
     if (error) throw error;
-    return ((data ?? []) as ForumPostRow[]).map(postFromRow);
+    return hydratePostCustomTitles(((data ?? []) as ForumPostRow[]).map(postFromRow));
   } catch {
     return [];
   }
@@ -508,7 +555,7 @@ export async function searchDiscussionPosts(
     if (error) throw error;
 
     const rows = (data ?? []) as (ForumPostRow & { rank: number; total_count: number })[];
-    const posts = rows.map((row) => postFromRow(row));
+    const posts = await hydratePostCustomTitles(rows.map((row) => postFromRow(row)));
     const totalCount = rows.length > 0 ? Number(rows[0].total_count) : 0;
     const hasMore = rows.length === pageSize;
     const nextCursor = hasMore && rows.length > 0
@@ -601,7 +648,7 @@ export async function loadDiscussionPostsPaginated(
       : null;
 
     return {
-      posts: page.map(postFromRow),
+      posts: await hydratePostCustomTitles(page.map(postFromRow)),
       nextCursor,
       hasMore,
     };
@@ -645,7 +692,7 @@ export async function loadStationDiscussionPosts(
       : null;
 
     return {
-      posts: page.map(postFromRow),
+      posts: await hydratePostCustomTitles(page.map(postFromRow)),
       nextCursor,
       hasMore,
     };
@@ -695,10 +742,12 @@ export async function createDiscussionPost(
 
     if (error) throw error;
     rateLimitSlot.commit();
+    const customTitles = await loadProfileCustomTitles([authorId]);
 
     return postFromRow({
       ...(data as ForumPostRow),
       author_display_name: authorName,
+      author_custom_title: customTitles.get(authorId) ?? "",
       reply_count: 0,
       like_count: 0,
     });
@@ -718,7 +767,7 @@ export async function loadComments(postId: string): Promise<DiscussionReply[]> {
       .order("created_at", { ascending: true });
 
     if (error) throw error;
-    return ((data ?? []) as ForumReplyRow[]).map(replyFromRow);
+    return hydrateReplyCustomTitles(((data ?? []) as ForumReplyRow[]).map(replyFromRow));
   } catch {
     return [];
   }
@@ -762,6 +811,7 @@ export async function replyDiscussionPost(
       .select("display_name, avatar_url")
       .eq("id", authorId)
       .maybeSingle();
+    const customTitles = await loadProfileCustomTitles([authorId]);
 
     rateLimitSlot.commit();
 
@@ -769,6 +819,7 @@ export async function replyDiscussionPost(
       ...(data as ForumReplyRow),
       author_display_name: profile?.display_name || "噜噜",
       author_avatar_url: profile?.avatar_url || "",
+      author_custom_title: customTitles.get(authorId) ?? "",
     });
   } catch (error) {
     rateLimitSlot.rollback();

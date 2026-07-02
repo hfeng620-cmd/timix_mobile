@@ -15,6 +15,7 @@ type PublicProfile = {
   avatar_url: string | null;
   bio: string | null;
   tags: string[] | null;
+  custom_title: string | null;
   created_at: string | null;
 };
 
@@ -52,11 +53,22 @@ function UserProfileContent() {
     async function loadProfile() {
       setLoading(true);
       try {
-        const { data } = await supabase
+        const profileResult = await supabase
           .from("forum_profiles")
-          .select("display_name, avatar_url, bio, tags, created_at")
+          .select("display_name, avatar_url, bio, tags, custom_title, created_at")
           .eq("id", userId)
           .maybeSingle();
+        let data: any = profileResult.data;
+        const error = profileResult.error;
+
+        if (error) {
+          const fallback = await supabase
+            .from("forum_profiles")
+            .select("display_name, avatar_url, bio, tags, created_at")
+            .eq("id", userId)
+            .maybeSingle();
+          data = fallback.data;
+        }
 
         if (!cancelled) setProfile((data as PublicProfile | null) ?? null);
 
@@ -109,15 +121,26 @@ function UserProfileContent() {
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-3">
                 <h1 className="text-3xl font-black tracking-tight">{name}</h1>
-                {role === "owner" || role === "admin" ? (
+                {role === "owner" ? (
                   <span className="rounded px-2 py-0.5 text-xs font-bold bg-red-500/10 text-red-500 border border-red-500/20">
                     TiMix 站主
                   </span>
-                ) : (
+                ) : null}
+                {role === "admin" ? (
+                  <span className="rounded px-2 py-0.5 text-xs font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                    管理员
+                  </span>
+                ) : null}
+                {profile.custom_title?.trim() ? (
+                  <span className="rounded-md px-2 py-0.5 text-xs font-bold bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                    {profile.custom_title.trim()}
+                  </span>
+                ) : null}
+                {role === "user" && !profile.custom_title?.trim() ? (
                   <span className="rounded-full bg-[var(--color-brand-soft)] px-3 py-1 text-xs font-bold text-[var(--color-brand-deep)]">
                     Timix 观察成员
                   </span>
-                )}
+                ) : null}
               </div>
               <p className="mt-3 text-sm text-[var(--color-muted)]">{formatJoinDate(profile.created_at)}</p>
               {currentUser && !isViewingSelf ? (

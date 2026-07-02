@@ -17,6 +17,7 @@ type UserProfileRow = {
   bio: string | null;
   tags: string[] | null;
   personality_tags: string[] | null;
+  custom_title?: string | null;
   created_at: string | null;
 };
 
@@ -25,6 +26,7 @@ type UserProfile = {
   avatar_url: string | null;
   bio: string | null;
   tags: string[];
+  custom_title: string | null;
   created_at: string | null;
 };
 
@@ -51,6 +53,7 @@ function normalizeProfile(row: UserProfileRow): UserProfile {
       .filter((tag): tag is string => typeof tag === "string" && tag.trim().length > 0)
       .map((tag) => tag.trim())
       .slice(0, 5),
+    custom_title: row.custom_title ?? null,
     created_at: row.created_at,
   };
 }
@@ -128,6 +131,7 @@ export function UserProfileCard({ userId, position, viewerUserId, onClose }: Use
   const [isAnimating, setIsAnimating] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const [isDMOpen, setIsDMOpen] = useState(false);
+  const [role, setRole] = useState<"owner" | "admin" | "user">("user");
   const cardRef = useRef<HTMLDivElement>(null);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isClosingRef = useRef(false);
@@ -169,14 +173,36 @@ export function UserProfileCard({ userId, position, viewerUserId, onClose }: Use
     let cancelled = false;
     (async () => {
       setLoading(true);
+      setRole("user");
       try {
-        const { data } = await getSupabaseClient()
+        const supabase = getSupabaseClient();
+        const profileResult = await supabase
           .from("forum_profiles")
-          .select("display_name, avatar_url, bio, tags, created_at")
+          .select("display_name, avatar_url, bio, tags, custom_title, created_at")
           .eq("id", userId)
           .single();
+        let data: any = profileResult.data;
+        const error = profileResult.error;
+        if (error) {
+          const fallback = await supabase
+            .from("forum_profiles")
+            .select("display_name, avatar_url, bio, tags, created_at")
+            .eq("id", userId)
+            .single();
+          data = fallback.data;
+        }
         if (!cancelled && data) {
           setProfile(normalizeProfile(data as UserProfileRow));
+        }
+
+        const { data: isOwner } = await supabase.rpc("is_site_owner", { check_user_id: userId });
+        if (!cancelled && isOwner) {
+          setRole("owner");
+          return;
+        }
+        const { data: isAdmin } = await supabase.rpc("is_forum_admin", { check_user_id: userId });
+        if (!cancelled && isAdmin) {
+          setRole("admin");
         }
       } catch {
         // ignore
@@ -257,6 +283,7 @@ export function UserProfileCard({ userId, position, viewerUserId, onClose }: Use
       : "简介已经补上，再加几个标签会更像完整名片。"
     : "还缺一句能代表自己的介绍，进入主页补完后展示会更完整。";
   const isOwnProfile = viewerUserId === userId;
+  const customTitle = profile?.custom_title?.trim() ?? "";
   const profilePreviewHint = "点击或右键讨论区头像/昵称会打开这张公开档案预览；完整个人主页仍用于管理自己的资料。";
   const identityRows = [
     { label: "档案编号", value: archiveId },
@@ -348,9 +375,26 @@ export function UserProfileCard({ userId, position, viewerUserId, onClose }: Use
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <p className="truncate text-lg font-black text-[var(--color-ink)]">{name}</p>
-                  <span className="rounded-full bg-[var(--color-brand)]/10 px-2.5 py-1 text-[10px] font-bold text-[var(--color-brand-deep)] ring-1 ring-[var(--color-brand)]/15">
+                  {role === "owner" ? (
+                    <span className="rounded border border-red-500/20 bg-red-500/10 px-2 py-0.5 text-[10px] font-bold text-red-500">
+                      TiMix 站主
+                    </span>
+                  ) : null}
+                  {role === "admin" ? (
+                    <span className="rounded border border-blue-500/20 bg-blue-500/10 px-2 py-0.5 text-[10px] font-bold text-blue-400">
+                      管理员
+                    </span>
+                  ) : null}
+                  {customTitle ? (
+                    <span className="rounded-md border border-purple-500/20 bg-purple-500/10 px-2 py-0.5 text-[10px] font-bold text-purple-400">
+                      {customTitle}
+                    </span>
+                  ) : null}
+                  {role === "user" && !customTitle ? (
+                    <span className="rounded-full bg-[var(--color-brand)]/10 px-2.5 py-1 text-[10px] font-bold text-[var(--color-brand-deep)] ring-1 ring-[var(--color-brand)]/15">
                     Timix 观察成员
-                  </span>
+                    </span>
+                  ) : null}
                 </div>
                 <p className="mt-2 text-xs text-[var(--color-muted)]">{joinDate}</p>
                 <p className="mt-1 text-xs font-medium text-[var(--color-brand-deep)]">{completenessLabel}</p>

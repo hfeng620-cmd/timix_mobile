@@ -34,6 +34,8 @@ type CommentItem = {
   authorId: string;
   authorName: string;
   authorAvatar: string | null;
+  authorRole?: "owner" | "admin" | "user";
+  authorCustomTitle?: string | null;
   content: string;
   createdAt: string;
   likedBy: Set<string>;
@@ -63,6 +65,28 @@ function normalizePostLikers(likes: PostNode["likes"]): Liker[] {
 
 function getPostLikesCount(likes: PostNode["likes"]): number {
   return Array.isArray(likes) ? likes.length : likes;
+}
+
+function RoleTitleBadges({ role, customTitle }: { role?: "owner" | "admin" | "user"; customTitle?: string | null }) {
+  return (
+    <>
+      {role === "owner" ? (
+        <span className="rounded border border-red-500/20 bg-red-500/10 px-2 py-0.5 text-[10px] font-bold text-red-500">
+          TiMix 站主
+        </span>
+      ) : null}
+      {role === "admin" ? (
+        <span className="rounded border border-blue-500/20 bg-blue-500/10 px-2 py-0.5 text-[10px] font-bold text-blue-400">
+          管理员
+        </span>
+      ) : null}
+      {customTitle ? (
+        <span className="rounded-md border border-purple-500/20 bg-purple-500/10 px-2 py-0.5 text-[10px] font-bold text-purple-400">
+          {customTitle}
+        </span>
+      ) : null}
+    </>
+  );
 }
 
 type SlashEmojiItem = {
@@ -353,8 +377,9 @@ function NestedReplyModal({
               </span>
             )}
             <div className="min-w-0">
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <span className="text-sm font-medium text-white/80 font-body">{rootComment.authorName}</span>
+                <RoleTitleBadges role={rootComment.authorRole} customTitle={rootComment.authorCustomTitle} />
                 <span className="text-[11px] text-gray-500 font-body">{formatRelativeTime(rootComment.createdAt)}</span>
               </div>
               <div className="mt-1 whitespace-pre-wrap break-words text-sm leading-relaxed text-white/60 font-body">
@@ -392,8 +417,9 @@ function NestedReplyModal({
                   </span>
                 )}
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <span className="text-sm font-medium text-white/70 font-body">{reply.authorName}</span>
+                    <RoleTitleBadges role={reply.authorRole} customTitle={reply.authorCustomTitle} />
                     <span className="text-[11px] text-gray-500 font-body">{formatRelativeTime(reply.createdAt)}</span>
                   </div>
                   <div className="mt-1 whitespace-pre-wrap break-words text-sm leading-relaxed text-white/45 font-body">
@@ -521,6 +547,8 @@ export function PostDetailModal({ post, onClose, onEdit }: Props) {
           authorId: r.authorId,
           authorName: r.authorName,
           authorAvatar: r.authorAvatar,
+          authorRole: r.authorRole,
+          authorCustomTitle: r.authorCustomTitle,
           content: r.body,
           createdAt: r.createdAt,
           likedBy: new Set<string>(),
@@ -620,6 +648,8 @@ export function PostDetailModal({ post, onClose, onEdit }: Props) {
         authorId: saved.authorId,
         authorName: saved.authorName,
         authorAvatar: saved.authorAvatar,
+        authorRole: saved.authorRole,
+        authorCustomTitle: saved.authorCustomTitle,
         content: saved.body,
         createdAt: saved.createdAt,
         likedBy: new Set(),
@@ -659,6 +689,8 @@ export function PostDetailModal({ post, onClose, onEdit }: Props) {
           authorId: saved.authorId,
           authorName: saved.authorName,
           authorAvatar: saved.authorAvatar,
+          authorRole: saved.authorRole,
+          authorCustomTitle: saved.authorCustomTitle,
           content: saved.body,
           createdAt: saved.createdAt,
           likedBy: new Set(),
@@ -1032,7 +1064,7 @@ export function PostDetailModal({ post, onClose, onEdit }: Props) {
                                 </span>
                               )}
                             <div className="min-w-0 flex-1">
-                              <div className="flex items-center gap-2">
+                              <div className="flex flex-wrap items-center gap-2">
                                 {root.authorId ? (
                                   <Link
                                     className="text-sm font-medium text-white/70 font-body transition hover:text-white"
@@ -1044,6 +1076,7 @@ export function PostDetailModal({ post, onClose, onEdit }: Props) {
                                 ) : (
                                   <span className="text-sm font-medium text-white/70 font-body">{root.authorName}</span>
                                 )}
+                                <RoleTitleBadges role={root.authorRole} customTitle={root.authorCustomTitle} />
                                 <span className="text-[11px] text-gray-500 font-body">{formatRelativeTime(root.createdAt)}</span>
                               </div>
                               <div className="mt-1 whitespace-pre-wrap break-words text-sm leading-relaxed text-white/45 font-body">
@@ -1092,18 +1125,21 @@ export function PostDetailModal({ post, onClose, onEdit }: Props) {
                                       </span>
                                     )}
                                     <div className="min-w-0">
-                                      {reply.authorId ? (
-                                        <Link
-                                          className="text-xs font-medium text-white/60 font-body transition hover:text-white"
-                                          href={getUserProfileHref(reply.authorId)}
-                                          onClick={(event) => event.stopPropagation()}
-                                        >
-                                          {reply.authorName}
-                                        </Link>
-                                      ) : (
-                                        <span className="text-xs font-medium text-white/60 font-body">{reply.authorName}</span>
-                                      )}
-                                      <span className="ml-1.5 text-[10px] text-gray-500 font-body">{formatRelativeTime(reply.createdAt)}</span>
+                                      <div className="flex flex-wrap items-center gap-1.5">
+                                        {reply.authorId ? (
+                                          <Link
+                                            className="text-xs font-medium text-white/60 font-body transition hover:text-white"
+                                            href={getUserProfileHref(reply.authorId)}
+                                            onClick={(event) => event.stopPropagation()}
+                                          >
+                                            {reply.authorName}
+                                          </Link>
+                                        ) : (
+                                          <span className="text-xs font-medium text-white/60 font-body">{reply.authorName}</span>
+                                        )}
+                                        <RoleTitleBadges role={reply.authorRole} customTitle={reply.authorCustomTitle} />
+                                        <span className="text-[10px] text-gray-500 font-body">{formatRelativeTime(reply.createdAt)}</span>
+                                      </div>
                                       <div className="mt-0.5 whitespace-pre-wrap break-words text-xs leading-relaxed text-white/35 font-body">
                                         <MarkdownContent
                                           text={reply.content}

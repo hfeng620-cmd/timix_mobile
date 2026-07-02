@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { MessageSquare } from "lucide-react";
+import { MessageSquare, Pencil } from "lucide-react";
 
 import { Navbar } from "@/components/navbar";
 import { AdminDropManager } from "@/components/admin-drop-manager";
@@ -96,6 +96,7 @@ type AdminUserListItem = {
   last_seen: string | null;
   is_online: boolean;
   total_replies: number;
+  custom_title: string;
 };
 
 function getErrorMessage(error: unknown, fallback: string) {
@@ -123,6 +124,31 @@ function formatLastSeen(lastSeen: string): string {
   if (hours < 24) return `${hours}小时前`;
   const days = Math.floor(hours / 24);
   return `${days}天前`;
+}
+
+async function loadCustomTitleMap(
+  supabase: ReturnType<typeof getSupabaseClient>,
+  userIds: string[],
+) {
+  const ids = Array.from(new Set(userIds.filter(Boolean)));
+  const titleMap = new Map<string, string>();
+  if (ids.length === 0) return titleMap;
+
+  try {
+    const { data, error } = await supabase
+      .from("forum_profiles")
+      .select("id, custom_title")
+      .in("id", ids);
+    if (error) throw error;
+    for (const row of (data ?? []) as Array<{ id?: string; custom_title?: string | null }>) {
+      if (!row.id) continue;
+      titleMap.set(row.id, row.custom_title?.trim() ?? "");
+    }
+  } catch {
+    // custom_title is migration-backed; older databases should still render user management.
+  }
+
+  return titleMap;
 }
 
 export default function AdminPage() {
@@ -215,6 +241,9 @@ export default function AdminPage() {
   const [userActionStatus, setUserActionStatus] = useState("");
   const [togglingUserId, setTogglingUserId] = useState<string | null>(null);
   const [activeChatUser, setActiveChatUser] = useState<AdminUserListItem | null>(null);
+  const [editingTitleUser, setEditingTitleUser] = useState<AdminUserListItem | null>(null);
+  const [titleDraft, setTitleDraft] = useState("");
+  const [titleSaving, setTitleSaving] = useState(false);
 
   const isMountedRef = useRef(true);
   const statsRequestRef = useRef(0);
@@ -238,7 +267,7 @@ export default function AdminPage() {
       const supabase = getSupabaseClient();
 
       // Try the enhanced RPC first (includes email, last_seen, is_online)
-      let rpcUsers: { id: string; display_name: string; avatar_url: string | null; created_at: string; isAdmin: boolean; email: string; last_seen: string | null; is_online: boolean; total_replies: number }[] | null = null;
+      let rpcUsers: AdminUserListItem[] | null = null;
       try {
         const { data: rpcData, error: rpcError } = await supabase.rpc("get_admin_user_list");
         if (rpcError) throw rpcError;
@@ -257,6 +286,7 @@ export default function AdminPage() {
             last_seen: u.last_seen ?? null,
             is_online: Boolean(u.is_online),
             total_replies: u.total_replies ?? 0,
+            custom_title: "",
           }));
         }
       } catch {
@@ -264,15 +294,24 @@ export default function AdminPage() {
       }
 
       if (rpcUsers) {
+        const titleMap = await loadCustomTitleMap(supabase, rpcUsers.map((user) => user.id));
+        rpcUsers = rpcUsers.map((user) => ({
+          ...user,
+          custom_title: titleMap.get(user.id) ?? user.custom_title,
+        }));
         if (!isMountedRef.current || requestId !== userListRequestRef.current) return;
         setUserList(rpcUsers);
         setUserActionStatus("");
       } else {
         // Fallback: original behavior without online status
-        const [profilesRes, adminsRes] = await Promise.all([
-          supabase.from("forum_profiles").select("id, display_name, avatar_url, created_at").order("created_at", { ascending: false }).limit(100),
+        const [profilesWithTitleRes, adminsRes] = await Promise.all([
+          supabase.from("forum_profiles").select("id, display_name, avatar_url, custom_title, created_at").order("created_at", { ascending: false }).limit(100),
           supabase.from("forum_admins").select("user_id"),
         ]);
+        let profilesRes: typeof profilesWithTitleRes | Awaited<ReturnType<typeof supabase.from>> | any = profilesWithTitleRes;
+        if (profilesRes.error) {
+          profilesRes = await supabase.from("forum_profiles").select("id, display_name, avatar_url, created_at").order("created_at", { ascending: false }).limit(100);
+        }
         if (profilesRes.error) throw profilesRes.error;
         if (adminsRes.error) throw adminsRes.error;
         const adminIds = new Set(((adminsRes.data ?? []) as { user_id: string }[]).map((a) => a.user_id));
@@ -299,6 +338,7 @@ export default function AdminPage() {
           last_seen: null as string | null,
           is_online: false,
           total_replies: u.total_replies ?? 0,
+          custom_title: (u.custom_title ?? "").trim(),
         }));
         if (!isMountedRef.current || requestId !== userListRequestRef.current) return;
         setUserList(users);
@@ -331,6 +371,40 @@ export default function AdminPage() {
       setUserActionStatus(`操作失败：${getErrorMessage(error, "未知错误")}`);
     } finally {
       setTogglingUserId(null);
+    }
+  }
+
+  function openTitleEditor(user: AdminUserListItem) {
+    setEditingTitleUser(user);
+    setTitleDraft(user.custom_title ?? "");
+    setUserActionStatus("");
+  }
+
+  async function saveCustomTitle() {
+    if (!editingTitleUser) return;
+    const nextTitle = titleDraft.trim();
+    setTitleSaving(true);
+    setUserActionStatus("");
+    try {
+      const { error } = await getSupabaseClient().rpc("set_user_custom_title", {
+        p_user_id: editingTitleUser.id,
+        p_custom_title: nextTitle,
+      });
+      if (error) throw error;
+
+      setUserList((current) =>
+        current.map((user) =>
+          user.id === editingTitleUser.id ? { ...user, custom_title: nextTitle } : user,
+        ),
+      );
+      setEditingTitleUser(null);
+      setTitleDraft("");
+      await loadUsers();
+      setUserActionStatus(nextTitle ? "自定义头衔已保存。" : "自定义头衔已清空。");
+    } catch (error) {
+      setUserActionStatus(`头衔保存失败：${getErrorMessage(error, "请确认已运行 custom_title 数据库迁移。")}`);
+    } finally {
+      setTitleSaving(false);
     }
   }
 
@@ -2392,8 +2466,13 @@ export default function AdminPage() {
                       <div className="flex items-center gap-2">
                         <p className="font-semibold text-white text-sm">{user.display_name}</p>
                         {user.isAdmin && (
-                          <span className="shrink-0 rounded-full bg-amber-400/15 px-2 py-0.5 text-[10px] font-bold text-amber-400">管理员</span>
+                          <span className="shrink-0 rounded border border-blue-500/20 bg-blue-500/10 px-2 py-0.5 text-[10px] font-bold text-blue-400">管理员</span>
                         )}
+                        {user.custom_title ? (
+                          <span className="shrink-0 rounded-md border border-purple-500/20 bg-purple-500/10 px-2 py-0.5 text-[10px] font-bold text-purple-400">
+                            {user.custom_title}
+                          </span>
+                        ) : null}
                       </div>
                       <p className="text-xs text-white/35 font-body mt-0.5">{user.email}</p>
                       <p className="text-xs text-white/25 font-body mt-0.5">
@@ -2422,6 +2501,18 @@ export default function AdminPage() {
                       >
                         <MessageSquare className="h-4 w-4" />
                       </button>
+                      <button
+                        aria-label={`设置 ${user.display_name} 的自定义头衔`}
+                        className="flex shrink-0 items-center justify-center rounded-lg bg-zinc-900/50 p-2 text-zinc-500 shadow-sm transition-all hover:bg-purple-500/10 hover:text-purple-400"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          openTitleEditor(user);
+                        }}
+                        title="设置头衔"
+                        type="button"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
 
                       {isOwner && (
                         <button
@@ -2449,6 +2540,68 @@ export default function AdminPage() {
           onClose={() => setActiveChatUser(null)}
           targetUser={activeChatUser}
         />
+      )}
+
+      {editingTitleUser && (
+        <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm">
+          <form
+            aria-labelledby="custom-title-modal-title"
+            aria-modal="true"
+            className="w-full max-w-md overflow-hidden rounded-[24px] border border-white/10 bg-zinc-950 shadow-[0_24px_80px_rgba(0,0,0,0.45)]"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void saveCustomTitle();
+            }}
+            role="dialog"
+          >
+            <div className="border-b border-white/10 px-6 py-4">
+              <h2 id="custom-title-modal-title" className="text-lg font-bold text-white">设置自定义头衔</h2>
+              <p className="mt-1 text-sm text-white/45">
+                给 {editingTitleUser.display_name} 发一个紫色身份牌。
+              </p>
+            </div>
+            <div className="px-6 py-5">
+              <label className="block text-xs font-bold uppercase tracking-[0.18em] text-white/35" htmlFor="custom-title-input">
+                自定义头衔
+              </label>
+              <input
+                autoFocus
+                className="mt-3 w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-semibold text-white outline-none transition placeholder:text-white/25 focus:border-purple-500/50 focus:bg-purple-500/10"
+                id="custom-title-input"
+                maxLength={40}
+                onChange={(event) => setTitleDraft(event.target.value)}
+                placeholder="例如：群星观测员"
+                value={titleDraft}
+              />
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+                <span className="rounded-md border border-purple-500/20 bg-purple-500/10 px-2 py-0.5 text-xs font-bold text-purple-400">
+                  {titleDraft.trim() || "紫色头衔预览"}
+                </span>
+                <span className="text-xs text-white/35">{titleDraft.trim().length}/40</span>
+              </div>
+            </div>
+            <div className="flex flex-col-reverse gap-3 border-t border-white/10 px-6 py-4 sm:flex-row sm:justify-end">
+              <button
+                className="rounded-xl border border-white/10 px-4 py-2 text-sm font-semibold text-white/60 transition hover:bg-white/10 hover:text-white disabled:opacity-50"
+                disabled={titleSaving}
+                onClick={() => {
+                  setEditingTitleUser(null);
+                  setTitleDraft("");
+                }}
+                type="button"
+              >
+                取消
+              </button>
+              <button
+                className="rounded-xl bg-purple-500/20 px-4 py-2 text-sm font-bold text-purple-200 ring-1 ring-purple-500/30 transition hover:bg-purple-500/30 disabled:opacity-50"
+                disabled={titleSaving}
+                type="submit"
+              >
+                {titleSaving ? "保存中..." : "保存头衔"}
+              </button>
+            </div>
+          </form>
+        </div>
       )}
 
       {/* ── Announcement confirmation dialog ── */}
