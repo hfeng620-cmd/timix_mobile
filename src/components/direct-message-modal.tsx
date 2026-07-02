@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Loader2, Lock, MessageCircle, Send, Sparkles, X } from "lucide-react";
 
+import { EmojiPickerButton } from "@/components/emoji-picker-button";
 import {
   loadDirectMessageProfile,
   loadDirectMessages,
@@ -107,6 +108,7 @@ export function DirectMessageModal({
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const overlayRef = useRef<HTMLDivElement | null>(null);
@@ -165,6 +167,7 @@ export function DirectMessageModal({
     setDraft("");
     setError(null);
     setProfile(null);
+    setShowEmojiPicker(false);
   }, [open, peerId]);
 
   useEffect(() => {
@@ -232,7 +235,10 @@ export function DirectMessageModal({
     if (!canSend || !peerId || !user?.id || sending) return;
 
     const content = draft.trim();
-    if (!content) return;
+    if (!content) {
+      textareaRef.current?.focus();
+      return;
+    }
 
     setSending(true);
     setError(null);
@@ -245,7 +251,24 @@ export function DirectMessageModal({
       setError(sendError instanceof Error ? sendError.message : "私信发送失败，请稍后重试。");
     } finally {
       setSending(false);
+      requestAnimationFrame(() => textareaRef.current?.focus());
     }
+  }
+
+  function insertEmojiAtCursor(emoji: string) {
+    const textarea = textareaRef.current;
+    const start = textarea?.selectionStart ?? draft.length;
+    const end = textarea?.selectionEnd ?? start;
+    const nextDraft = `${draft.slice(0, start)}${emoji}${draft.slice(end)}`;
+    const nextCursor = start + emoji.length;
+
+    setDraft(nextDraft);
+    requestAnimationFrame(() => {
+      const node = textareaRef.current;
+      if (!node) return;
+      node.focus();
+      node.setSelectionRange(nextCursor, nextCursor);
+    });
   }
 
   if (!mounted || !open) return null;
@@ -398,7 +421,7 @@ export function DirectMessageModal({
           <div className="relative">
             <textarea
               ref={textareaRef}
-              className="min-h-[82px] w-full resize-none rounded-3xl border border-white/10 bg-white/[0.06] px-4 py-3 pr-16 text-sm leading-6 text-zinc-100 outline-none transition placeholder:text-zinc-500 focus:border-sky-300/40 focus:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-60"
+              className="min-h-[82px] w-full resize-none rounded-3xl border border-white/10 bg-white/[0.06] px-4 py-3 pr-28 text-sm leading-6 text-zinc-100 outline-none transition placeholder:text-zinc-500 focus:border-sky-300/40 focus:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-60"
               disabled={!canSend || sending}
               onChange={(event) => setDraft(event.target.value)}
               onKeyDown={(event) => {
@@ -412,6 +435,18 @@ export function DirectMessageModal({
               rows={3}
               value={draft}
             />
+            <div className="absolute bottom-3 right-14">
+              <EmojiPickerButton
+                align="right"
+                buttonClassName="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.06] text-zinc-400 transition hover:border-white/20 hover:bg-white/[0.1] hover:text-white disabled:cursor-not-allowed disabled:opacity-45"
+                disabled={!canSend || sending}
+                iconClassName="h-4 w-4"
+                onClose={() => setShowEmojiPicker(false)}
+                onEmojiSelect={insertEmojiAtCursor}
+                onToggle={() => setShowEmojiPicker((current) => !current)}
+                open={showEmojiPicker}
+              />
+            </div>
             <button
               aria-label="发送私信"
               className="absolute bottom-3 right-3 inline-flex h-10 w-10 items-center justify-center rounded-full bg-white text-zinc-950 shadow-lg shadow-black/20 transition hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-45"
