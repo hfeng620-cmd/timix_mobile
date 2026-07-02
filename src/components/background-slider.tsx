@@ -7,15 +7,13 @@ const INTERVAL_MS = 9000;
 
 export function BackgroundSlider() {
   const [current, setCurrent] = useState(0);
-  const [previous, setPrevious] = useState<number | null>(null);
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setPrevious(current);
       setCurrent((prev) => (prev + 1) % IMAGES.length);
     }, INTERVAL_MS);
     return () => clearInterval(timer);
-  }, [current]);
+  }, []);
 
   return (
     <div className="pointer-events-none fixed inset-0 z-0 h-full w-full">

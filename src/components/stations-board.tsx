@@ -1916,6 +1916,7 @@ export function StationsBoard() {
                   hideComposer={false}
                   hideHeader={true}
                   title={`${discussionStation.name} 讨论`}
+                  stationId={discussionStation.id}
                   stationFilter={discussionStation.name}
                   showSyncButton={true}
                 />

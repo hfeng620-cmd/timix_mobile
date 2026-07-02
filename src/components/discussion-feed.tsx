@@ -27,6 +27,7 @@ import {
 } from "@/lib/discussion-storage";
 import { FORUM_IMAGE_ACCEPT } from "@/lib/forum-image-safety";
 import { useForumAuth } from "@/lib/forum-auth";
+import { getStation } from "@/lib/station-storage";
 import { getUserProfileHref } from "@/lib/user-profile-url";
 import { ForumPostModal } from "@/components/forum-post-modal";
 import { ImageLightbox } from "@/components/image-lightbox";
@@ -39,6 +40,7 @@ type DiscussionFeedProps = {
   hideComposer?: boolean;
   hideHeader?: boolean;
   limit?: number;
+  stationId?: string;
   stationFilter?: string;
   showSyncButton?: boolean;
 };
@@ -255,6 +257,7 @@ export function DiscussionFeed({
   hideComposer = false,
   hideHeader = false,
   limit,
+  stationId,
   stationFilter,
   showSyncButton = false,
 }: DiscussionFeedProps) {
@@ -298,12 +301,33 @@ export function DiscussionFeed({
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [totalCount, setTotalCount] = useState(0);
   const [feedCursor, setFeedCursor] = useState<string | null>(null);
+  const [resolvedStationFilter, setResolvedStationFilter] = useState(stationFilter ?? "");
   const pageSize = limit ?? 20;
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!stationId) {
+      setResolvedStationFilter(stationFilter ?? "");
+      return;
+    }
+
+    setResolvedStationFilter(stationFilter ?? "");
+    getStation(stationId).then((stationRecord) => {
+      if (!cancelled && stationRecord?.name) {
+        setResolvedStationFilter(stationRecord.name);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [stationId, stationFilter]);
 
   // Execute server-side search with debounce
   const executeSearch = useCallback(
     async (query: string, tag: string | null, sort: string, cursor: string | null = null, append = false) => {
-      if (!query.trim() && !tag && !stationFilter) {
+      if (!query.trim() && !tag && !resolvedStationFilter) {
         // No search active — use regular paginated load
         return;
       }
@@ -320,7 +344,7 @@ export function DiscussionFeed({
           sort: sort as "latest" | "mostReplies" | "mostLikes",
           limit: pageSize,
           cursor,
-          station: stationFilter,
+          station: resolvedStationFilter || undefined,
         });
         if (append) {
           setSearchResult((current) =>
@@ -344,7 +368,7 @@ export function DiscussionFeed({
         setLoadingMore(false);
       }
     },
-    [pageSize, stationFilter],
+    [pageSize, resolvedStationFilter],
   );
 
   // Debounced search effect
@@ -477,8 +501,8 @@ export function DiscussionFeed({
     setError(null);
 
     try {
-      const result = stationFilter
-        ? await loadStationDiscussionPosts(stationFilter, pageSize)
+      const result = resolvedStationFilter
+        ? await loadStationDiscussionPosts(resolvedStationFilter, pageSize)
         : await loadDiscussionPostsPaginated(pageSize);
       setPosts(result.posts);
       setFeedCursor(result.nextCursor);
@@ -488,14 +512,14 @@ export function DiscussionFeed({
     } finally {
       if (setLoadingState) setLoading(false);
     }
-  }, [pageSize, stationFilter]);
+  }, [pageSize, resolvedStationFilter]);
 
   const loadMoreFeed = useCallback(async () => {
     if (!feedCursor || loadingMore) return;
     setLoadingMore(true);
     try {
-      const result = stationFilter
-        ? await loadStationDiscussionPosts(stationFilter, pageSize, feedCursor)
+      const result = resolvedStationFilter
+        ? await loadStationDiscussionPosts(resolvedStationFilter, pageSize, feedCursor)
         : await loadDiscussionPostsPaginated(pageSize, feedCursor);
       setPosts((prev) => [...prev, ...result.posts]);
       setFeedCursor(result.nextCursor);
@@ -504,13 +528,13 @@ export function DiscussionFeed({
       // ignore
     }
     setLoadingMore(false);
-  }, [feedCursor, loadingMore, pageSize, stationFilter]);
+  }, [feedCursor, loadingMore, pageSize, resolvedStationFilter]);
 
   useEffect(() => {
     let cancelled = false;
 
-    const loadFn = stationFilter
-      ? () => loadStationDiscussionPosts(stationFilter, pageSize)
+    const loadFn = resolvedStationFilter
+      ? () => loadStationDiscussionPosts(resolvedStationFilter, pageSize)
       : () => loadDiscussionPostsPaginated(pageSize);
 
     loadFn()
@@ -530,7 +554,7 @@ export function DiscussionFeed({
     return () => {
       cancelled = true;
     };
-  }, [pageSize, stationFilter]);
+  }, [pageSize, resolvedStationFilter]);
 
   const topTags = useMemo(() => {
     const counts = new Map<string, number>();
@@ -595,7 +619,7 @@ export function DiscussionFeed({
         ? "按点赞优先"
         : "按最新优先";
   const activeFilters = [
-    stationFilter ? `站点 ${stationFilter}` : null,
+    resolvedStationFilter ? `站点 ${resolvedStationFilter}` : null,
     searchQuery.trim() ? `搜索 ${searchQuery.trim()}` : null,
     selectedTag ? `标签 #${selectedTag}` : null,
     bookmarksOnly ? "只看收藏" : null,
@@ -959,8 +983,8 @@ export function DiscussionFeed({
             </p>
             <h2 className="mt-2 text-2xl font-black tracking-tight">{title}</h2>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--color-muted)]">
-              {stationFilter
-                ? `围绕 ${stationFilter} 聚合最新反馈，优先处理当下短流。`
+              {resolvedStationFilter
+                ? `围绕 ${resolvedStationFilter} 聚合最新反馈，优先处理当下短流。`
                 : "把新动态、筛选和重点讨论收在同一工作台里。"}
             </p>
           </div>
@@ -1236,7 +1260,7 @@ export function DiscussionFeed({
                   </button>
                   <a
                     className="rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] px-4 py-2 text-sm font-bold text-[var(--color-ink)] transition hover:border-[var(--color-brand)] hover:text-[var(--color-brand-deep)]"
-                    href={stationFilter ? "/community#community-composer" : "#community-composer"}
+                    href={resolvedStationFilter ? "/community#community-composer" : "#community-composer"}
                   >
                     发起新讨论
                   </a>
@@ -1275,7 +1299,7 @@ export function DiscussionFeed({
                 <div className="mt-5 flex flex-wrap justify-center gap-2">
                   <a
                     className="rounded-full bg-[var(--color-brand)] px-5 py-2.5 text-sm font-bold text-[var(--color-on-brand)] shadow-[0_12px_24px_var(--color-panel-glow)] transition hover:bg-[var(--color-brand-deep)]"
-                    href={stationFilter ? "/community#community-composer" : "#community-composer"}
+                    href={resolvedStationFilter ? "/community#community-composer" : "#community-composer"}
                   >
                     去发第一条
                   </a>
@@ -1302,7 +1326,7 @@ export function DiscussionFeed({
               key={post.issueNumber}
               className={`surface-in card-lift rounded-[24px] border border-[var(--color-line)] bg-[var(--color-panel)] px-4 py-4 transition duration-200 hover:border-[var(--color-brand)] hover:bg-[linear-gradient(180deg,var(--color-panel),var(--color-soft))] sm:px-5 ${
                 post.is_pinned ? "bg-[linear-gradient(180deg,var(--color-brand-soft),var(--color-panel))] shadow-[0_16px_44px_var(--color-panel-glow)]" : ""
-              } ${stationFilter ? "xl:col-span-2" : ""}`}
+              } ${resolvedStationFilter ? "xl:col-span-2" : ""}`}
               style={createFeedItemStyle(index)}
             >
               <button
@@ -1524,7 +1548,7 @@ export function DiscussionFeed({
                       <span className="text-xs font-semibold">{isBookmarked ? "已收藏" : "收藏"}</span>
                     </button>
                     {/* Sync to main discussion button (only in station view) */}
-                    {showSyncButton && stationFilter && (
+                    {showSyncButton && resolvedStationFilter && (
                       <a
                         className="inline-flex min-h-[40px] min-w-[40px] items-center justify-center gap-1.5 rounded-full px-3 py-2 text-xs font-bold text-[var(--color-brand-deep)] transition hover:bg-[var(--color-brand-soft)] sm:min-h-[44px] sm:min-w-[44px]"
                         href="/community"

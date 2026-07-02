@@ -272,6 +272,7 @@ export function RelayStationDetailModal({ station, open, onClose }: RelayStation
             <DiscussionFeed
               hideHeader
               showSyncButton
+              stationId={station.id}
               stationFilter={station.name}
               title={`${station.name} 用户评价与反馈`}
             />
