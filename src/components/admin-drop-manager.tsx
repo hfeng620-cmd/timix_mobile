@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { CheckCircle2, Gift, Loader2, UploadCloud } from "lucide-react";
+import { CheckCircle2, Gift, Loader2, Plus, Trash2, UploadCloud } from "lucide-react";
 
 import { createCampaignWithBulkCodes } from "@/lib/drop-storage";
 import { useForumAuth } from "@/lib/forum-auth";
@@ -11,9 +11,26 @@ const emptyForm = {
   sponsorName: "",
   sponsorUrl: "",
   description: "",
-  customQuestion: "",
-  customOptions: "",
 };
+
+type SurveyQuestionDraft = {
+  id: string;
+  question: string;
+  options: string;
+};
+
+type SurveyQuestionPayload = {
+  question: string;
+  options: string[];
+};
+
+function createEmptySurveyQuestion(): SurveyQuestionDraft {
+  return {
+    id: crypto.randomUUID(),
+    question: "",
+    options: "",
+  };
+}
 
 function parseCodes(text: string) {
   return text
@@ -22,9 +39,19 @@ function parseCodes(text: string) {
     .filter((code) => code.length > 0);
 }
 
+function parseSurveyOptions(options: string) {
+  return options
+    .split(/[,，]+/)
+    .map((option) => option.trim())
+    .filter(Boolean);
+}
+
 export function AdminDropManager() {
   const { isAdmin } = useForumAuth();
   const [form, setForm] = useState(emptyForm);
+  const [surveyQuestions, setSurveyQuestions] = useState<SurveyQuestionDraft[]>(() => [
+    createEmptySurveyQuestion(),
+  ]);
   const [bulkCodesText, setBulkCodesText] = useState("");
   const [status, setStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -37,7 +64,24 @@ export function AdminDropManager() {
 
   function resetForm() {
     setForm(emptyForm);
+    setSurveyQuestions([createEmptySurveyQuestion()]);
     setBulkCodesText("");
+  }
+
+  function addQuestion() {
+    setSurveyQuestions((next) => [...next, createEmptySurveyQuestion()]);
+  }
+
+  function removeQuestion(idToRemove: string) {
+    setSurveyQuestions((next) => (
+      next.length > 1 ? next.filter((question) => question.id !== idToRemove) : next
+    ));
+  }
+
+  function updateQuestion(id: string, field: "question" | "options", value: string) {
+    setSurveyQuestions((next) => next.map((question) => (
+      question.id === id ? { ...question, [field]: value } : question
+    )));
   }
 
   async function handlePublish() {
@@ -49,9 +93,32 @@ export function AdminDropManager() {
       return;
     }
 
+    const invalidQuestion = surveyQuestions.find((question) => {
+      const hasQuestion = question.question.trim().length > 0;
+      const hasOptions = parseSurveyOptions(question.options).length > 0;
+      return hasQuestion !== hasOptions;
+    });
+
+    if (invalidQuestion) {
+      setStatus({ type: "error", message: "问卷题目和选项需要成对填写；如果不需要该题，请留空。" });
+      return;
+    }
+
+    const validQuestions: SurveyQuestionPayload[] = surveyQuestions
+      .map((question) => ({
+        question: question.question.trim(),
+        options: parseSurveyOptions(question.options),
+      }))
+      .filter((question) => question.question && question.options.length > 0);
+
+    const surveyConfig = validQuestions.length > 0 ? JSON.stringify(validQuestions) : "";
+    const firstQuestion = validQuestions[0];
+
     setIsSubmitting(true);
     const result = await createCampaignWithBulkCodes({
       ...form,
+      customQuestion: surveyConfig,
+      customOptions: firstQuestion ? firstQuestion.options.join(", ") : "",
       codeList: nextCodeList,
     });
     setIsSubmitting(false);
@@ -137,29 +204,60 @@ export function AdminDropManager() {
             />
           </label>
           <div className="md:col-span-2 rounded-2xl border border-emerald-300/10 bg-emerald-300/[0.03] p-4">
-            <p className="text-sm font-semibold text-emerald-200">附加互动问卷 (可选)</p>
-            <p className="mt-1 text-xs text-zinc-500">
-              不填时会继续使用默认的 TiMix UI 评价问题；填写后领取弹窗会自动换成你这次活动的问题和选项。
-            </p>
-            <div className="mt-4 grid gap-4 md:grid-cols-2">
-              <label className="space-y-2 text-sm text-zinc-300">
-                <span>自定义问题</span>
-                <input
-                  value={form.customQuestion}
-                  onChange={(event) => setForm((next) => ({ ...next, customQuestion: event.target.value }))}
-                  className="w-full rounded-2xl border border-white/10 bg-zinc-950/70 px-4 py-3 text-white outline-none transition focus:border-emerald-300/60"
-                  placeholder="例如：你觉得本次活动的UI怎么样？"
-                />
-              </label>
-              <label className="space-y-2 text-sm text-zinc-300">
-                <span>自定义选项</span>
-                <input
-                  value={form.customOptions}
-                  onChange={(event) => setForm((next) => ({ ...next, customOptions: event.target.value }))}
-                  className="w-full rounded-2xl border border-white/10 bg-zinc-950/70 px-4 py-3 text-white outline-none transition focus:border-emerald-300/60"
-                  placeholder="例如：🔥 夯爆了, 🤖 NPC, 💩 拉完了 (请用逗号分隔)"
-                />
-              </label>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <p className="text-sm font-semibold text-emerald-200">附加互动问卷 (可选)</p>
+                <p className="mt-1 text-xs text-zinc-500">
+                  不填时使用默认评价；填写后用户需回答这里的所有问题才能领码。
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={addQuestion}
+                className="inline-flex items-center justify-center gap-1 rounded-full border border-emerald-300/20 bg-emerald-300/10 px-3 py-2 text-xs font-semibold text-emerald-200 transition hover:border-emerald-300/40 hover:bg-emerald-300/15"
+              >
+                <Plus className="h-4 w-4" />
+                添加问题
+              </button>
+            </div>
+            <div className="mt-4 space-y-4">
+              {surveyQuestions.map((surveyQuestion, index) => (
+                <div
+                  key={surveyQuestion.id}
+                  className="flex gap-3 rounded-2xl border border-white/5 bg-zinc-950/50 p-4"
+                >
+                  <div className="min-w-0 flex-1 space-y-4">
+                    <label className="space-y-2 text-sm text-zinc-300">
+                      <span>问题 {index + 1}</span>
+                      <input
+                        value={surveyQuestion.question}
+                        onChange={(event) => updateQuestion(surveyQuestion.id, "question", event.target.value)}
+                        className="w-full rounded-2xl border border-white/10 bg-zinc-950/70 px-4 py-3 text-white outline-none transition focus:border-emerald-300/60"
+                        placeholder="例如：你觉得 TiMix 这次福利活动怎么样？"
+                      />
+                    </label>
+                    <label className="space-y-2 text-sm text-zinc-300">
+                      <span>选项 (用逗号分隔，中文/英文逗号都可以)</span>
+                      <input
+                        value={surveyQuestion.options}
+                        onChange={(event) => updateQuestion(surveyQuestion.id, "options", event.target.value)}
+                        className="w-full rounded-2xl border border-white/10 bg-zinc-950/70 px-4 py-3 text-white outline-none transition focus:border-emerald-300/60"
+                        placeholder="例如：🔥 夯爆了, 🤖 还不错, 💩 需要改进"
+                      />
+                    </label>
+                  </div>
+                  {surveyQuestions.length > 1 ? (
+                    <button
+                      type="button"
+                      onClick={() => removeQuestion(surveyQuestion.id)}
+                      className="mt-8 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-zinc-500 transition hover:border-red-300/30 hover:bg-red-400/10 hover:text-red-300"
+                      aria-label={`删除问题 ${index + 1}`}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  ) : null}
+                </div>
+              ))}
             </div>
           </div>
           <label className="space-y-2 text-sm text-zinc-300 md:col-span-2">
