@@ -8,7 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "mobile:build": "next build && cap sync android",
+    "mobile:build": "next build && node scripts/flatten-mobile-css.mjs && cap sync android",
     "mobile:android": "npm run mobile:build && cap open android",
     "mobile:apk:debug": "npm run mobile:build && cd android && gradlew assembleDebug",
     "mobile:apk:release": "npm run mobile:build && cd android && gradlew assembleRelease",
