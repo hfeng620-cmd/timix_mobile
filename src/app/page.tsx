@@ -49,7 +49,7 @@ export default function Home() {
       <Navbar />
 
       <section className="relative overflow-visible" style={{ height: "1000px" }}>
-        <VideoBackground mp4Src={HERO_VIDEO} poster="/images/hero_bg.jpeg" topOffset="20%" className="z-0" />
+        <VideoBackground mp4Src={HERO_VIDEO} poster="/bg-1-hd.jpg" topOffset="20%" className="z-0" />
         <div className="pointer-events-none absolute inset-0 z-0 bg-black/5" />
         <div
           className="pointer-events-none absolute bottom-0 z-0 h-[300px] w-full"

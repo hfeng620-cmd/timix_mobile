@@ -40,20 +40,32 @@ export function VideoBackground({
   }, [hlsSrc, mp4Src]);
 
   return (
-    <video
-      ref={videoRef}
-      autoPlay
-      loop
-      muted
-      playsInline
-      poster={poster}
-      className={`pointer-events-none absolute left-0 h-auto w-full object-contain ${className}`}
-      style={{
-        top: topOffset,
-        filter: desaturated ? "saturate(0)" : undefined,
-      }}
-    >
-      {mp4Src && <source src={mp4Src} type="video/mp4" />}
-    </video>
+    <div className={`pointer-events-none absolute inset-0 overflow-hidden ${className}`}>
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 bg-cover bg-center"
+        style={{
+          backgroundImage: poster
+            ? `linear-gradient(rgba(0,0,0,0.18), rgba(0,0,0,0.18)), url(${poster})`
+            : "radial-gradient(circle at 35% 25%, rgba(34,211,238,0.16), transparent 34%), radial-gradient(circle at 72% 18%, rgba(217,70,239,0.12), transparent 30%), #000",
+          filter: desaturated ? "saturate(0)" : undefined,
+        }}
+      />
+      <video
+        ref={videoRef}
+        autoPlay
+        loop
+        muted
+        playsInline
+        poster={poster}
+        className="absolute inset-0 h-full w-full object-cover"
+        style={{
+          objectPosition: topOffset ? `center ${topOffset}` : "center center",
+          filter: desaturated ? "saturate(0)" : undefined,
+        }}
+      >
+        {mp4Src && <source src={mp4Src} type="video/mp4" />}
+      </video>
+    </div>
   );
 }
