@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
-import { lockBodyScroll } from "@/lib/body-scroll-lock";
 import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase";
 
 const DISMISS_PERMANENT_KEY = "timin-announce-dismissed-permanent";
@@ -168,15 +167,14 @@ export function AnnouncementModal() {
     if (!visible) return;
     function handleKeyDown(event: KeyboardEvent) { if (event.key === "Escape") setVisible(false); }
     document.addEventListener("keydown", handleKeyDown);
-    const unlock = lockBodyScroll();
-    return () => { document.removeEventListener("keydown", handleKeyDown); unlock(); };
+    return () => { document.removeEventListener("keydown", handleKeyDown); };
   }, [visible]);
 
   if (loadFailed || !visible || !announcement) return null;
 
   return (
-    <div aria-modal="true" className="fixed inset-0 z-[300] flex items-center justify-center bg-black/50 px-4 backdrop-blur-xl" role="dialog" onClick={() => setVisible(false)}>
-      <div ref={panelRef} aria-labelledby="announcement-title" className="w-full max-w-lg overflow-hidden rounded-[28px] border border-white/15 bg-white/6 shadow-2xl backdrop-blur-xl" onClick={(e) => e.stopPropagation()}>
+    <div aria-modal="false" className="pointer-events-none fixed inset-0 z-[300] flex items-center justify-center bg-black/50 px-4 backdrop-blur-xl" role="dialog">
+      <div ref={panelRef} aria-labelledby="announcement-title" className="pointer-events-auto w-full max-w-lg overflow-hidden rounded-[28px] border border-white/15 bg-white/6 shadow-2xl backdrop-blur-xl" onClick={(e) => e.stopPropagation()}>
         {/* Close button */}
         <button onClick={() => setVisible(false)} className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white/50 hover:bg-white/20 hover:text-white transition z-10" type="button" aria-label="关闭">
           <X className="h-4 w-4" />
