@@ -53,6 +53,12 @@
   --theme-glow-rgb: 255, 255, 255;
   --theme-secondary-rgb: 200, 200, 200;
   --theme-surface-rgb: 0, 0, 0;
+
+  /* Mobile safe-area */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
 }
 
 /* ═══════════════════════════════════════════
@@ -199,6 +205,8 @@ body {
   -moz-osx-font-smoothing: grayscale;
   min-height: 100%;
   overflow-x: hidden;
+  overscroll-behavior: none;
+  padding-top: var(--safe-top);
 }
 
 ::selection {
@@ -276,3 +284,78 @@ input, textarea, button { font: inherit; }
 }
 
 button[aria-label="Open Next.js Dev Tools"] { display: none !important; }
+
+
+/* ═══════════════════════════════════════════
+   Mobile App Shell — touch feedback, dvh, safe-area
+   ═══════════════════════════════════════════ */
+
+/* Touch press feedback */
+.touch-press {
+  transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  -webkit-tap-highlight-color: transparent;
+}
+.touch-press:active {
+  transform: scale(0.97);
+}
+
+@media (hover: none) and (pointer: coarse) {
+  button, a, [role="button"], label[for] {
+    -webkit-tap-highlight-color: transparent;
+  }
+  button:active, a:active, [role="button"]:active {
+    transform: scale(0.97);
+    transition: transform 0.1s ease;
+  }
+}
+
+/* dvh utilities */
+@supports (height: 100dvh) {
+  .h-dvh { height: 100dvh; }
+  .min-h-dvh { min-height: 100dvh; }
+  .max-h-dvh { max-height: 100dvh; }
+}
+
+/* Mobile bottom safe area */
+.pb-safe {
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), 12px);
+}
+
+/* Mobile modal bottom sheet */
+@media (max-width: 767px) {
+  .modal-sheet {
+    position: fixed !important;
+    inset: auto 0 0 0 !important;
+    max-height: 85dvh !important;
+    border-radius: 20px 20px 0 0 !important;
+    border-bottom: none !important;
+    padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+  }
+  .modal-sheet-backdrop {
+    padding-top: 0 !important;
+    align-items: flex-end !important;
+  }
+}
+
+/* Hide scrollbar on mobile */
+@media (hover: none) {
+  ::-webkit-scrollbar {
+    display: none;
+  }
+  * {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+/* Prevent double-tap zoom */
+* {
+  touch-action: manipulation;
+}
+
+/* Page content bottom padding for MobileDock */
+@media (max-width: 1023px) {
+  main#main-content {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+  }
+}
