@@ -1,5 +1,6 @@
 "use client";
 
+
 import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -12,6 +13,10 @@ const GlassBackground = dynamic(
 );
 
 export function BackgroundSliderWrapper() {
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    setIsMobile(window.innerWidth < 768 || /iPhone|iPad|iPod|Android/i.test(navigator.userAgent));
+  }, []);
   const pathname = usePathname();
   const [theme, setTheme] = useState<string | null>(null);
 
@@ -31,7 +36,7 @@ export function BackgroundSliderWrapper() {
     return () => observer.disconnect();
   }, []);
 
-  if (theme === "apple-light") {
+  if (theme === "apple-light" && !isMobile) {
     return <GlassBackground />;
   }
 

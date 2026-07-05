@@ -1237,7 +1237,7 @@ export default function AdminPage() {
     <div className="min-h-screen text-white">
       <Navbar />
 
-      <div className="mx-auto max-w-7xl px-6 pt-28 lg:px-10">
+      <div className="mx-auto max-w-7xl px-3 md:px-8 px-6 pt-28 lg:px-10">
         <div className="mb-8">
           <div className="liquid-glass mb-3 inline-block rounded-full px-3.5 py-1 text-xs font-medium text-white font-body">
             {isOwner ? "站主面板" : "管理员面板"}
@@ -1248,7 +1248,7 @@ export default function AdminPage() {
           <p className="mt-2 text-sm text-white/55 font-body">{email ?? "管理员"}</p>
         </div>
 
-      <div className="mx-auto max-w-7xl px-6 py-8 lg:px-10">
+      <div className="mx-auto max-w-7xl px-3 md:px-8 px-6 py-8 lg:px-10">
         {/* ---- Dashboard stats ---- */}
         <section className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
           <div className="rounded-[24px] border border-[var(--color-line)] bg-[var(--color-panel)] p-5 shadow-[0_8px_30px_rgba(13,25,48,0.05)]">
