@@ -347,8 +347,8 @@ button[aria-label="Open Next.js Dev Tools"] { display: none !important; }
   }
 }
 
-/* Prevent double-tap zoom */
-* {
+/* Prevent double-tap zoom on interactive elements only */
+a, button, [role="button"], input, select, textarea {
   touch-action: manipulation;
 }
 
