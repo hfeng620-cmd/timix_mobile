@@ -1,5 +1,6 @@
 "use client";
 
+import { lockBodyScroll } from "@/lib/body-scroll-lock";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef } from "react";
 import { Archive, Sparkles, X } from "lucide-react";
@@ -34,8 +35,8 @@ export function VersionSwitcherModal({ open, onClose }: Props) {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     document.addEventListener("keydown", onKey);
-    document.body.style.overflow = "hidden";
-    return () => { document.removeEventListener("keydown", onKey); document.body.style.overflow = ""; };
+    const unlock = lockBodyScroll();
+    return () => { document.removeEventListener("keydown", onKey); unlock(); };
   }, [open, onClose]);
 
   useEffect(() => {

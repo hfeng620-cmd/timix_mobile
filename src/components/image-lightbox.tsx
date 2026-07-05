@@ -1,5 +1,6 @@
 "use client";
 
+import { lockBodyScroll } from "@/lib/body-scroll-lock";
 import { useEffect } from "react";
 import { createPortal } from "react-dom";
 
@@ -14,7 +15,7 @@ export function ImageLightbox({ src, imageUrl, alt = "全屏大图", onClose }: 
   const resolvedSrc = imageUrl ?? src;
 
   useEffect(() => {
-    document.body.style.overflow = "hidden";
+    const unlock = lockBodyScroll();
 
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
@@ -24,7 +25,7 @@ export function ImageLightbox({ src, imageUrl, alt = "全屏大图", onClose }: 
 
     window.addEventListener("keydown", handleKeyDown);
     return () => {
-      document.body.style.overflow = "unset";
+      unlock();
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [onClose]);

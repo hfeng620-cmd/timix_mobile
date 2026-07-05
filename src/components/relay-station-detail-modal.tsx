@@ -1,5 +1,6 @@
 ﻿"use client";
 
+import { lockBodyScroll } from "@/lib/body-scroll-lock";
 import { X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
@@ -110,7 +111,7 @@ export function RelayStationDetailModal({ station, open, onClose }: RelayStation
   useEffect(() => {
     if (!open) return;
 
-    document.body.style.overflow = "hidden";
+    const unlock = lockBodyScroll();
 
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") onClose();
@@ -118,7 +119,7 @@ export function RelayStationDetailModal({ station, open, onClose }: RelayStation
 
     document.addEventListener("keydown", handleKeyDown);
     return () => {
-      document.body.style.overflow = "unset";
+      unlock();
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, [open, onClose]);

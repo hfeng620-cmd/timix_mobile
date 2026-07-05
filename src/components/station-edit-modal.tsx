@@ -1,5 +1,6 @@
 "use client";
 
+import { lockBodyScroll } from "@/lib/body-scroll-lock";
 import { Loader2, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
@@ -88,7 +89,7 @@ export function StationEditModal({
   useEffect(() => {
     if (!open) return;
     setForm(buildInitialForm(station));
-    document.body.style.overflow = "hidden";
+    const unlock = lockBodyScroll();
 
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") onClose();
@@ -96,7 +97,7 @@ export function StationEditModal({
 
     document.addEventListener("keydown", handleKeyDown);
     return () => {
-      document.body.style.overflow = "unset";
+      unlock();
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, [open, station, onClose]);

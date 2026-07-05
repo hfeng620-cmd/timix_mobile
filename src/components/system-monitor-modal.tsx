@@ -1,5 +1,6 @@
 "use client";
 
+import { lockBodyScroll } from "@/lib/body-scroll-lock";
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { Activity, AlertCircle, Database, HardDrive, Loader2, Network, Server, X } from "lucide-react";
 
@@ -191,8 +192,7 @@ export function SystemMonitorModal({ open, onClose }: SystemMonitorModalProps) {
   useEffect(() => {
     if (!open) return;
 
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    const unlockScroll = lockBodyScroll();
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") onClose();
@@ -200,7 +200,7 @@ export function SystemMonitorModal({ open, onClose }: SystemMonitorModalProps) {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => {
-      document.body.style.overflow = previousOverflow;
+      unlockScroll();
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [onClose, open]);

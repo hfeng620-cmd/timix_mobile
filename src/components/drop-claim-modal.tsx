@@ -1,5 +1,6 @@
 "use client";
 
+import { lockBodyScroll } from "@/lib/body-scroll-lock";
 import { Check, Copy, ExternalLink, Gift, Loader2, PartyPopper, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
@@ -136,14 +137,13 @@ export function DropClaimModal({ campaign, onClaimed, open, onClose }: DropClaim
   // ── Body scroll lock + Esc ──
   useEffect(() => {
     if (!open) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    const unlockScroll = lockBodyScroll();
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
     document.addEventListener("keydown", onKey);
     return () => {
-      document.body.style.overflow = prev;
+      unlockScroll();
       document.removeEventListener("keydown", onKey);
     };
   }, [open, onClose]);

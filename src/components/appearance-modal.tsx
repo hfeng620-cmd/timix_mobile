@@ -1,5 +1,6 @@
 "use client";
 
+import { lockBodyScroll } from "@/lib/body-scroll-lock";
 import { useEffect, useState } from "react";
 import { X, Check } from "lucide-react";
 
@@ -72,10 +73,10 @@ export function AppearanceModal({ open, onClose }: Props) {
       if (e.key === "Escape") onClose();
     };
     document.addEventListener("keydown", h);
-    document.body.style.overflow = "hidden";
+    const unlock = lockBodyScroll();
     return () => {
       document.removeEventListener("keydown", h);
-      document.body.style.overflow = "";
+      unlock();
     };
   }, [open, onClose]);
 

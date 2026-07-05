@@ -1,5 +1,6 @@
 "use client";
 
+import { lockBodyScroll } from "@/lib/body-scroll-lock";
 import { useEffect, useState } from "react";
 import { X, Clock, Loader2, ImageIcon } from "lucide-react";
 import { loadEditLogs, updateFolder, updateSharePost, type EditLogEntry } from "@/lib/share-storage";
@@ -47,8 +48,8 @@ export function EditPanelModal({ open, mode, targetId, initialName, initialDesc,
       finally { if (!cancelled) setLogsLoading(false); }
     }
     load();
-    document.body.style.overflow = "hidden";
-    return () => { cancelled = true; document.body.style.overflow = ""; };
+    const unlock = lockBodyScroll();
+    return () => { cancelled = true; unlock(); };
   }, [open, targetId, mode, initialName, initialDesc, initialBody, initialLink]);
 
   useEffect(() => {

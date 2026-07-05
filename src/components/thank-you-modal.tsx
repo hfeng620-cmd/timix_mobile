@@ -1,5 +1,6 @@
 "use client";
 
+import { lockBodyScroll } from "@/lib/body-scroll-lock";
 import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import { X, Shield, Star, User } from "lucide-react";
@@ -22,8 +23,8 @@ export function ThankYouModal({ open, onClose, creators }: Props) {
     if (!open) return;
     const h = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     document.addEventListener("keydown", h);
-    document.body.style.overflow = "hidden";
-    return () => { document.removeEventListener("keydown", h); document.body.style.overflow = ""; };
+    const unlock = lockBodyScroll();
+    return () => { document.removeEventListener("keydown", h); unlock(); };
   }, [open, onClose]);
 
   if (!open) return null;

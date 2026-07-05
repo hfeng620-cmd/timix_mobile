@@ -336,17 +336,6 @@ button[aria-label="Open Next.js Dev Tools"] { display: none !important; }
   }
 }
 
-/* Hide scrollbar on mobile */
-@media (hover: none) {
-  ::-webkit-scrollbar {
-    display: none;
-  }
-  * {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-}
-
 /* Prevent double-tap zoom on interactive elements only */
 a, button, [role="button"], input, select, textarea {
   touch-action: manipulation;
