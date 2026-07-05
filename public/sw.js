@@ -3,7 +3,7 @@
  * 缓存策略：App Shell (Cache First) + API (Network First)
  */
 
-const CACHE_NAME = "timix-shell-v1";
+const CACHE_NAME = "timix-shell-v2";
 const SHELL_ASSETS = [
   "/",
   "/stations/",

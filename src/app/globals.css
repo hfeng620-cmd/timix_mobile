@@ -205,7 +205,6 @@ body {
   -moz-osx-font-smoothing: grayscale;
   min-height: 100%;
   overflow-x: hidden;
-  overscroll-behavior-y: none;
 }
 
 ::selection {
