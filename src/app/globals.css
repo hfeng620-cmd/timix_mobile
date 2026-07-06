@@ -1123,33 +1123,6 @@ a:focus-visible,
     border-color: rgba(255, 255, 255, 0.075) !important;
   }
 }
-/* Mobile scroll fix: let pages grow naturally and keep root scrolling responsive. */
-@media (max-width: 767px) {
-  html,
-  body {
-    height: auto !important;
-    min-height: 100% !important;
-    overflow-x: hidden !important;
-    overflow-y: auto !important;
-    background: var(--mobile-app-surface) !important;
-  }
-
-  main#main-content {
-    background: var(--mobile-app-surface) !important;
-  }
-
-  html[data-mobile-theme="cyber"] body,
-  html[data-mobile-theme="cyber"] .timix-mobile-shell,
-  html[data-mobile-theme="cyber"] .profile-mobile-app,
-  html[data-mobile-theme="cyber"] .community-mobile-app,
-  html[data-mobile-theme="cyber"] .stations-mobile-app {
-    height: auto !important;
-    min-height: 100dvh !important;
-    overflow-y: visible !important;
-    touch-action: pan-y !important;
-  }
-}
-
 /* Mobile native touch ergonomics pass: keep desktop hover, make app shells feel tappable. */
 @media (max-width: 767px) {
   .timix-mobile-shell :where(a, button, [role="button"]),
@@ -1185,29 +1158,8 @@ a:focus-visible,
     transform: scale(0.992) translateZ(0);
   }
 }
-/* Mobile app refinement: restore natural scrolling and raise feed density. */
+/* Mobile app refinement: raise feed density without changing the app-shell scroll container. */
 @media (max-width: 767px) {
-  html:not([data-scroll-locked]),
-  html:not([data-scroll-locked]) body {
-    height: auto !important;
-    min-height: 100% !important;
-    overflow-x: hidden !important;
-    overflow-y: auto !important;
-    overscroll-behavior-y: auto !important;
-    touch-action: pan-y !important;
-  }
-
-  html:not([data-scroll-locked]) body {
-    position: static !important;
-    top: auto !important;
-    width: auto !important;
-  }
-
-  main#main-content {
-    min-height: auto !important;
-    overflow: visible !important;
-  }
-
   .community-mobile-app .community-mobile-header {
     margin-bottom: 6px !important;
     padding-bottom: 8px !important;
@@ -1311,27 +1263,8 @@ a:focus-visible,
   }
 }
 
-/* Final mobile app guardrails: all themes keep natural page scrolling and dense TiMix feeds. */
+/* Final mobile app guardrails: dense TiMix feeds only; app-shell owns scrolling below. */
 @media (max-width: 767px) {
-  html:not([data-scroll-locked]) body,
-  html:not([data-scroll-locked]) main#main-content,
-  html:not([data-scroll-locked]) .timix-mobile-shell,
-  html:not([data-scroll-locked]) .profile-mobile-app,
-  html:not([data-scroll-locked]) .community-mobile-app,
-  html:not([data-scroll-locked]) .stations-mobile-app {
-    height: auto !important;
-    min-height: 100dvh !important;
-    overflow-x: hidden !important;
-    overflow-y: visible !important;
-    touch-action: pan-y !important;
-  }
-
-  html:not([data-scroll-locked]),
-  html:not([data-scroll-locked]) body {
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch;
-  }
-
   .community-mobile-app .community-feed-shell article {
     border-radius: 14px !important;
     margin-bottom: 7px !important;
@@ -1386,77 +1319,10 @@ html[data-scroll-locked] body {
   touch-action: none !important;
 }
 
-/* APK/WebView mobile tab scrolling: non-share tabs scroll inside their own viewport. */
-@media (max-width: 1023px) {
-  html:not([data-scroll-locked]) .mobile-tab-scroll {
-    display: block !important;
-    height: 100dvh !important;
-    max-height: 100dvh !important;
-    min-height: 100dvh !important;
-    overflow-x: hidden !important;
-    overflow-y: auto !important;
-    overscroll-behavior-y: contain !important;
-    -webkit-overflow-scrolling: touch;
-    touch-action: pan-y !important;
-    padding-bottom: calc(var(--mobile-dock-height, 66px) + env(safe-area-inset-bottom, 0px)) !important;
-  }
-
-  html:not([data-scroll-locked]) .mobile-tab-scroll > :last-child {
-    margin-bottom: 0 !important;
-  }
-
-  html[data-scroll-locked] .mobile-tab-scroll {
-    overflow: hidden !important;
-    touch-action: none !important;
-  }
-}
 .post-detail-modal-scroll {
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
   transform: translateZ(0);
-}
-/* APK/WebView scroll fix: keep every bottom-tab page on natural document scrolling. */
-@media (max-width: 1023px) {
-  html:not([data-scroll-locked]),
-  html:not([data-scroll-locked]) body {
-    height: auto !important;
-    min-height: 100% !important;
-    overflow-x: hidden !important;
-    overflow-y: auto !important;
-    overscroll-behavior-y: auto !important;
-    -webkit-overflow-scrolling: touch;
-    touch-action: pan-y !important;
-  }
-
-  html:not([data-scroll-locked]) body {
-    position: static !important;
-    top: auto !important;
-    width: auto !important;
-  }
-
-  html:not([data-scroll-locked]) main#main-content,
-  html:not([data-scroll-locked]) .mobile-page-transition,
-  html:not([data-scroll-locked]) .mobile-tab-scroll,
-  html:not([data-scroll-locked]) .timix-mobile-shell,
-  html:not([data-scroll-locked]) .community-mobile-app,
-  html:not([data-scroll-locked]) .stations-mobile-app,
-  html:not([data-scroll-locked]) .profile-mobile-app {
-    height: auto !important;
-    max-height: none !important;
-    min-height: 100dvh !important;
-    overflow-x: hidden !important;
-    overflow-y: visible !important;
-    overscroll-behavior-y: auto !important;
-    touch-action: pan-y !important;
-  }
-
-  html:not([data-scroll-locked]) .mobile-tab-scroll,
-  html:not([data-scroll-locked]) .timix-mobile-shell,
-  html:not([data-scroll-locked]) .community-mobile-app,
-  html:not([data-scroll-locked]) .stations-mobile-app,
-  html:not([data-scroll-locked]) .profile-mobile-app {
-    padding-bottom: calc(var(--mobile-dock-height, 66px) + env(safe-area-inset-bottom, 0px) + 12px) !important;
-  }
 }
 /* Ironclad APK WebView App-Shell: root is fixed, each tab is the only scroll container. */
 @media (max-width: 1023px) {
@@ -1505,8 +1371,9 @@ html[data-scroll-locked] body {
   .community-mobile-app,
   .stations-mobile-app,
   .profile-mobile-app {
-    display: block !important;
+    display: flex !important;
     flex: 1 1 auto !important;
+    flex-direction: column !important;
     height: 100% !important;
     min-height: 0 !important;
     max-height: 100% !important;
@@ -1528,3 +1395,4 @@ html[data-scroll-locked] body {
     touch-action: none !important;
   }
 }
+

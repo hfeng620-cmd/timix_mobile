@@ -3,7 +3,6 @@ import type { Metadata, Viewport } from "next";
 import { AnnouncementModal } from "@/components/announcement-modal";
 import { BackgroundSliderWrapper } from "@/components/background-slider-wrapper";
 import { ErrorBoundary } from "@/components/error-boundary";
-import { PageTransition } from "@/components/page-transition";
 import { MobileDock } from "@/components/mobile-dock";
 import { MobileAppSplash } from "@/components/mobile-app-splash";
 import { RegisterCounter } from "@/components/register-counter";
@@ -83,7 +82,7 @@ export default function RootLayout({
           <SystemMonitorProvider>
             <ToastProvider>
               <main id="main-content" className="relative z-10 flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden bg-zinc-950">
-                <ErrorBoundary><PageTransition>{children}</PageTransition></ErrorBoundary>
+                <ErrorBoundary>{children}</ErrorBoundary>
               </main>
               <ToastContainer />
             </ToastProvider>
