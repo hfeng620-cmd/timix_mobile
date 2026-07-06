@@ -39,7 +39,7 @@ export default function CommunityPage() {
   }, []);
 
   return (
-    <div className="community-mobile-app min-h-[100dvh] overflow-x-hidden text-white">
+    <div className="mobile-tab-scroll community-mobile-app min-h-[100dvh] overflow-x-hidden text-white">
       <Navbar />
 
       <div className="mx-auto max-w-[1680px] px-3 pt-20 sm:px-5 md:pt-28 lg:px-8">

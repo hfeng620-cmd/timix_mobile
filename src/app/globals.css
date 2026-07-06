@@ -1385,3 +1385,28 @@ html[data-scroll-locked] body {
 html[data-scroll-locked] body {
   touch-action: none !important;
 }
+
+/* APK/WebView mobile tab scrolling: non-share tabs scroll inside their own viewport. */
+@media (max-width: 1023px) {
+  html:not([data-scroll-locked]) .mobile-tab-scroll {
+    display: block !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    min-height: 100dvh !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    overscroll-behavior-y: contain !important;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y !important;
+    padding-bottom: calc(var(--mobile-dock-height, 66px) + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  html:not([data-scroll-locked]) .mobile-tab-scroll > :last-child {
+    margin-bottom: 0 !important;
+  }
+
+  html[data-scroll-locked] .mobile-tab-scroll {
+    overflow: hidden !important;
+    touch-action: none !important;
+  }
+}

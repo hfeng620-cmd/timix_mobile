@@ -66,7 +66,7 @@ export default function DropsPage() {
   }, []);
 
   return (
-    <div className="min-h-screen overflow-x-hidden text-white">
+    <div className="mobile-tab-scroll min-h-screen overflow-x-hidden text-white">
       <Navbar />
 
       <section className="relative z-10 mx-auto max-w-[1680px] px-4 pt-28 sm:px-5 lg:px-8">

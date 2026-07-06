@@ -18,8 +18,8 @@ export function MobileAppSplash() {
     window.sessionStorage.setItem(SPLASH_KEY, "1");
     setVisible(true);
 
-    const leaveTimer = window.setTimeout(() => setLeaving(true), 1180);
-    const hideTimer = window.setTimeout(() => setVisible(false), 1560);
+    const leaveTimer = window.setTimeout(() => setLeaving(true), 1500);
+    const hideTimer = window.setTimeout(() => setVisible(false), 1850);
 
     return () => {
       window.clearTimeout(leaveTimer);
@@ -32,7 +32,7 @@ export function MobileAppSplash() {
   return (
     <div
       aria-hidden="true"
-      className={`fixed inset-0 z-[9999] flex flex-col bg-[#fbfffd] text-[#25343a] transition-opacity duration-500 ${leaving ? "opacity-0" : "opacity-100"}`}
+      className={`fixed inset-0 z-[9999] flex flex-col bg-[#fbfffd] text-[#25343a] transition-opacity duration-300 ${leaving ? "opacity-0" : "opacity-100"}`}
     >
       <div className="absolute right-[11vw] top-[max(36px,env(safe-area-inset-top,0px)+18px)] h-6 w-6 animate-spin rounded-full border-[3px] border-[#27b4a8]/20 border-t-[#20a99f]" />
 
