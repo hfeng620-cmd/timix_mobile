@@ -1,66 +1,85 @@
-# ⚠️ 移动端专用分支
+# TiMix Mobile 独立仓库
 
-此分支（`mobile-app`）专门用于 Android APK 构建，修改不会影响桌面 Web 版本。
+此项目现在作为移动端独立仓库维护，目标远端是：
 
-## 📱 分支说明
-
-- **`main`**: 桌面端 Web 版本（生产环境）
-- **`mobile-app`**: 移动端 APK 版本（独立开发）
-
-## 🔄 开发流程
-
-### 移动端开发（在 mobile-app 分支）
-
-```bash
-git checkout mobile-app
-git pull origin mobile-app
-
-# 修改代码...
-
-git add .
-git commit -m "fix(mobile): 修复XXX问题"
-git push origin mobile-app
+```text
+https://github.com/hfeng620-cmd/timix_mobile.git
 ```
 
-### 发布移动端 APK
+桌面 Web 版本继续在 `timix_share` 维护，移动端 APK / Capacitor / Android 配置只放在这里。
 
-```bash
-git checkout mobile-app
+## 分支说明
 
-# 确保代码已提交
-git tag mobile-v1.0.x
-git push origin mobile-v1.0.x
+- **`main`**: 新移动端仓库主分支，GitHub Actions 默认从这里构建 APK。
+- **`mobile-app`**: 旧本地迁移分支，可推送到新仓库 `main` 后继续以 `main` 为主线开发。
+
+## 首次迁移推送
+
+如果本地仍在旧目录 `D:\github\TiMix_Mibille` 的 `mobile-app` 分支：
+
+```powershell
+git remote add mobile https://github.com/hfeng620-cmd/timix_mobile.git
+git switch mobile-app
+git push -u mobile mobile-app:main
+```
+
+如果 `mobile` 远端已经存在：
+
+```powershell
+git remote set-url mobile https://github.com/hfeng620-cmd/timix_mobile.git
+```
+
+不要使用 `git push --all` 或 `git push --mirror`，避免把网页分支和历史构建分支推入移动仓库。
+
+## 开发流程
+
+```powershell
+git switch main
+git pull
+
+# 修改代码后只添加需要的源码文件，避免把 release/*.apk 和临时文件提交进去。
+git status --short
+git add <changed-source-files>
+git commit -m "fix(mobile): 修复XXX问题"
+git push
+```
+
+## 发布移动端 APK
+
+```powershell
+git switch main
+git tag v1.0.x
+git push origin v1.0.x
 
 # GitHub Actions 自动构建 APK 并发布到 Release
 ```
 
-## ✅ 已完成的移动端优化
+## 已完成的移动端优化
 
-- ✅ Ultimate Mobile App Audit (4阶段)
-- ✅ Desktop Purge (450+ hover转换)
-- ✅ Touch Ergonomics (44px标准)
-- ✅ Modal → Bottom Sheet (11个模态框)
-- ✅ Visual Harmony & Safe Areas
-- ✅ Feed密度优化
-- ✅ Modal对比度修复
+- Ultimate Mobile App Audit (4阶段)
+- Desktop Purge (450+ hover转换)
+- Touch Ergonomics (44px标准)
+- Modal -> Bottom Sheet (11个模态框)
+- Visual Harmony & Safe Areas
+- Feed密度优化
+- Modal对比度修复
 
-## 🚀 构建状态
+## 构建状态
 
-- 构建触发：推送到 `mobile-app` 分支或打 `mobile-v*` 标签
+- 构建触发：推送到 `main` / `mobile-app` 分支，或打 `v*` / `mobile-v*` 标签
 - 构建平台：GitHub Actions
 - 构建产物：TiMix-debug.apk
 - 发布位置：GitHub Releases
 
-## 📝 注意事项
+## 注意事项
 
-1. ⚠️ **不要直接在 main 分支做移动端修改**
-2. ⚠️ **所有移动端改动必须在 mobile-app 分支**
-3. ✅ 桌面端和移动端现已完全隔离
-4. ✅ APK 构建不会影响 main 分支
+1. 不要把移动端改动提交回 `timix_share` 的网页主线。
+2. 不要提交 `release/*.apk`、构建输出目录或临时 txt。
+3. 移动端仓库需要配置 `NEXT_PUBLIC_SUPABASE_URL` 和 `NEXT_PUBLIC_SUPABASE_ANON_KEY` 两个 GitHub Secrets。
+4. Android APK workflow 只负责移动端构建，不再服务桌面 Web 部署。
 
-## 🔗 相关链接
+## 相关链接
 
-- Releases: https://github.com/hfeng620-cmd/timix_share/releases
-- Issues: https://github.com/hfeng620-cmd/timix_share/issues
-- 桌面端分支: `main`
-- 移动端分支: `mobile-app`
+- Mobile Releases: https://github.com/hfeng620-cmd/timix_mobile/releases
+- Mobile Issues: https://github.com/hfeng620-cmd/timix_mobile/issues
+- Desktop Web Repo: https://github.com/hfeng620-cmd/timix_share
