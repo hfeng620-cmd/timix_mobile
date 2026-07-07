@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { createPortal } from "react-dom";
 import { useEffect, useRef, useState, useCallback } from "react";
 import {
   Heart, MessageCircle, Bookmark, X,
@@ -353,11 +352,7 @@ function NestedReplyModal({
     <div
       ref={overlayRef}
       tabIndex={-1}
-<<<<<<< HEAD
-      className="fixed inset-0 z-[200] flex items-center justify-center overscroll-none bg-black/60 px-4 outline-none backdrop-blur-xl"
-=======
       className="fixed inset-0 z-[200] flex items-end justify-center bg-[#09090b]/60 px-0 backdrop-blur-xl outline-none sm:items-center sm:px-4"
->>>>>>> apk-build/debug-20260705-2005
       onKeyDown={handleOverlayKeyDown}
       onClick={onClose}
     >
@@ -410,11 +405,7 @@ function NestedReplyModal({
         </div>
 
         {/* 全部回复列表 */}
-<<<<<<< HEAD
-        <div className="flex-1 overflow-y-auto overscroll-contain px-6 py-4 space-y-4">
-=======
         <div className="flex-1 space-y-3 overflow-y-auto px-4 py-3 sm:space-y-3 sm:px-6 sm:py-4">
->>>>>>> apk-build/debug-20260705-2005
           {allReplies.length === 0 ? (
             <p className="text-sm text-gray-500 font-body text-center py-6">暂无回复</p>
           ) : (
@@ -614,12 +605,6 @@ export function PostDetailModal({ post, onClose, onEdit }: Props) {
 
   /* ── 主弹窗 Esc + 滚动锁 ── */
   const overlayRef = useRef<HTMLDivElement>(null);
-  const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
-
-  useEffect(() => {
-    setPortalTarget(document.body);
-  }, []);
-
   useEffect(() => {
     const unlock = lockBodyScroll();
     overlayRef.current?.focus();
@@ -877,19 +862,13 @@ export function PostDetailModal({ post, onClose, onEdit }: Props) {
 
   const activeCommentSlashEmoji = getActiveSlashEmoji(commentText, Math.min(commentCursor, commentText.length));
 
-  if (!portalTarget) return null;
-
-  return createPortal(
+  return (
     <>
       {/* ═══ 主弹窗 ═══ */}
       <div
         ref={overlayRef}
         tabIndex={-1}
-<<<<<<< HEAD
-        className="fixed inset-0 z-[100] flex items-center justify-center overscroll-none bg-black/60 px-4 outline-none backdrop-blur-xl"
-=======
         className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-zinc-950/35 px-0 outline-none sm:bg-[#09090b]/60 sm:px-4 sm:backdrop-blur-xl"
->>>>>>> apk-build/debug-20260705-2005
         onKeyDown={handleMainKeyDown}
         onClick={onClose}
       >
@@ -900,20 +879,12 @@ export function PostDetailModal({ post, onClose, onEdit }: Props) {
           className="relative flex h-[92dvh] max-h-[calc(100dvh_-_var(--safe-top))] w-full max-w-6xl flex-col overflow-hidden rounded-t-3xl sm:rounded-2xl border border-zinc-200 border-b-0 bg-white text-zinc-900 shadow-2xl sm:h-[85dvh] sm:flex-row sm:border-white/10 sm:border-b sm:bg-zinc-950/90 sm:text-zinc-100"
           onClick={(e) => e.stopPropagation()}
         >
-<<<<<<< HEAD
-          {/* ── Left: 项目内容 (70%) ── */}
-          <div className="flex-1 flex flex-col overflow-y-auto overscroll-contain border-r border-white/10">
-            <div className="flex-1 p-8">
-              <div className="flex flex-wrap items-start justify-between gap-3 mb-6">
-                <span className="inline-block rounded-full bg-white/10 px-3 py-1 text-xs text-white/50 font-body">{post.tag}</span>
-=======
           {/* ── Drag Handle ── */}
           <div className="w-12 h-1.5 bg-zinc-300 dark:bg-zinc-700 rounded-full mx-auto mt-3 mb-1 shrink-0 sm:hidden" />
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden sm:border-r sm:border-white/10">
             <div className="post-detail-modal-scroll flex-1 overflow-y-auto overscroll-contain p-4 sm:p-8">
               <div className="mb-4 flex flex-wrap items-start justify-between gap-3 sm:mb-6">
                 <span className="inline-block rounded-full bg-zinc-100 px-2.5 py-1 text-[11px] text-zinc-600 font-body sm:bg-white/10 sm:px-3 sm:text-xs sm:text-white/50">{post.tag}</span>
->>>>>>> apk-build/debug-20260705-2005
                 <div className="flex items-center gap-2">
                   {canEdit && onEdit && (
                     <button onClick={onEdit} className="rounded-lg p-1.5 text-zinc-500 transition active:bg-zinc-100 active:text-zinc-900 active:scale-[0.98] sm:text-white/30 sm:active:bg-white/10 sm:active:text-white md:hover:bg-zinc-100 md:hover:text-zinc-900 sm:md:hover:bg-white/10 sm:md:hover:text-white" title="编辑" type="button">
@@ -1073,11 +1044,7 @@ export function PostDetailModal({ post, onClose, onEdit }: Props) {
             {/* Tab: Comments */}
             {rightTab === "comments" && (
               <>
-<<<<<<< HEAD
-                <div className="flex-1 overflow-y-auto overscroll-contain p-4 space-y-4">
-=======
                 <div className="post-detail-modal-scroll flex-1 space-y-3 overflow-y-auto overscroll-contain p-3 sm:space-y-4 sm:p-4">
->>>>>>> apk-build/debug-20260705-2005
                   {commentsLoading ? (
                     <div className="flex items-center justify-center py-12"><Loader2 className="h-5 w-5 text-zinc-400 animate-spin sm:text-white/30" /></div>
                   ) : rootComments.length === 0 ? (
@@ -1316,11 +1283,7 @@ export function PostDetailModal({ post, onClose, onEdit }: Props) {
 
             {/* Tab: Logs */}
             {rightTab === "logs" && (
-<<<<<<< HEAD
-              <div className="flex-1 overflow-y-auto overscroll-contain p-4">
-=======
               <div className="post-detail-modal-scroll flex-1 overflow-y-auto overscroll-contain p-3 sm:p-4">
->>>>>>> apk-build/debug-20260705-2005
                 {logsLoading ? (
                   <div className="flex items-center justify-center py-12"><Loader2 className="h-5 w-5 text-zinc-400 animate-spin sm:text-white/30" /></div>
                 ) : editLogs.length === 0 ? (
@@ -1363,7 +1326,6 @@ export function PostDetailModal({ post, onClose, onEdit }: Props) {
       {lightboxImage ? (
         <ImageLightbox src={lightboxImage} onClose={() => setLightboxImage(null)} />
       ) : null}
-    </>,
-    portalTarget,
+    </>
   );
 }

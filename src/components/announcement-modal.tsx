@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
+import { lockBodyScroll } from "@/lib/body-scroll-lock";
 import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase";
 
 const DISMISS_PERMANENT_KEY = "timin-announce-dismissed-permanent";
@@ -167,21 +168,17 @@ export function AnnouncementModal() {
     if (!visible) return;
     function handleKeyDown(event: KeyboardEvent) { if (event.key === "Escape") setVisible(false); }
     document.addEventListener("keydown", handleKeyDown);
-    return () => { document.removeEventListener("keydown", handleKeyDown); };
+    const unlock = lockBodyScroll();
+    return () => { document.removeEventListener("keydown", handleKeyDown); unlock(); };
   }, [visible]);
 
   if (loadFailed || !visible || !announcement) return null;
 
   return (
-<<<<<<< HEAD
-    <div aria-modal="false" className="pointer-events-none fixed inset-0 z-[300] flex items-center justify-center bg-black/50 px-4 backdrop-blur-xl" role="dialog">
-      <div ref={panelRef} aria-labelledby="announcement-title" className="pointer-events-auto w-full max-w-lg overflow-hidden rounded-[28px] border border-white/15 bg-white/6 shadow-2xl backdrop-blur-xl" onClick={(e) => e.stopPropagation()}>
-=======
     <div aria-modal="true" className="fixed inset-0 z-[300] flex items-end sm:items-center justify-center bg-[#09090b]/50 px-4 backdrop-blur-xl" role="dialog" onClick={() => setVisible(false)}>
       <div ref={panelRef} aria-labelledby="announcement-title" className="w-full max-w-lg overflow-hidden rounded-t-3xl sm:rounded-[28px] border border-white/15 bg-white/6 shadow-2xl backdrop-blur-xl" onClick={(e) => e.stopPropagation()}>
         {/* Drag handle for mobile */}
         <div className="w-12 h-1.5 bg-zinc-300 dark:bg-zinc-700 rounded-full mx-auto mt-3 mb-1 shrink-0 sm:hidden" />
->>>>>>> apk-build/debug-20260705-2005
         {/* Close button */}
         <button onClick={() => setVisible(false)} className="absolute right-4 top-4 flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white/50 transition z-10 active:bg-white/20 active:scale-[0.98] active:text-white md:hover:bg-white/20 md:hover:text-white" type="button" aria-label="关闭">
           <X className="h-5 w-5" />

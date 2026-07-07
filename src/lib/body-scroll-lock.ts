@@ -1,23 +1,6 @@
 "use client";
 
 let lockCount = 0;
-<<<<<<< HEAD
-
-function getScrollbarWidth() {
-  if (typeof window === "undefined") return 0;
-  return Math.max(0, window.innerWidth - document.documentElement.clientWidth);
-}
-
-function applyBodyLock() {
-  const scrollbarWidth = getScrollbarWidth();
-  document.body.style.setProperty("--scrollbar-compensation", `${scrollbarWidth}px`);
-  document.body.classList.add("modal-open-lock");
-}
-
-function releaseBodyLock() {
-  document.body.classList.remove("modal-open-lock");
-  document.body.style.removeProperty("--scrollbar-compensation");
-=======
 let previousBodyOverflow = "";
 let previousBodyPosition = "";
 let previousBodyTop = "";
@@ -64,7 +47,6 @@ function scheduleStaleLockCleanup() {
       restoreBodyScroll();
     }
   }, 250);
->>>>>>> apk-build/debug-20260705-2005
 }
 
 export function lockBodyScroll() {
@@ -73,9 +55,6 @@ export function lockBodyScroll() {
   }
 
   if (lockCount === 0) {
-<<<<<<< HEAD
-    applyBodyLock();
-=======
     const { documentElement, body } = document;
     lockedScrollY = window.scrollY;
     previousHtmlOverflow = documentElement.style.overflow;
@@ -90,7 +69,6 @@ export function lockBodyScroll() {
     body.style.position = "fixed";
     body.style.top = `-${lockedScrollY}px`;
     body.style.width = "100%";
->>>>>>> apk-build/debug-20260705-2005
   }
 
   lockCount += 1;
@@ -103,13 +81,9 @@ export function lockBodyScroll() {
     lockCount = Math.max(lockCount - 1, 0);
 
     if (lockCount === 0) {
-<<<<<<< HEAD
-      releaseBodyLock();
-=======
       restoreBodyScroll();
     } else {
       scheduleStaleLockCleanup();
->>>>>>> apk-build/debug-20260705-2005
     }
   };
 }
