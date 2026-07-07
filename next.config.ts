@@ -10,7 +10,7 @@ const isMobileBuild =
   process.env.npm_lifecycle_event?.startsWith("mobile:");
 const isGithubPages =
   !isServerDeploy && !isMobileBuild && process.env.GITHUB_ACTIONS === "true";
-const repoName = "timix_share";
+const repoName = "timix_mobile";
 
 const nextConfig: NextConfig = {
   devIndicators: false,

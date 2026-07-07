@@ -92,8 +92,8 @@
 ### 快速开始
 
 ```bash
-git clone https://github.com/hfeng620-cmd/timin_api_test_and_forum.git
-cd timin_api_test_and_forum
+git clone https://github.com/hfeng620-cmd/timix_mobile.git
+cd timix_mobile
 npm install
 cp .env.example .env.local
 # 编辑 .env.local 填入 Supabase 配置

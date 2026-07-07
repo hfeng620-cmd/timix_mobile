@@ -15,15 +15,15 @@ https://github.com/hfeng620-cmd/timix_mobile.git
 
 ## 首次迁移推送
 
-如果本地仍在旧目录 `D:\github\TiMix_Mibille` 的 `mobile-app` 分支：
+如果本地仍在旧目录 `D:\github\TiMix_Mibille` 的 `mobile-app` 分支，优先把 `origin` 指到移动端仓库：
 
 ```powershell
-git remote add mobile https://github.com/hfeng620-cmd/timix_mobile.git
+git remote set-url origin https://github.com/hfeng620-cmd/timix_mobile.git
 git switch mobile-app
-git push -u mobile mobile-app:main
+git push -u origin mobile-app:main
 ```
 
-如果 `mobile` 远端已经存在：
+如果你仍保留 `mobile` 远端，也可以这样修正：
 
 ```powershell
 git remote set-url mobile https://github.com/hfeng620-cmd/timix_mobile.git
