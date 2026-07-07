@@ -50,13 +50,13 @@ export function MobileDock() {
               key={item.href}
               aria-current={active ? "page" : undefined}
               aria-label={`${item.label}${active ? "，当前页面" : ""}${badgeCount > 0 ? `，${badgeCount} 条未读` : ""}`}
-              className="touch-press relative flex min-h-[58px] flex-col items-center justify-center py-2 transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)]"
+              className="touch-press relative flex min-h-[60px] flex-col items-center justify-center py-2 transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)]"
               href={item.href}
               onClick={() => haptic("light")}
               style={{ WebkitTapHighlightColor: "transparent" }}
             >
               <motion.div
-                className="relative flex flex-col items-center gap-0.5"
+                className="relative flex flex-col items-center gap-1"
                 animate={{
                   scale: active ? 1.05 : 1,
                   y: active ? -1 : 0,
@@ -65,7 +65,7 @@ export function MobileDock() {
               >
                 <span className="relative">
                   <Icon
-                    className="h-[22px] w-[22px]"
+                    className="h-6 w-6"
                     strokeWidth={active ? 2.2 : 1.5}
                     style={{
                       color: active ? "var(--mobile-app-primary, var(--dt-primary))" : "var(--mobile-nav-muted, rgba(255,255,255,0.4))",
@@ -74,13 +74,13 @@ export function MobileDock() {
                     }}
                   />
                   {badgeCount > 0 ? (
-                    <span className="absolute -right-2 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-emerald-400 px-1 text-[9px] font-black leading-none text-zinc-950 ring-2 ring-[#09090b]">
+                    <span className="absolute -right-2 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-emerald-400 px-1 text-[10px] font-black leading-none text-zinc-950 ring-2 ring-[#09090b]">
                       {badgeCount > 99 ? "99+" : badgeCount}
                     </span>
                   ) : null}
                 </span>
                 <span
-                  className="text-[10px] font-medium leading-none"
+                  className="text-xs font-medium leading-none"
                   style={{
                     color: active ? "var(--mobile-app-primary, var(--dt-primary))" : "var(--mobile-nav-muted, rgba(255,255,255,0.4))",
                     transition: "color 0.2s",

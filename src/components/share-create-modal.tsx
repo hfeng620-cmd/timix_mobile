@@ -95,10 +95,11 @@ export function ShareCreateModal({ open, mode, currentFolder, folders, onClose, 
   const options = buildOptions();
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-end justify-center bg-[#09090b]/50 px-0 backdrop-blur-xl sm:items-center sm:px-4" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="relative w-full max-h-[88dvh] overflow-y-auto rounded-t-2xl border border-white/10 bg-zinc-950/95 p-4 pb-[max(env(safe-area-inset-bottom,0px),1rem)] shadow-2xl backdrop-blur-xl sm:max-w-lg sm:rounded-3xl sm:border-white/15 sm:bg-white/6 sm:p-6" onClick={(e) => e.stopPropagation()}>
-        <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-white/20 sm:hidden" />
-        <button onClick={onClose} className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white/50 transition active:scale-95 active:bg-white/20 hover:bg-white/20 hover:text-white sm:right-4 sm:top-4" type="button"><X className="h-4 w-4" /></button>
+    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-[#09090b]/50 px-0 backdrop-blur-xl sm:px-4" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="relative w-full max-h-[88dvh] overflow-y-auto rounded-t-3xl sm:rounded-3xl border border-white/10 bg-zinc-950/95 p-4 pb-[max(env(safe-area-inset-bottom,0px),1rem)] shadow-2xl backdrop-blur-xl sm:max-w-lg sm:border-white/15 sm:bg-white/6 sm:p-6" onClick={(e) => e.stopPropagation()}>
+        {/* Drag handle for mobile */}
+        <div className="w-12 h-1.5 bg-zinc-300 dark:bg-zinc-700 rounded-full mx-auto mt-3 mb-1 shrink-0 sm:hidden" />
+        <button onClick={onClose} className="absolute right-3 top-3 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white/50 transition active:scale-95 active:bg-white/20 active:scale-[0.98] active:text-white md:hover:bg-white/20 md:hover:text-white sm:right-4 sm:top-4" type="button"><X className="h-5 w-5" /></button>
 
         <div className="mb-4 flex items-center gap-2 sm:mb-6">
           {mode === "folder" ? <Folder className="h-4 w-4 text-white/50 sm:h-5 sm:w-5" /> : <Plus className="h-4 w-4 text-white/50 sm:h-5 sm:w-5" />}
@@ -110,7 +111,7 @@ export function ShareCreateModal({ open, mode, currentFolder, folders, onClose, 
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-400/20"><Check className="h-6 w-6 text-emerald-400" /></div>
             <p className="text-sm text-white/70 font-body">{error || (mode === "folder" ? "板块创建成功！" : "分享发布成功！")}</p>
             <p className="text-xs text-white/30 font-body">已保存，刷新后可见</p>
-            <button onClick={onClose} className="mt-3 rounded-full bg-white/10 px-5 py-2 text-xs text-white/60 transition active:scale-[0.98] active:bg-white/20 hover:bg-white/20 font-body">完成</button>
+            <button onClick={onClose} className="mt-3 rounded-full bg-white/10 px-5 py-2 text-xs text-white/60 transition active:scale-[0.98] active:bg-white/20 md:hover:bg-white/20 font-body">完成</button>
           </div>
         ) : (
           <>
@@ -159,7 +160,7 @@ export function ShareCreateModal({ open, mode, currentFolder, folders, onClose, 
                         type="button"
                         onClick={triggerUpload}
                         disabled={uploading}
-                        className="inline-flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-200 transition-colors disabled:opacity-40 font-body"
+                        className="inline-flex items-center gap-1 text-xs text-zinc-500 transition-colors disabled:opacity-40 font-body active:text-zinc-200 active:scale-[0.98] md:hover:text-zinc-200"
                         title="上传图片 (Ctrl+V 粘贴)"
                       >
                         {uploading ? (
@@ -200,9 +201,9 @@ export function ShareCreateModal({ open, mode, currentFolder, folders, onClose, 
             </div>
             <FileInput />
             {error && <p className="mt-4 text-xs font-semibold text-red-400 font-body sm:text-sm" role="alert">{error}</p>}
-            <div className="mt-5 flex items-center justify-end gap-2 sm:mt-6 sm:gap-3">
-              <button onClick={onClose} className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs text-white/50 transition active:scale-[0.98] active:bg-white/10 hover:bg-white/10 hover:text-white font-body sm:px-5 sm:py-2.5 sm:text-sm" type="button" disabled={loading}>取消</button>
-              <button onClick={handleSubmit} disabled={loading} className="inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-xs font-medium text-white transition active:scale-[0.98] active:bg-white/25 hover:bg-white/25 font-body disabled:opacity-50 sm:px-5 sm:py-2.5 sm:text-sm" type="button">
+            <div className="mt-5 flex items-center justify-end gap-2 sm:mt-6 sm:gap-3" style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 16px)' }}>
+              <button onClick={onClose} className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs text-white/50 transition active:scale-[0.98] active:bg-white/10 active:text-white md:hover:bg-white/10 md:hover:text-white font-body sm:px-5 sm:py-2.5 sm:text-sm" type="button" disabled={loading}>取消</button>
+              <button onClick={handleSubmit} disabled={loading} className="inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-xs font-medium text-white transition active:scale-[0.98] active:bg-white/25 md:hover:bg-white/25 font-body disabled:opacity-50 sm:px-5 sm:py-2.5 sm:text-sm" type="button">
                 {loading ? <><Loader2 className="h-4 w-4 animate-spin" />{mode === "folder" ? "创建中..." : "发布中..."}</> : mode === "folder" ? <><Folder className="h-4 w-4" />创建板块</> : <><Plus className="h-4 w-4" />发布分享</>}
               </button>
             </div>

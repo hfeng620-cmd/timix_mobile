@@ -7,9 +7,7 @@ import { StationsBoard } from "@/components/stations-board";
 export default function StationsPage() {
   return (
     <div className="mobile-tab-scroll stations-mobile-app flex-1 min-h-0 h-full overflow-y-auto overscroll-y-contain pb-24 bg-[var(--mobile-app-bg,#09090b)] text-white lg:bg-transparent lg:text-white">
-      <Navbar />
-
-      <section className="relative z-10 mx-auto max-w-[1680px] px-2.5 pt-16 sm:px-5 lg:px-8 lg:pt-28">
+      <section className="relative z-10 mx-auto max-w-[1680px] px-2.5 pt-2 sm:px-5">
         <div className="mb-2 rounded-b-[18px] border border-white/10 bg-white/[0.04] px-3 py-2.5 shadow-[0_12px_30px_rgba(15,23,42,0.08)] backdrop-blur lg:hidden">
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">

@@ -373,7 +373,6 @@ export function StationsBoard() {
       console.error("[StationsBoard] Cannot open detail — station or station.id is missing:", station);
       return;
     }
-    console.log("[StationsBoard] Opening detail for station:", station.name, "| id:", station.id);
     setDetailStation(station);
   }
 
@@ -759,7 +758,7 @@ export function StationsBoard() {
         </div>
         <div className="mt-5 flex flex-wrap items-center gap-3 border-t border-[var(--color-line)] pt-4">
           <button
-            className="rounded-full bg-[var(--color-brand)] px-5 py-2.5 text-sm font-bold text-[var(--color-on-brand)] shadow-[0_10px_24px_var(--color-panel-glow)] transition hover:bg-[var(--color-brand-deep)] disabled:opacity-50"
+            className="rounded-full bg-[var(--color-brand)] px-5 py-2.5 text-sm font-bold text-[var(--color-on-brand)] shadow-[0_10px_24px_var(--color-panel-glow)] transition active:bg-[var(--color-brand-deep)] active:scale-[0.98] md:hover:bg-[var(--color-brand-deep)] disabled:opacity-50"
             disabled={saving}
             onClick={saveEdit}
             type="button"
@@ -771,7 +770,7 @@ export function StationsBoard() {
                 : "保存修改"}
           </button>
           <button
-            className="rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] px-5 py-2.5 text-sm font-bold text-[var(--color-muted)] transition hover:border-[var(--color-brand)] hover:text-[var(--color-brand-deep)]"
+            className="rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] px-5 py-2.5 text-sm font-bold text-[var(--color-muted)] transition active:border-[var(--color-brand)] active:text-[var(--color-brand-deep)] active:scale-[0.98] md:hover:border-[var(--color-brand)] md:hover:text-[var(--color-brand-deep)]"
             onClick={cancelEdit}
             type="button"
           >
@@ -780,7 +779,7 @@ export function StationsBoard() {
           <span className="flex-1" />
           {canDeleteStations ? (
             <button
-              className="rounded-full border border-red-200 bg-red-50 px-4 py-2 text-sm font-bold text-red-600 transition hover:bg-red-100"
+              className="rounded-full border border-red-200 bg-red-50 px-4 py-2 text-sm font-bold text-red-600 transition active:bg-red-100 active:scale-[0.98] md:hover:bg-red-100"
               onClick={() => editingId && handleDelete(editingId)}
               type="button"
             >
@@ -832,7 +831,7 @@ export function StationsBoard() {
         </div>
         <div className="mt-5 flex flex-wrap items-center gap-3 border-t border-[var(--color-line)] pt-4">
           <button
-            className="rounded-full bg-[var(--color-brand)] px-5 py-2.5 text-sm font-bold text-[var(--color-on-brand)] shadow-[0_10px_24px_var(--color-panel-glow)] transition hover:bg-[var(--color-brand-deep)] disabled:opacity-50"
+            className="rounded-full bg-[var(--color-brand)] px-5 py-2.5 text-sm font-bold text-[var(--color-on-brand)] shadow-[0_10px_24px_var(--color-panel-glow)] transition active:bg-[var(--color-brand-deep)] active:scale-[0.98] md:hover:bg-[var(--color-brand-deep)] disabled:opacity-50"
             disabled={saving}
             onClick={saveNew}
             type="button"
@@ -840,7 +839,7 @@ export function StationsBoard() {
             {saving ? "创建中..." : "创建站点"}
           </button>
           <button
-            className="rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] px-5 py-2.5 text-sm font-bold text-[var(--color-muted)] transition hover:border-[var(--color-brand)] hover:text-[var(--color-brand-deep)]"
+            className="rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] px-5 py-2.5 text-sm font-bold text-[var(--color-muted)] transition active:border-[var(--color-brand)] active:text-[var(--color-brand-deep)] active:scale-[0.98] md:hover:border-[var(--color-brand)] md:hover:text-[var(--color-brand-deep)]"
             onClick={cancelAdd}
             type="button"
           >
@@ -919,7 +918,7 @@ export function StationsBoard() {
         <p className="text-lg font-bold text-red-500">加载失败</p>
         <p className="mt-2 text-sm text-[var(--color-muted)]">{error}</p>
         <button
-          className="mt-4 rounded-full bg-[var(--color-brand)] px-5 py-2.5 text-sm font-bold text-[var(--color-on-brand)] transition hover:bg-[var(--color-brand-deep)]"
+          className="mt-4 rounded-full bg-[var(--color-brand)] px-5 py-2.5 text-sm font-bold text-[var(--color-on-brand)] transition active:bg-[var(--color-brand-deep)] active:scale-[0.98] md:hover:bg-[var(--color-brand-deep)]"
           onClick={refreshStations}
           type="button"
         >
@@ -1008,12 +1007,12 @@ export function StationsBoard() {
                       {stationHref ? (
                         <div className="inline-flex items-center text-xs font-bold text-[var(--color-brand-deep)]">
                           打开站点入口
-                          <span className="ml-2 transition-all duration-300 group-hover:translate-x-1.5">→</span>
+                          <span className="ml-2 transition-all duration-300">→</span>
                         </div>
                       ) : null}
 
                       <button
-                        className="inline-flex items-center gap-1.5 rounded-full bg-[var(--color-soft)] px-2.5 py-1 text-xs font-semibold text-[var(--color-muted)] transition hover:bg-[var(--color-brand-soft)] hover:text-[var(--color-brand-deep)]"
+                        className="inline-flex items-center gap-1.5 rounded-full bg-[var(--color-soft)] px-2.5 py-1 text-xs font-semibold text-[var(--color-muted)] transition active:bg-[var(--color-brand-soft)] active:text-[var(--color-brand-deep)] active:scale-[0.98] md:hover:bg-[var(--color-brand-soft)] md:hover:text-[var(--color-brand-deep)]"
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
@@ -1037,7 +1036,7 @@ export function StationsBoard() {
                       href={stationHref}
                       rel="noopener noreferrer"
                       target="_blank"
-                      className="card-lift group min-h-0 self-start rounded-[20px] border border-[var(--color-line)] bg-[var(--surface-gradient)] p-3.5 shadow-[var(--shadow-card)] transition-all duration-300 hover:-translate-y-[3px] hover:border-[var(--color-brand)] hover:shadow-[0_28px_72px_rgba(15,23,42,0.10)] sm:p-4"
+                      className="card-lift group min-h-0 self-start rounded-[20px] border border-[var(--color-line)] bg-[var(--surface-gradient)] p-3.5 shadow-[var(--shadow-card)] transition-all duration-300 active:scale-[0.98] md:hover:-translate-y-[3px] md:hover:border-[var(--color-brand)] md:hover:shadow-[0_28px_72px_rgba(15,23,42,0.10)] sm:p-4"
                     >
                       {cardContent}
                     </a>
@@ -1047,7 +1046,7 @@ export function StationsBoard() {
                 return (
                   <div
                     key={`${station.id}-hero`}
-                    className="card-lift group min-h-0 self-start rounded-[20px] border border-[var(--color-line)] bg-[var(--surface-gradient)] p-3.5 shadow-[var(--shadow-card)] transition-all duration-300 hover:-translate-y-[3px] hover:border-[var(--color-brand)] hover:shadow-[0_28px_72px_rgba(15,23,42,0.10)] sm:p-4"
+                    className="card-lift group min-h-0 self-start rounded-[20px] border border-[var(--color-line)] bg-[var(--surface-gradient)] p-3.5 shadow-[var(--shadow-card)] transition-all duration-300 active:scale-[0.98] md:hover:-translate-y-[3px] md:hover:border-[var(--color-brand)] md:hover:shadow-[0_28px_72px_rgba(15,23,42,0.10)] sm:p-4"
                   >
                     {cardContent}
                   </div>
@@ -1156,12 +1155,12 @@ export function StationsBoard() {
               <div className="absolute right-3.5 top-1/2 flex -translate-y-1/2 items-center gap-2">
                 {query ? (
                   <button
-                    className="flex h-5 w-5 items-center justify-center rounded-full text-[var(--color-muted)] transition hover:bg-[var(--color-line)] hover:text-[var(--color-ink)]"
+                    className="flex h-10 w-10 items-center justify-center rounded-full text-[var(--color-muted)] transition active:bg-[var(--color-line)] active:text-[var(--color-ink)] active:scale-[0.98] md:hover:bg-[var(--color-line)] md:hover:text-[var(--color-ink)]"
                     onClick={() => { setQuery(""); setDebouncedQuery(""); }}
                     type="button"
                     aria-label="清除搜索"
                   >
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                   </button>
                 ) : null}
                 <span className="hidden select-none rounded-md border border-[var(--color-line)] px-1.5 py-0.5 text-[11px] leading-tight text-[var(--color-muted)] lg:inline">
@@ -1192,7 +1191,7 @@ export function StationsBoard() {
                 className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold transition lg:px-3 lg:py-2 lg:text-sm ${
                   activeFilter === filter.id
                     ? "pill-pulse bg-[var(--color-brand)] text-[var(--color-on-brand)] shadow-[0_10px_24px_var(--color-panel-glow)]"
-                    : "border border-[var(--color-line)] bg-[var(--color-panel)] text-[var(--color-muted)] hover:border-[var(--color-brand)] hover:text-[var(--color-brand-deep)]"
+                    : "border border-[var(--color-line)] bg-[var(--color-panel)] text-[var(--color-muted)] active:border-[var(--color-brand)] active:text-[var(--color-brand-deep)] active:scale-[0.98] md:hover:border-[var(--color-brand)] md:hover:text-[var(--color-brand-deep)]"
                 }`}
                 onClick={() => setActiveFilter(filter.id)}
                 type="button"
@@ -1263,7 +1262,7 @@ export function StationsBoard() {
             </div>
             <div className="flex shrink-0 flex-nowrap gap-1.5 lg:flex-wrap lg:gap-3">
               <button
-                className="rounded-full bg-[var(--color-soft)] px-2.5 py-1 text-[11px] font-bold text-[var(--color-brand-deep)] transition hover:bg-[var(--color-brand-soft)] lg:px-4 lg:py-2 lg:text-sm"
+                className="rounded-full bg-[var(--color-soft)] px-2.5 py-1 text-[11px] font-bold text-[var(--color-brand-deep)] transition active:bg-[var(--color-brand-soft)] active:scale-[0.98] md:hover:bg-[var(--color-brand-soft)] lg:px-4 lg:py-2 lg:text-sm"
                 onClick={() => setShowAllRows((value) => !value)}
                 type="button"
               >
@@ -1271,7 +1270,7 @@ export function StationsBoard() {
               </button>
               <Link
                 href="/community"
-                className="hidden rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] px-4 py-2 text-sm font-bold text-[var(--color-ink)] transition hover:border-[var(--color-brand)] hover:text-[var(--color-brand-deep)] sm:inline-flex"
+                className="hidden rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] px-4 py-2 text-sm font-bold text-[var(--color-ink)] transition active:border-[var(--color-brand)] active:text-[var(--color-brand-deep)] active:scale-[0.98] md:hover:border-[var(--color-brand)] md:hover:text-[var(--color-brand-deep)] sm:inline-flex"
               >
                 去论坛补反馈
               </Link>
@@ -1324,7 +1323,7 @@ export function StationsBoard() {
                         <div className="min-w-0 flex-1">
                           <div className="flex min-w-0 items-center gap-2">
                           <button
-                              className="relative z-20 min-w-0 truncate text-left text-[13px] font-black leading-4 text-[var(--color-ink)] transition hover:text-[var(--color-brand)]"
+                              className="relative z-20 min-w-0 truncate text-left text-[13px] font-black leading-4 text-[var(--color-ink)] transition active:text-[var(--color-brand)] active:scale-[0.98] md:hover:text-[var(--color-brand)]"
                             onClick={(event) => {
                               event.stopPropagation();
                               handleDetailStationClick(station);
@@ -1396,7 +1395,7 @@ export function StationsBoard() {
             {/* Add-new button */}
             {isConnected && !addingNew && (
               <button
-                className="w-full rounded-full border border-dashed border-[var(--color-brand-soft)] bg-[var(--color-soft)] px-5 py-3 text-sm font-bold text-[var(--color-brand-deep)] transition hover:border-[var(--color-brand)] hover:bg-[var(--color-brand-soft)] md:col-span-2"
+                className="w-full rounded-full border border-dashed border-[var(--color-brand-soft)] bg-[var(--color-soft)] px-5 py-3 text-sm font-bold text-[var(--color-brand-deep)] transition active:border-[var(--color-brand)] active:bg-[var(--color-brand-soft)] active:scale-[0.98] md:hover:border-[var(--color-brand)] md:hover:bg-[var(--color-brand-soft)] md:col-span-2"
                 onClick={startAdd}
                 type="button"
               >
@@ -1440,7 +1439,7 @@ export function StationsBoard() {
                         试试调整搜索关键词或切换筛选标签
                       </p>
                       <button
-                        className="mt-4 rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] px-5 py-2.5 text-sm font-bold text-[var(--color-brand-deep)] transition hover:border-[var(--color-brand)]"
+                        className="mt-4 rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] px-5 py-2.5 text-sm font-bold text-[var(--color-brand-deep)] transition active:border-[var(--color-brand)] active:scale-[0.98] md:hover:border-[var(--color-brand)]"
                         onClick={() => { setQuery(""); setDebouncedQuery(""); setActiveFilter("all"); }}
                         type="button"
                       >
@@ -1458,7 +1457,7 @@ export function StationsBoard() {
                 return (
                   <div key={station.id}>
                     <article
-                      className="group relative z-10 grid cursor-pointer grid-cols-[1.35fr_0.9fr_0.72fr_0.92fr_0.82fr_0.7fr_0.78fr_0.68fr_0.9fr] items-center gap-x-3 border-b border-white/5 px-5 py-3 pr-14 text-sm transition hover:bg-white/[0.02]"
+                      className="group relative z-10 grid cursor-pointer grid-cols-[1.35fr_0.9fr_0.72fr_0.92fr_0.82fr_0.7fr_0.78fr_0.68fr_0.9fr] items-center gap-x-3 border-b border-white/5 px-5 py-3 pr-14 text-sm transition active:bg-white/[0.02] active:scale-[0.98] md:hover:bg-white/[0.02]"
                       onClick={() => handleDetailStationClick(station)}
                     >
                       {/* 站点 */}
@@ -1466,7 +1465,7 @@ export function StationsBoard() {
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="font-mono text-xs text-[var(--color-muted)]">{rankingBadge(index)}</span>
                           <button
-                            className="relative z-20 max-w-[180px] truncate text-left font-bold text-[var(--color-ink)] transition hover:text-[var(--color-brand)]"
+                            className="relative z-20 max-w-[180px] truncate text-left font-bold text-[var(--color-ink)] transition active:text-[var(--color-brand)] active:scale-[0.98] md:hover:text-[var(--color-brand)]"
                             onClick={(event) => {
                               event.stopPropagation();
                               handleDetailStationClick(station);
@@ -1507,7 +1506,7 @@ export function StationsBoard() {
                           })()}
                         </div>
                         <button
-                          className="absolute right-4 top-4 z-20 rounded-full p-2 text-zinc-500 transition-colors hover:bg-white/5 hover:text-emerald-400"
+                          className="absolute right-4 top-4 z-20 rounded-full p-2 text-zinc-500 transition-colors active:bg-white/5 active:text-emerald-400 active:scale-[0.98] md:hover:bg-white/5 md:hover:text-emerald-400"
                           onClick={(event) => {
                             event.stopPropagation();
                             openWikiEditModal(station);
@@ -1523,14 +1522,14 @@ export function StationsBoard() {
                               href={stationHref}
                               rel="noopener noreferrer"
                               target="_blank"
-                              className="relative z-20 font-semibold text-zinc-300 transition hover:text-white"
+                              className="relative z-20 font-semibold text-zinc-300 transition active:text-white active:scale-[0.98] md:hover:text-white"
                               onClick={(event) => event.stopPropagation()}
                             >
                               打开入口
                             </a>
                           ) : null}
                           <button
-                            className="relative z-20 transition hover:text-[var(--color-brand-deep)]"
+                            className="relative z-20 transition active:text-[var(--color-brand-deep)] active:scale-[0.98] md:hover:text-[var(--color-brand-deep)]"
                             onClick={(event) => {
                               event.stopPropagation();
                               setDiscussionStation(station);
@@ -1541,7 +1540,7 @@ export function StationsBoard() {
                             讨论区
                           </button>
                           <button
-                            className="relative z-20 transition hover:text-[var(--color-brand-deep)]"
+                            className="relative z-20 transition active:text-[var(--color-brand-deep)] active:scale-[0.98] md:hover:text-[var(--color-brand-deep)]"
                             onClick={(event) => {
                               event.stopPropagation();
                               toggleHistory(station.id);
@@ -1594,7 +1593,7 @@ export function StationsBoard() {
                         <span className="line-clamp-1 text-xs text-[var(--color-muted)]">{station.status || "待检测"}</span>
                       </div>
                       <button
-                        className="absolute right-3 top-1/2 z-20 -translate-y-1/2 rounded-full p-2 text-zinc-500 opacity-70 transition-colors hover:bg-white/5 hover:text-emerald-400 group-hover:opacity-100"
+                        className="absolute right-3 top-1/2 z-20 -translate-y-1/2 rounded-full p-2 text-zinc-500 opacity-70 transition-colors active:bg-white/5 active:text-emerald-400 active:scale-[0.98] md:hover:bg-white/5 md:hover:text-emerald-400 md:group-hover:opacity-100"
                         onClick={(event) => {
                           event.stopPropagation();
                           openWikiEditModal(station);
@@ -1620,7 +1619,7 @@ export function StationsBoard() {
               {isConnected && !addingNew && (
                 <div className="px-6 py-4 border-t border-dashed border-[var(--color-line)]">
                   <button
-                    className="rounded-full border border-dashed border-[var(--color-brand-soft)] bg-[var(--color-soft)] px-5 py-2.5 text-sm font-bold text-[var(--color-brand-deep)] transition hover:border-[var(--color-brand)] hover:bg-[var(--color-brand-soft)]"
+                    className="rounded-full border border-dashed border-[var(--color-brand-soft)] bg-[var(--color-soft)] px-5 py-2.5 text-sm font-bold text-[var(--color-brand-deep)] transition active:border-[var(--color-brand)] active:bg-[var(--color-brand-soft)] active:scale-[0.98] md:hover:border-[var(--color-brand)] md:hover:bg-[var(--color-brand-soft)]"
                     onClick={startAdd}
                     type="button"
                   >
@@ -1643,7 +1642,7 @@ export function StationsBoard() {
             </p>
             {!showAllRows && filteredRows.length > visibleRows.length ? (
               <button
-                className="rounded-full bg-[var(--color-brand)] px-3 py-2 text-xs font-bold text-[var(--color-on-brand)] transition hover:bg-[var(--color-brand-deep)] lg:px-5 lg:py-3 lg:text-sm"
+                className="rounded-full bg-[var(--color-brand)] px-3 py-2 text-xs font-bold text-[var(--color-on-brand)] transition active:bg-[var(--color-brand-deep)] active:scale-[0.98] md:hover:bg-[var(--color-brand-deep)] lg:px-5 lg:py-3 lg:text-sm"
                 onClick={() => setShowAllRows(true)}
                 type="button"
               >
@@ -1685,7 +1684,7 @@ export function StationsBoard() {
               <div className="mt-4 space-y-2.5 border-t border-[var(--color-line)] pt-4">
                 <Link
                   href="/community"
-                  className="block rounded-full bg-[var(--color-brand)] px-5 py-3 text-center text-sm font-bold text-[var(--color-on-brand)] transition hover:bg-[var(--color-brand-deep)]"
+                  className="block rounded-full bg-[var(--color-brand)] px-5 py-3 text-center text-sm font-bold text-[var(--color-on-brand)] transition active:bg-[var(--color-brand-deep)] active:scale-[0.98] md:hover:bg-[var(--color-brand-deep)]"
                 >
                   进入站内讨论区
                 </Link>
@@ -1693,7 +1692,7 @@ export function StationsBoard() {
                   href="https://github.com/hfeng620-cmd/timin_api_test_and_forum/discussions"
                   rel="noopener noreferrer"
                   target="_blank"
-                  className="block rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] px-5 py-3 text-center text-sm font-bold text-[var(--color-ink)] transition hover:border-[var(--color-brand)] hover:text-[var(--color-brand-deep)]"
+                  className="block rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] px-5 py-3 text-center text-sm font-bold text-[var(--color-ink)] transition active:border-[var(--color-brand)] active:text-[var(--color-brand-deep)] active:scale-[0.98] md:hover:border-[var(--color-brand)] md:hover:text-[var(--color-brand-deep)]"
                 >
                   GitHub Discussions
                 </a>
@@ -1817,7 +1816,7 @@ export function StationsBoard() {
                 </div>
               </div>
               <button
-                className="flex h-10 w-10 items-center justify-center rounded-full text-[var(--color-muted)] transition hover:bg-[var(--color-soft)] hover:text-[var(--color-ink)]"
+                className="flex h-10 w-10 items-center justify-center rounded-full text-[var(--color-muted)] transition active:bg-[var(--color-soft)] active:text-[var(--color-ink)] active:scale-[0.98] md:hover:bg-[var(--color-soft)] md:hover:text-[var(--color-ink)]"
                 onClick={() => setDiscussionStation(null)}
                 type="button"
                 aria-label="关闭"
@@ -1868,7 +1867,7 @@ export function StationsBoard() {
           )}
           <button
             aria-label="站点操作"
-            className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--color-brand)] text-xl font-bold text-[var(--color-on-brand)] shadow-[0_8px_28px_var(--color-panel-glow)] transition active:scale-95 active:opacity-90 hover:bg-[var(--color-brand-deep)]"
+            className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--color-brand)] text-xl font-bold text-[var(--color-on-brand)] shadow-[0_8px_28px_var(--color-panel-glow)] transition active:scale-95 active:opacity-90 active:bg-[var(--color-brand-deep)] md:hover:bg-[var(--color-brand-deep)]"
             onClick={() => setQuickMenuOpen((v) => !v)}
             type="button"
           >

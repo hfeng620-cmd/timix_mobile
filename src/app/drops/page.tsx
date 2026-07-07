@@ -67,9 +67,7 @@ export default function DropsPage() {
 
   return (
     <div className="mobile-tab-scroll flex-1 min-h-0 h-full overflow-y-auto overscroll-y-contain pb-24 text-zinc-900">
-      <Navbar />
-
-      <section className="relative z-10 mx-auto max-w-[1680px] px-4 pt-28 sm:px-5 lg:px-8">
+      <section className="relative z-10 mx-auto max-w-[1680px] px-4 pt-4 sm:px-5">
         {/* ── Header ── */}
         <div className="mb-8">
           <div className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-white/80 bg-white/60 px-3.5 py-1 text-xs font-semibold text-zinc-700 shadow-sm backdrop-blur-md font-body">

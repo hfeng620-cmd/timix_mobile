@@ -320,7 +320,7 @@ export function UserProfileCard({ userId, position, viewerUserId, onClose }: Use
           >
             <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-[radial-gradient(circle_at_50%_-20%,rgba(255,255,255,0.16),transparent_60%)]" />
             <button
-              className="touch-press absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-zinc-500 transition hover:bg-white/[0.08] hover:text-zinc-100"
+              className="touch-press absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-zinc-500 transition active:bg-white/[0.08] active:text-zinc-100 active:scale-[0.98] md:hover:bg-white/[0.08] md:hover:text-zinc-100"
               onClick={handleClose}
               type="button"
               aria-label="关闭"
@@ -447,7 +447,7 @@ export function UserProfileCard({ userId, position, viewerUserId, onClose }: Use
                 </Link>
               ) : (
                 <button
-                  className="touch-press rounded-full bg-zinc-100 py-2.5 text-center text-sm font-bold text-zinc-950 transition hover:bg-white"
+                  className="touch-press rounded-full bg-zinc-100 py-2.5 text-center text-sm font-bold text-zinc-950 transition active:bg-white active:scale-[0.98] md:hover:bg-white"
                   onClick={handleClose}
                   type="button"
                 >
@@ -456,7 +456,7 @@ export function UserProfileCard({ userId, position, viewerUserId, onClose }: Use
               )}
               {viewerUserId && !isOwnProfile ? (
                 <button
-                  className="touch-press inline-flex items-center justify-center gap-2 rounded-full border border-emerald-400/25 bg-emerald-400/10 py-2.5 text-sm font-semibold text-emerald-300 transition hover:bg-emerald-400/15"
+                  className="touch-press inline-flex items-center justify-center gap-2 rounded-full border border-emerald-400/25 bg-emerald-400/10 py-2.5 text-sm font-semibold text-emerald-300 transition active:bg-emerald-400/15 active:scale-[0.98] md:hover:bg-emerald-400/15"
                   onClick={() => setIsDMOpen(true)}
                   type="button"
                 >
@@ -465,7 +465,7 @@ export function UserProfileCard({ userId, position, viewerUserId, onClose }: Use
                 </button>
               ) : (
                 <Link
-                  className="touch-press block rounded-full border border-white/10 bg-white/[0.04] py-2.5 text-center text-sm font-semibold text-zinc-300 transition hover:bg-white/[0.07] hover:text-white"
+                  className="touch-press block rounded-full border border-white/10 bg-white/[0.04] py-2.5 text-center text-sm font-semibold text-zinc-300 transition active:bg-white/[0.07] active:text-white active:scale-[0.98] md:hover:bg-white/[0.07] md:hover:text-white"
                   href="/community"
                 >
                   去社区

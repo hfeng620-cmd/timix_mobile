@@ -174,13 +174,16 @@ function ActionButton({
   );
 
   if (!onClick) {
-    return <div className="inline-flex items-center gap-1.5 text-[13px] text-[var(--color-muted)] sm:gap-2 sm:text-[15px]">{content}</div>;
+    return <div className="inline-flex items-center gap-1.5 text-sm text-[var(--color-muted)] sm:gap-2 sm:text-sm">{content}</div>;
   }
 
   return (
     <button
-      className="inline-flex min-h-9 min-w-9 items-center justify-center gap-1.5 rounded-full px-2 text-[13px] text-[var(--color-muted)] transition hover:bg-[var(--color-soft)] hover:text-[var(--color-ink)] active:scale-[0.98] active:opacity-80 sm:min-h-[44px] sm:min-w-[44px] sm:gap-2 sm:text-[15px]"
-      onClick={onClick}
+      className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-full px-3 text-sm text-[var(--color-muted)] transition active:bg-[var(--color-soft)] active:text-[var(--color-ink)] active:scale-[0.98] active:opacity-80 md:hover:bg-[var(--color-soft)] md:hover:text-[var(--color-ink)] sm:min-h-11 sm:gap-2 sm:text-sm"
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick();
+      }}
       type="button"
     >
       {content}
@@ -230,18 +233,18 @@ function ClampedPostBody({
     <div className="mt-4 max-w-4xl">
       <div
         ref={contentRef}
-        className="line-clamp-3 whitespace-pre-wrap break-words text-[15px] leading-7 text-[var(--color-ink)] sm:text-base sm:leading-8"
+        className="line-clamp-3 whitespace-pre-wrap break-words text-sm leading-7 text-[var(--color-ink)] sm:text-base sm:leading-8"
       >
         <MarkdownContent
           text={body}
-          imageClassName="my-2 max-h-40 w-auto max-w-full cursor-zoom-in rounded-lg border border-white/5 object-cover shadow-sm transition-opacity hover:opacity-90"
+          imageClassName="my-2 max-h-40 w-auto max-w-full cursor-zoom-in rounded-lg border border-white/5 object-cover shadow-sm transition-opacity active:opacity-90 md:hover:opacity-90"
           onImageClick={onImageClick}
         />
       </div>
 
       {isOverflowing ? (
         <button
-          className="mt-2 inline-flex min-h-[36px] items-center rounded-full border border-[var(--color-line)] bg-[var(--color-soft)] px-3.5 py-1.5 text-xs font-bold text-[var(--color-brand-deep)] transition hover:-translate-y-0.5 hover:border-[var(--color-brand)] hover:bg-[var(--color-brand-soft)]"
+          className="mt-2 inline-flex min-h-11 items-center rounded-full border border-[var(--color-line)] bg-[var(--color-soft)] px-4 py-2 text-sm font-bold text-[var(--color-brand-deep)] transition active:border-[var(--color-brand)] active:bg-[var(--color-brand-soft)] md:hover:border-[var(--color-brand)] md:hover:bg-[var(--color-brand-soft)]"
           onClick={onShowFull}
           type="button"
         >
@@ -699,7 +702,6 @@ export function DiscussionFeed({
     setSubmitting(true);
     setStatus("发布中...");
     try {
-      console.log("[讨论] 准备发送帖子:", { body: trimmed, station: station.trim(), tags });
       await createDiscussionPost({
         author: displayName || "噜噜",
         handle: "@forum",
@@ -784,7 +786,6 @@ export function DiscussionFeed({
     setReplySubmitting(postId);
     setStatus("回复中...");
     try {
-      console.log("[讨论] 准备发送回复:", { postId, draft: trimmedDraft });
       await replyDiscussionPost(postId, trimmedDraft);
       const newComments = await loadComments(postId);
       setCommentsMap((current) => ({ ...current, [postId]: newComments }));
@@ -940,7 +941,7 @@ export function DiscussionFeed({
 
   if (loading) {
     return (
-      <section className="overflow-hidden rounded-[20px] border border-[var(--color-line)] bg-[var(--color-panel)] shadow-[var(--shadow-card)]">
+      <section className="overflow-hidden rounded-2xl border border-[var(--color-line)] bg-[var(--color-panel)] shadow-[var(--shadow-card)]">
         <div className="px-5 py-10 text-center">
           <p className="text-base text-[var(--color-muted)]">正在加载讨论...</p>
         </div>
@@ -950,11 +951,11 @@ export function DiscussionFeed({
 
   if (error) {
     return (
-      <section className="overflow-hidden rounded-[20px] border border-[var(--color-line)] bg-[var(--color-panel)] shadow-[var(--shadow-card)]">
+      <section className="overflow-hidden rounded-2xl border border-[var(--color-line)] bg-[var(--color-panel)] shadow-[var(--shadow-card)]">
         <div className="px-5 py-10 text-center">
           <p className="text-base text-[var(--color-muted)]">{error}</p>
           <button
-            className="mt-3 rounded-full bg-[var(--color-brand)] px-4 py-2 text-sm font-bold text-[var(--color-on-brand)] transition hover:bg-[var(--color-brand-deep)]"
+            className="mt-3 rounded-full bg-[var(--color-brand)] px-4 py-2 text-sm font-bold text-[var(--color-on-brand)] transition active:bg-[var(--color-brand-deep)] md:hover:bg-[var(--color-brand-deep)]"
             onClick={() => loadPosts(true)}
             type="button"
           >
@@ -968,14 +969,14 @@ export function DiscussionFeed({
   return (
     <section
       ref={sectionRef}
-      className={`card-lift overflow-hidden rounded-[28px] border border-[var(--color-line)] bg-[var(--color-panel)] pb-24 shadow-[0_20px_60px_rgba(15,23,42,0.08)] transition-[opacity,transform,box-shadow] duration-700 ease-out motion-reduce:translate-y-0 motion-reduce:opacity-100 ${
+      className={`card-lift overflow-hidden rounded-3xl border border-[var(--color-line)] bg-[var(--color-panel)] pb-24 shadow-[0_20px_60px_rgba(15,23,42,0.08)] transition-[opacity,transform,box-shadow] duration-700 ease-out motion-reduce:translate-y-0 motion-reduce:opacity-100 ${
         isSectionRevealed ? "translate-y-0 opacity-100" : "translate-y-2 opacity-70"
       }`}
       data-selection-comments="off"
     >
       {!hideHeader && (
       <div className="border-b border-[var(--color-line)] bg-[linear-gradient(145deg,var(--color-header),var(--color-panel)_58%,var(--color-brand-soft))] px-4 py-5 sm:px-6">
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand-deep)]">
               Discussion Workbench
@@ -988,19 +989,19 @@ export function DiscussionFeed({
             </p>
           </div>
           <div className="grid gap-2 sm:grid-cols-3 lg:min-w-[420px]">
-            <div className="rounded-[18px] border border-[var(--color-line)] bg-[color-mix(in_srgb,var(--color-panel)_76%,transparent)] px-4 py-3 shadow-[0_12px_30px_rgba(15,23,42,0.05)] backdrop-blur">
+            <div className="rounded-xl border border-[var(--color-line)] bg-[color-mix(in_srgb,var(--color-panel)_76%,transparent)] px-4 py-3 shadow-[0_12px_30px_rgba(15,23,42,0.05)] backdrop-blur">
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
                 结果
               </p>
               <p className="mt-1 text-lg font-black text-[var(--color-ink)]">{resultCount}</p>
             </div>
-            <div className="rounded-[18px] border border-[var(--color-line)] bg-[color-mix(in_srgb,var(--color-panel)_76%,transparent)] px-4 py-3 shadow-[0_12px_30px_rgba(15,23,42,0.05)] backdrop-blur">
+            <div className="rounded-xl border border-[var(--color-line)] bg-[color-mix(in_srgb,var(--color-panel)_76%,transparent)] px-4 py-3 shadow-[0_12px_30px_rgba(15,23,42,0.05)] backdrop-blur">
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
                 排序
               </p>
               <p className="mt-1 text-sm font-bold text-[var(--color-ink)]">{sortLabel}</p>
             </div>
-            <div className="rounded-[18px] border border-[var(--color-line)] bg-[color-mix(in_srgb,var(--color-panel)_76%,transparent)] px-4 py-3 shadow-[0_12px_30px_rgba(15,23,42,0.05)] backdrop-blur">
+            <div className="rounded-xl border border-[var(--color-line)] bg-[color-mix(in_srgb,var(--color-panel)_76%,transparent)] px-4 py-3 shadow-[0_12px_30px_rgba(15,23,42,0.05)] backdrop-blur">
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
                 状态
               </p>
@@ -1011,7 +1012,7 @@ export function DiscussionFeed({
           </div>
         </div>
 
-        <div className="mt-5 grid gap-3 rounded-[22px] border border-[var(--color-line)] bg-[color-mix(in_srgb,var(--color-panel)_64%,transparent)] p-3 backdrop-blur lg:grid-cols-[minmax(0,1fr)_auto]">
+        <div className="mt-4 grid gap-3 rounded-2xl border border-[var(--color-line)] bg-[color-mix(in_srgb,var(--color-panel)_64%,transparent)] p-3 backdrop-blur lg:grid-cols-[minmax(0,1fr)_auto]">
           <div className="relative min-w-0">
             <input
               className="w-full rounded-full border border-[var(--color-line)] bg-[var(--color-input)] py-3 pl-5 pr-4 text-sm text-[var(--color-ink)] outline-none transition placeholder:text-[var(--color-muted)] focus:border-[var(--color-brand)] focus:bg-[var(--color-panel)]"
@@ -1022,7 +1023,7 @@ export function DiscussionFeed({
           </div>
           <div className="grid gap-2 sm:flex sm:flex-wrap sm:items-center">
             <select
-              className="w-full cursor-pointer appearance-none rounded-[18px] border border-[var(--color-line)] bg-[var(--color-input)] px-4 py-3 text-sm text-[var(--color-ink)] outline-none transition focus:border-[var(--color-brand)] sm:w-auto sm:rounded-full"
+              className="w-full cursor-pointer appearance-none rounded-lg border border-[var(--color-line)] bg-[var(--color-input)] px-4 py-3 text-sm text-[var(--color-ink)] outline-none transition focus:border-[var(--color-brand)] sm:w-auto sm:rounded-full"
               value={sortOption}
               onChange={(e) => setSortOption(e.target.value as "latest" | "mostReplies" | "mostLikes")}
               style={{
@@ -1038,7 +1039,7 @@ export function DiscussionFeed({
             </select>
             {hasActiveFilters ? (
               <button
-                className="rounded-[18px] border border-[var(--color-line)] bg-[var(--color-panel)] px-4 py-3 text-sm font-semibold text-[var(--color-muted)] transition hover:border-[var(--color-brand)] hover:bg-[var(--color-soft)] hover:text-[var(--color-brand-deep)] sm:rounded-full"
+                className="rounded-lg border border-[var(--color-line)] bg-[var(--color-panel)] px-4 py-3 text-sm font-semibold text-[var(--color-muted)] transition active:border-[var(--color-brand)] active:bg-[var(--color-soft)] active:text-[var(--color-brand-deep)] md:hover:border-[var(--color-brand)] md:hover:bg-[var(--color-soft)] md:hover:text-[var(--color-brand-deep)] sm:rounded-full"
                 onClick={() => {
                   setSearchQuery("");
                   setSelectedTag(null);
@@ -1078,7 +1079,7 @@ export function DiscussionFeed({
 
       {!hideComposer ? (
         <div className="border-b border-[var(--color-line)] bg-[var(--color-soft)]/40 px-4 py-5 sm:px-6">
-          <div className="rounded-[24px] border border-[var(--color-line)] bg-[linear-gradient(180deg,var(--color-panel),var(--color-soft))] p-5 shadow-[inset_0_1px_0_var(--color-panel)]">
+          <div className="rounded-2xl border border-[var(--color-line)] bg-[linear-gradient(180deg,var(--color-panel),var(--color-soft))] p-5 shadow-[inset_0_1px_0_var(--color-panel)]">
             <textarea
               className="min-h-28 w-full resize-none bg-transparent text-base leading-7 text-[var(--color-ink)] outline-none placeholder:text-[var(--color-muted)]"
               onChange={(event) => setBody(event.target.value)}
@@ -1140,7 +1141,7 @@ export function DiscussionFeed({
                   type="file"
                 />
                 <button
-                  className="rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] px-3 py-1.5 text-xs font-semibold text-[var(--color-muted)] transition hover:bg-[var(--color-soft)] hover:text-[var(--color-ink)] disabled:opacity-50"
+                  className="rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] px-3 py-1.5 text-xs font-semibold text-[var(--color-muted)] transition active:bg-[var(--color-soft)] active:text-[var(--color-ink)] md:hover:bg-[var(--color-soft)] md:hover:text-[var(--color-ink)] disabled:opacity-50"
                   disabled={uploadingImage}
                   onClick={() => fileInputRef.current?.click()}
                   type="button"
@@ -1151,7 +1152,7 @@ export function DiscussionFeed({
                 <span aria-live="polite" className="text-xs text-[var(--color-muted)]">{status}</span>
               </div>
               <button
-                className="cursor-pointer rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-bold text-[var(--color-on-brand)] transition hover:bg-[var(--color-brand-deep)]"
+                className="cursor-pointer rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-bold text-[var(--color-on-brand)] transition active:bg-[var(--color-brand-deep)] md:hover:bg-[var(--color-brand-deep)]"
                 onClick={handleSubmitPost}
                 type="button"
               >
@@ -1166,7 +1167,7 @@ export function DiscussionFeed({
       {!hideHeader && (
       <div className="border-b border-[var(--color-line)] bg-[var(--color-panel)] px-5 py-4 sm:px-6">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex flex-wrap items-center gap-2.5">
+          <div className="flex flex-wrap items-center gap-3">
             <span className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
               高频标签
             </span>
@@ -1176,7 +1177,7 @@ export function DiscussionFeed({
                   className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${
                     selectedTag === null
                       ? "bg-[var(--color-brand)] text-[var(--color-on-brand)]"
-                      : "border border-[var(--color-line)] bg-[var(--color-soft)] text-[var(--color-muted)] hover:bg-[var(--color-hover)] hover:text-[var(--color-ink)]"
+                      : "border border-[var(--color-line)] bg-[var(--color-soft)] text-[var(--color-muted)] active:bg-[var(--color-hover)] active:text-[var(--color-ink)] md:hover:bg-[var(--color-hover)] md:hover:text-[var(--color-ink)]"
                   }`}
                   onClick={() => setSelectedTag(null)}
                   type="button"
@@ -1189,7 +1190,7 @@ export function DiscussionFeed({
                     className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${
                       selectedTag === tag
                         ? "bg-[var(--color-brand)] text-[var(--color-on-brand)]"
-                        : "border border-[var(--color-line)] bg-[var(--color-soft)] text-[var(--color-muted)] hover:bg-[var(--color-hover)] hover:text-[var(--color-ink)]"
+                        : "border border-[var(--color-line)] bg-[var(--color-soft)] text-[var(--color-muted)] active:bg-[var(--color-hover)] active:text-[var(--color-ink)] md:hover:bg-[var(--color-hover)] md:hover:text-[var(--color-ink)]"
                     }`}
                     onClick={() => setSelectedTag(selectedTag === tag ? null : tag)}
                     type="button"
@@ -1230,7 +1231,7 @@ export function DiscussionFeed({
       <div className="grid gap-4 bg-[var(--color-soft)]/35 p-3 sm:p-5 xl:grid-cols-2">
         {visiblePosts.length === 0 ? (
           <div
-            className="surface-in overflow-hidden rounded-[24px] border border-[var(--color-line)] bg-[linear-gradient(135deg,var(--color-panel),var(--color-brand-soft)_62%,var(--color-panel))] px-5 py-8 text-center shadow-[0_18px_54px_rgba(15,23,42,0.08)] sm:px-6 sm:py-10 xl:col-span-2"
+            className="surface-in overflow-hidden rounded-2xl border border-[var(--color-line)] bg-[linear-gradient(135deg,var(--color-panel),var(--color-brand-soft)_62%,var(--color-panel))] px-5 py-8 text-center shadow-[0_18px_54px_rgba(15,23,42,0.08)] sm:px-6 sm:py-10 xl:col-span-2"
             style={createFeedItemStyle(0)}
           >
             {bookmarksOnly ? (
@@ -1238,7 +1239,7 @@ export function DiscussionFeed({
                 <p className="text-base font-bold text-[var(--color-ink)]">还没有收藏过帖子。</p>
                 <p className="mt-2 text-sm text-[var(--color-muted)]">先在讨论流里标记重点，再回来集中处理。</p>
                 <button
-                  className="mt-3 rounded-full bg-[var(--color-brand)] px-4 py-2 text-sm font-bold text-[var(--color-on-brand)] transition hover:bg-[var(--color-brand-deep)]"
+                  className="mt-3 rounded-full bg-[var(--color-brand)] px-4 py-2 text-sm font-bold text-[var(--color-on-brand)] transition active:bg-[var(--color-brand-deep)] md:hover:bg-[var(--color-brand-deep)]"
                   onClick={() => setBookmarksOnly(false)}
                   type="button"
                 >
@@ -1258,7 +1259,7 @@ export function DiscussionFeed({
                     清空搜索
                   </button>
                   <a
-                    className="rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] px-4 py-2 text-sm font-bold text-[var(--color-ink)] transition hover:border-[var(--color-brand)] hover:text-[var(--color-brand-deep)]"
+                    className="rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] px-4 py-2 text-sm font-bold text-[var(--color-ink)] transition active:border-[var(--color-brand)] active:text-[var(--color-brand-deep)] md:hover:border-[var(--color-brand)] md:hover:text-[var(--color-brand-deep)]"
                     href={resolvedStationFilter ? "/community#community-composer" : "#community-composer"}
                   >
                     发起新讨论
@@ -1269,7 +1270,7 @@ export function DiscussionFeed({
               <>
                 <p className="text-base font-bold text-[var(--color-ink)]">没有带「{selectedTag}」标签的帖子。</p>
                 <button
-                  className="mt-3 rounded-full bg-[var(--color-brand)] px-4 py-2 text-sm font-bold text-[var(--color-on-brand)] transition hover:bg-[var(--color-brand-deep)]"
+                  className="mt-3 rounded-full bg-[var(--color-brand)] px-4 py-2 text-sm font-bold text-[var(--color-on-brand)] transition active:bg-[var(--color-brand-deep)] md:hover:bg-[var(--color-brand-deep)]"
                   onClick={() => setSelectedTag(null)}
                   type="button"
                 >
@@ -1285,25 +1286,25 @@ export function DiscussionFeed({
                 <p className="mx-auto mt-2 max-w-xl text-sm leading-7 text-[var(--color-muted)]">
                   可以发价格变化、试用线索、模型口径或避坑记录；内容会直接进入下面的讨论流，方便后续回复和收藏。
                 </p>
-                <div className="mt-5 grid gap-2 sm:grid-cols-3">
+                <div className="mt-4 grid gap-2 sm:grid-cols-3">
                   {["短反馈", "可评论", "可收藏"].map((item) => (
                     <div
                       key={item}
-                      className="rounded-[18px] border border-[var(--color-line)] bg-[color-mix(in_srgb,var(--color-panel)_76%,transparent)] px-3 py-3 text-sm font-bold text-[var(--color-ink)]"
+                      className="rounded-xl border border-[var(--color-line)] bg-[color-mix(in_srgb,var(--color-panel)_76%,transparent)] px-3 py-3 text-sm font-bold text-[var(--color-ink)]"
                     >
                       {item}
                     </div>
                   ))}
                 </div>
-                <div className="mt-5 flex flex-wrap justify-center gap-2">
+                <div className="mt-4 flex flex-wrap justify-center gap-2">
                   <a
-                    className="rounded-full bg-[var(--color-brand)] px-5 py-2.5 text-sm font-bold text-[var(--color-on-brand)] shadow-[0_12px_24px_var(--color-panel-glow)] transition hover:bg-[var(--color-brand-deep)]"
+                    className="rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-bold text-[var(--color-on-brand)] shadow-[0_12px_24px_var(--color-panel-glow)] transition active:bg-[var(--color-brand-deep)] md:hover:bg-[var(--color-brand-deep)]"
                     href={resolvedStationFilter ? "/community#community-composer" : "#community-composer"}
                   >
                     去发第一条
                   </a>
                   <a
-                    className="rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] px-5 py-2.5 text-sm font-bold text-[var(--color-ink)] transition hover:border-[var(--color-brand)] hover:text-[var(--color-brand-deep)]"
+                    className="rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] px-5 py-3 text-sm font-bold text-[var(--color-ink)] transition hover:border-[var(--color-brand)] hover:text-[var(--color-brand-deep)]"
                     href="https://github.com/hfeng620-cmd/timin_api_test_and_forum/discussions"
                     rel="noopener noreferrer"
                     target="_blank"
@@ -1326,23 +1327,18 @@ export function DiscussionFeed({
             <article
               id={post.issueNumber}
               key={post.issueNumber}
-              className={`surface-in card-lift relative rounded-[24px] border border-[var(--color-line)] bg-[var(--color-panel)] px-4 py-4 transition duration-200 hover:border-[var(--color-brand)] hover:bg-[linear-gradient(180deg,var(--color-panel),var(--color-soft))] sm:px-5 ${
+              className={`surface-in card-lift relative cursor-pointer rounded-2xl border border-[var(--color-line)] bg-[var(--color-panel)] px-4 py-4 transition duration-200 active:border-[var(--color-brand)] active:bg-[linear-gradient(180deg,var(--color-panel),var(--color-soft))] active:scale-[0.98] md:hover:border-[var(--color-brand)] md:hover:bg-[linear-gradient(180deg,var(--color-panel),var(--color-soft))] sm:px-5 ${
                 post.is_pinned ? "bg-[linear-gradient(180deg,var(--color-brand-soft),var(--color-panel))] shadow-[0_16px_44px_var(--color-panel-glow)]" : ""
               } ${resolvedStationFilter ? "xl:col-span-2" : ""}`}
               style={createFeedItemStyle(index)}
+              onClick={() => openPostModal(post.issueNumber)}
             >
-              <button
-                aria-label={`打开 ${post.author} 的论坛详情`}
-                className="absolute inset-0 z-0 rounded-[24px]"
-                onClick={() => openPostModal(post.issueNumber)}
-                type="button"
-              />
               {canManagePost ? (
                 <div className="absolute right-3 top-3 z-[3]">
                   <button
                     aria-expanded={isPostMenuOpen}
                     aria-label="更多操作"
-                    className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] text-[var(--color-muted)] shadow-sm transition hover:bg-[var(--color-soft)] hover:text-[var(--color-ink)] active:scale-[0.98] active:opacity-80"
+                    className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] text-[var(--color-muted)] shadow-sm transition active:bg-[var(--color-soft)] active:text-[var(--color-ink)] active:scale-[0.98] active:opacity-80 md:hover:bg-[var(--color-soft)] md:hover:text-[var(--color-ink)]"
                     onClick={(event) => {
                       event.stopPropagation();
                       setOpenPostMenuId(isPostMenuOpen ? null : post.issueNumber);
@@ -1362,7 +1358,7 @@ export function DiscussionFeed({
                     >
                       {isAdmin ? (
                         <button
-                          className="flex min-h-[40px] w-full items-center rounded-xl px-3 text-left text-xs font-semibold text-[var(--color-ink)] transition hover:bg-[var(--color-soft)] active:scale-[0.98] active:bg-[var(--color-soft)] disabled:opacity-50"
+                          className="flex min-h-[40px] w-full items-center rounded-xl px-3 text-left text-xs font-semibold text-[var(--color-ink)] transition active:bg-[var(--color-soft)] active:scale-[0.98] md:hover:bg-[var(--color-soft)] disabled:opacity-50"
                           disabled={pinSaving}
                           onClick={() => {
                             setOpenPostMenuId(null);
@@ -1376,7 +1372,7 @@ export function DiscussionFeed({
                       {canEditPost ? (
                         <>
                           <button
-                            className="flex min-h-[40px] w-full items-center rounded-xl px-3 text-left text-xs font-semibold text-[var(--color-ink)] transition hover:bg-[var(--color-soft)] active:scale-[0.98] active:bg-[var(--color-soft)]"
+                            className="flex min-h-[40px] w-full items-center rounded-xl px-3 text-left text-xs font-semibold text-[var(--color-ink)] transition active:bg-[var(--color-soft)] active:scale-[0.98] md:hover:bg-[var(--color-soft)]"
                             onClick={() => {
                               setOpenPostMenuId(null);
                               handleStartEdit(post);
@@ -1386,7 +1382,7 @@ export function DiscussionFeed({
                             编辑
                           </button>
                           <button
-                            className="flex min-h-[40px] w-full items-center rounded-xl px-3 text-left text-xs font-semibold text-red-500 transition hover:bg-red-500/10 active:scale-[0.98] active:bg-red-500/10"
+                            className="flex min-h-[40px] w-full items-center rounded-xl px-3 text-left text-xs font-semibold text-red-500 transition active:bg-red-500/10 active:scale-[0.98] md:hover:bg-red-500/10"
                             onClick={() => {
                               setOpenPostMenuId(null);
                               handleDeletePost(post.issueNumber);
@@ -1405,7 +1401,7 @@ export function DiscussionFeed({
                 {post.authorId ? (
                   <Link
                     aria-label={`打开 ${post.author} 的公开主页`}
-                    className="shrink-0 cursor-pointer transition hover:opacity-80"
+                    className="shrink-0 cursor-pointer transition active:opacity-80 md:hover:opacity-80"
                     href={getUserProfileHref(post.authorId)}
                     onClick={(event) => event.stopPropagation()}
                     onContextMenu={(event) => handleAvatarClick(post.authorId, event)}
@@ -1434,7 +1430,7 @@ export function DiscussionFeed({
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                     {post.authorId ? (
                       <Link
-                        className="cursor-pointer rounded-md text-base font-black text-[var(--color-ink)] transition hover:text-[var(--color-brand)]"
+                        className="cursor-pointer rounded-md text-base font-black text-[var(--color-ink)] transition active:text-[var(--color-brand)] md:hover:text-[var(--color-brand)]"
                         href={getUserProfileHref(post.authorId)}
                         onClick={(event) => event.stopPropagation()}
                         onContextMenu={(event) => handleAvatarClick(post.authorId, event)}
@@ -1503,15 +1499,15 @@ export function DiscussionFeed({
                     ) : null}
                   </div>
                   {editingPostId === post.issueNumber ? (
-                    <div className="mt-3">
+                    <div className="mt-3" onClick={(e) => e.stopPropagation()}>
                       <textarea
-                        className="min-h-32 w-full resize-none rounded-[18px] border border-[var(--color-line)] bg-[var(--color-input)] px-4 py-3 text-base leading-7 text-[var(--color-ink)] outline-none transition focus:border-[var(--color-brand)]"
+                        className="min-h-32 w-full resize-none rounded-xl border border-[var(--color-line)] bg-[var(--color-input)] px-4 py-3 text-base leading-7 text-[var(--color-ink)] outline-none transition focus:border-[var(--color-brand)]"
                         onChange={(event) => setEditBody(event.target.value)}
                         value={editBody}
                       />
                       <div className="mt-2 flex items-center gap-3">
                         <button
-                          className="rounded-full bg-[var(--color-brand)] px-4 py-2 text-xs font-bold text-[var(--color-on-brand)] transition hover:bg-[var(--color-brand-deep)] disabled:opacity-50"
+                          className="rounded-full bg-[var(--color-brand)] px-4 py-2 text-xs font-bold text-[var(--color-on-brand)] transition active:bg-[var(--color-brand-deep)] md:hover:bg-[var(--color-brand-deep)] disabled:opacity-50"
                           disabled={editSaving}
                           onClick={() => handleSaveEdit(post.issueNumber)}
                           type="button"
@@ -1519,7 +1515,7 @@ export function DiscussionFeed({
                           {editSaving ? "保存中..." : "保存"}
                         </button>
                         <button
-                          className="rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] px-4 py-2 text-xs font-semibold text-[var(--color-muted)] transition hover:bg-[var(--color-soft)] hover:text-[var(--color-ink)]"
+                          className="rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] px-4 py-2 text-xs font-semibold text-[var(--color-muted)] transition active:bg-[var(--color-soft)] active:text-[var(--color-ink)] md:hover:bg-[var(--color-soft)] md:hover:text-[var(--color-ink)]"
                           disabled={editSaving}
                           onClick={handleCancelEdit}
                           type="button"
@@ -1542,9 +1538,12 @@ export function DiscussionFeed({
                         className={`rounded-full px-2.5 py-1 text-xs font-semibold transition ${
                           selectedTag === tag
                             ? "bg-[var(--color-brand)] text-[var(--color-on-brand)]"
-                            : "border border-[var(--color-line)] bg-[var(--color-soft)] text-[var(--color-muted)] hover:bg-[var(--color-hover)] hover:text-[var(--color-ink)]"
+                            : "border border-[var(--color-line)] bg-[var(--color-soft)] text-[var(--color-muted)] active:bg-[var(--color-hover)] active:text-[var(--color-ink)] md:hover:bg-[var(--color-hover)] md:hover:text-[var(--color-ink)]"
                         }`}
-                        onClick={() => setSelectedTag(selectedTag === tag ? null : tag)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedTag(selectedTag === tag ? null : tag);
+                        }}
                         type="button"
                       >
                         #{tag}
@@ -1553,7 +1552,7 @@ export function DiscussionFeed({
                   </div>
                   <div className="mt-5 grid grid-cols-2 gap-2 border-t border-[var(--color-line)] pt-3 sm:flex sm:flex-wrap sm:items-center sm:gap-3">
                     <button
-                      className="rounded-full bg-[var(--color-brand)] px-3 py-2.5 text-sm font-semibold text-[var(--color-on-brand)] shadow-[0_10px_24px_var(--color-panel-glow)] transition hover:bg-[var(--color-brand-deep)] sm:px-4"
+                      className="rounded-full bg-[var(--color-brand)] px-3 py-2.5 text-sm font-semibold text-[var(--color-on-brand)] shadow-[0_10px_24px_var(--color-panel-glow)] transition active:bg-[var(--color-brand-deep)] md:hover:bg-[var(--color-brand-deep)] sm:px-4"
                       onClick={(event) => {
                         event.stopPropagation();
                         openPostModal(post.issueNumber);
@@ -1571,7 +1570,7 @@ export function DiscussionFeed({
                     />
                     {/* Bookmark button */}
                     <button
-                      className="inline-flex min-h-9 min-w-9 items-center justify-center gap-1.5 rounded-full px-2 text-[13px] text-[var(--color-muted)] transition hover:bg-[var(--color-soft)] hover:text-[var(--color-ink)] active:scale-[0.98] active:opacity-80 sm:min-h-[44px] sm:min-w-[44px] sm:justify-start sm:gap-2 sm:text-[15px]"
+                      className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-full px-3 text-sm text-[var(--color-muted)] transition active:bg-[var(--color-soft)] active:text-[var(--color-ink)] active:scale-[0.98] active:opacity-80 md:hover:bg-[var(--color-soft)] md:hover:text-[var(--color-ink)] sm:min-h-11 sm:justify-start sm:gap-2 sm:text-sm"
                       onClick={(event) => {
                         event.stopPropagation();
                         handleToggleBookmark(post.issueNumber);
@@ -1580,13 +1579,14 @@ export function DiscussionFeed({
                       title={isBookmarked ? "取消收藏" : "收藏"}
                     >
                       <ActionIcon kind={isBookmarked ? "bookmarkFilled" : "bookmark"} />
-                      <span className="hidden text-xs font-semibold sm:inline">{isBookmarked ? "已收藏" : "收藏"}</span>
+                      <span className="hidden text-sm font-semibold sm:inline">{isBookmarked ? "已收藏" : "收藏"}</span>
                     </button>
                     {/* Sync to main discussion button (only in station view) */}
                     {showSyncButton && resolvedStationFilter && (
                       <a
-                        className="inline-flex min-h-[40px] min-w-[40px] items-center justify-center gap-1.5 rounded-full px-3 py-2 text-xs font-bold text-[var(--color-brand-deep)] transition hover:bg-[var(--color-brand-soft)] sm:min-h-[44px] sm:min-w-[44px]"
+                        className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-full px-3 py-2 text-sm font-bold text-[var(--color-brand-deep)] transition active:bg-[var(--color-brand-soft)] md:hover:bg-[var(--color-brand-soft)] sm:min-h-11"
                         href="/community"
+                        onClick={(e) => e.stopPropagation()}
                         title="同步到站内讨论区"
                       >
                         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -1598,7 +1598,7 @@ export function DiscussionFeed({
                       </a>
                     )}
                     <button
-                      className="min-h-[40px] rounded-full border border-[var(--color-line)] px-3 py-2 text-xs font-bold text-[var(--color-muted)] transition hover:bg-[var(--color-soft)] hover:text-[var(--color-brand-deep)] sm:min-h-[44px]"
+                      className="min-h-11 rounded-full border border-[var(--color-line)] px-4 py-2 text-sm font-bold text-[var(--color-muted)] transition active:bg-[var(--color-soft)] active:text-[var(--color-brand-deep)] md:hover:bg-[var(--color-soft)] md:hover:text-[var(--color-brand-deep)] sm:min-h-11"
                       onClick={(event) => {
                         event.stopPropagation();
                         openPostModal(post.issueNumber);
@@ -1619,7 +1619,7 @@ export function DiscussionFeed({
       {hasMore && !compact ? (
         <div className="relative z-20 border-t border-[var(--color-line)] px-5 py-4 text-center">
           <button
-            className="pointer-events-auto relative z-20 rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] px-6 py-3 text-sm font-bold text-[var(--color-brand-deep)] transition hover:border-[var(--color-brand)] hover:bg-[var(--color-brand-soft)] disabled:opacity-50"
+            className="pointer-events-auto relative z-20 rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] px-6 py-3 text-sm font-bold text-[var(--color-brand-deep)] transition active:border-[var(--color-brand)] active:bg-[var(--color-brand-soft)] md:hover:border-[var(--color-brand)] md:hover:bg-[var(--color-brand-soft)] disabled:opacity-50"
             disabled={loadingMore}
             onClick={handleLoadMore}
             type="button"

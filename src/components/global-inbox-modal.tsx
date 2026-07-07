@@ -8,6 +8,7 @@ import { Loader2, MessageCircle, X } from "lucide-react";
 
 import { DirectMessageModal } from "@/components/direct-message-modal";
 import { lockBodyScroll } from "@/lib/body-scroll-lock";
+import { useBackButtonClose } from "@/lib/use-back-button-close";
 import { useForumAuth } from "@/lib/forum-auth";
 import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase";
 
@@ -184,6 +185,8 @@ export function GlobalInboxModal({ onClose }: GlobalInboxModalProps) {
   const [error, setError] = useState<string | null>(null);
   const currentUserId = user?.id ?? "";
 
+  useBackButtonClose(true, onClose);
+
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -259,7 +262,7 @@ export function GlobalInboxModal({ onClose }: GlobalInboxModalProps) {
             </div>
             <button
               aria-label="关闭私信收件箱"
-              className="touch-press flex h-11 w-11 items-center justify-center rounded-full text-zinc-400 transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] active:bg-white/10 hover:bg-white/10 hover:text-white"
+              className="touch-press flex h-11 w-11 items-center justify-center rounded-full text-zinc-400 transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] active:bg-white/10 active:scale-[0.98] md:hover:bg-white/10 md:hover:text-white"
               onClick={onClose}
               type="button"
             >
@@ -273,7 +276,7 @@ export function GlobalInboxModal({ onClose }: GlobalInboxModalProps) {
                 <MessageCircle className="mb-3 h-12 w-12 opacity-20" />
                 <p>登录后可以查看你的私信收件箱。</p>
                 <button
-                  className="touch-press mt-4 rounded-full bg-emerald-500/15 px-4 py-2 text-sm font-bold text-emerald-300 ring-1 ring-emerald-500/30 transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] hover:bg-emerald-500/25"
+                  className="touch-press mt-4 rounded-full bg-emerald-500/15 px-4 py-2 text-sm font-bold text-emerald-300 ring-1 ring-emerald-500/30 transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] active:bg-emerald-500/25 active:scale-[0.98] md:hover:bg-emerald-500/25"
                   onClick={() => {
                     onClose();
                     showAuthModal();
@@ -293,7 +296,7 @@ export function GlobalInboxModal({ onClose }: GlobalInboxModalProps) {
                 <MessageCircle className="mb-3 h-12 w-12 opacity-20" />
                 <p>{error}</p>
                 <button
-                  className="touch-press mt-4 rounded-full border border-white/10 px-4 py-2 text-sm font-semibold text-zinc-300 transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] hover:bg-white/10 hover:text-white"
+                  className="touch-press mt-4 rounded-full border border-white/10 px-4 py-2 text-sm font-semibold text-zinc-300 transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] active:bg-white/10 active:scale-[0.98] active:text-white md:hover:bg-white/10 md:hover:text-white"
                   onClick={() => void refreshChats()}
                   type="button"
                 >
@@ -312,7 +315,7 @@ export function GlobalInboxModal({ onClose }: GlobalInboxModalProps) {
                 return (
                   <button
                     key={chat.user.id}
-                    className="touch-press flex w-full items-center gap-3 rounded-xl border-b border-white/5 p-3 text-left transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] last:border-0 hover:bg-white/5 active:bg-white/10"
+                    className="touch-press flex w-full items-center gap-3 rounded-xl border-b border-white/5 p-3 text-left transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] last:border-0 active:bg-white/10 active:scale-[0.98] md:hover:bg-white/5"
                     onClick={() => setActiveChatUser(chat.user)}
                     type="button"
                   >

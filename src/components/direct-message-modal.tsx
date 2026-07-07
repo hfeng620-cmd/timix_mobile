@@ -17,6 +17,7 @@ import {
 } from "@/lib/direct-message-storage";
 import { useForumAuth } from "@/lib/forum-auth";
 import { lockBodyScroll } from "@/lib/body-scroll-lock";
+import { useBackButtonClose } from "@/lib/use-back-button-close";
 
 export type DirectMessageModalProps = {
   open?: boolean;
@@ -112,6 +113,8 @@ export function DirectMessageModal({
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const overlayRef = useRef<HTMLDivElement | null>(null);
+
+  useBackButtonClose(open, onClose);
 
   const peerId = targetUser?.id ?? recipientId ?? targetUserId ?? peerUserId ?? toUserId ?? null;
   const fallbackName =
@@ -318,7 +321,7 @@ export function DirectMessageModal({
 
           <button
             aria-label="关闭私信"
-            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-zinc-400 transition active:scale-95 active:bg-white/10 hover:border-white/20 hover:bg-white/10 hover:text-white"
+            className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-zinc-400 transition active:scale-95 active:bg-white/10 active:scale-[0.98] md:hover:border-white/20 md:hover:bg-white/10 md:hover:text-white"
             onClick={onClose}
             type="button"
           >
@@ -350,7 +353,7 @@ export function DirectMessageModal({
                 私信会通过 Supabase 当前账号写入 direct_messages 表，并只展示你和对方之间的双向消息。
               </p>
               <button
-                className="mt-5 rounded-full bg-white px-5 py-2.5 text-sm font-bold text-zinc-950 transition active:scale-[0.98] active:opacity-90 hover:bg-zinc-200"
+                className="mt-5 rounded-full bg-white px-5 py-2.5 text-sm font-bold text-zinc-950 transition active:scale-[0.98] active:opacity-90 md:hover:bg-zinc-200"
                 onClick={showAuthModal}
                 type="button"
               >
@@ -438,7 +441,7 @@ export function DirectMessageModal({
             <div className="absolute bottom-3 right-14">
               <EmojiPickerButton
                 align="right"
-                buttonClassName="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.06] text-zinc-400 transition active:scale-95 active:bg-white/[0.1] hover:border-white/20 hover:bg-white/[0.1] hover:text-white disabled:cursor-not-allowed disabled:opacity-45"
+                buttonClassName="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.06] text-zinc-400 transition active:scale-95 active:bg-white/[0.1] active:scale-[0.98] md:hover:border-white/20 md:hover:bg-white/[0.1] md:hover:text-white disabled:cursor-not-allowed disabled:opacity-45"
                 disabled={!canSend || sending}
                 iconClassName="h-4 w-4"
                 onClose={() => setShowEmojiPicker(false)}
@@ -449,14 +452,14 @@ export function DirectMessageModal({
             </div>
             <button
               aria-label="发送私信"
-              className="absolute bottom-3 right-3 inline-flex h-10 w-10 items-center justify-center rounded-full bg-white text-zinc-950 shadow-lg shadow-black/20 transition active:scale-95 active:opacity-90 hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-45"
+              className="absolute bottom-3 right-3 inline-flex h-11 w-11 items-center justify-center rounded-full bg-white text-zinc-950 shadow-lg shadow-black/20 transition active:scale-95 active:opacity-90 active:scale-[0.98] md:hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-45"
               disabled={!canSend || sending || !draft.trim()}
               onClick={() => {
                 void handleSend();
               }}
               type="button"
             >
-              {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              {sending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
             </button>
           </div>
         </footer>

@@ -40,9 +40,7 @@ export default function CommunityPage() {
 
   return (
     <div className="mobile-tab-scroll community-mobile-app flex-1 min-h-0 h-full overflow-y-auto overscroll-y-contain pb-24 text-white">
-      <Navbar />
-
-      <div className="mx-auto max-w-[1680px] px-3 pt-20 sm:px-5 md:pt-28 lg:px-8">
+      <div className="mx-auto max-w-[1680px] px-3 pt-4 sm:px-5">
         <header className="community-mobile-header -mx-3 mb-2 border-b border-white/5 bg-[#09090b]/80 px-4 pb-2.5 pt-2.5 text-zinc-100 shadow-[0_10px_30px_rgba(0,0,0,0.32)] backdrop-blur-xl md:hidden">
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">

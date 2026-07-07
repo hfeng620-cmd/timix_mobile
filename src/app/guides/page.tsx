@@ -159,27 +159,27 @@ function PostCard({ post, onClick, onEdit, onDelete, onToggleHot }: { post: Post
         </div>
         {canEdit && (onEdit || onDelete) && (
           <div className="relative shrink-0 opacity-100 transition sm:opacity-0 sm:group-hover:opacity-100" onClick={(e) => e.stopPropagation()}>
-            <button className="rounded-lg p-1.5 text-white/50 transition active:scale-95 active:bg-white/10 hover:bg-white/10 hover:text-white" title="更多操作" type="button"
+            <button className="rounded-lg p-1.5 text-white/50 transition active:scale-95 active:bg-white/10 md:hover:bg-white/10 md:hover:text-white" title="更多操作" type="button"
               onClick={(e) => { e.stopPropagation(); const menu = (e.currentTarget as HTMLElement).nextElementSibling as HTMLElement; if (menu) menu.classList.toggle('hidden'); }}>
               <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>
             </button>
             <div className="hidden absolute right-0 top-full mt-1 w-28 rounded-xl border border-white/10 bg-[#09090b]/90 backdrop-blur py-1 shadow-xl z-30">
               {onEdit && (
-                <button className="flex w-full items-center gap-2 px-3 py-2 text-xs text-white/60 transition active:bg-white/10 hover:bg-white/10 hover:text-white font-body" type="button"
+                <button className="flex w-full items-center gap-2 px-3 py-2 text-xs text-white/60 transition active:bg-white/10 md:hover:bg-white/10 md:hover:text-white font-body" type="button"
                   onClick={(e) => { e.stopPropagation(); onEdit(); }}>
                   <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                   编辑
                 </button>
               )}
               {(isAdmin || isOwner) && onToggleHot && (
-                <button className="flex w-full items-center gap-2 px-3 py-2 text-xs text-amber-400 hover:bg-amber-400/10 hover:text-amber-300 transition font-body" type="button"
+                <button className="flex w-full items-center gap-2 px-3 py-2 text-xs text-amber-400 transition active:bg-amber-400/10 active:text-amber-300 md:hover:bg-amber-400/10 md:hover:text-amber-300 font-body" type="button"
                   onClick={(e) => { e.stopPropagation(); onToggleHot(); }}>
                   <Flame className="h-3.5 w-3.5" />
                   {post.isHot ? "取消热门" : "设为热门"}
                 </button>
               )}
               {onDelete && (
-                <button className="flex w-full items-center gap-2 px-3 py-2 text-xs text-red-400 hover:bg-red-400/10 hover:text-red-300 transition font-body" type="button"
+                <button className="flex w-full items-center gap-2 px-3 py-2 text-xs text-red-400 transition active:bg-red-400/10 active:text-red-300 md:hover:bg-red-400/10 md:hover:text-red-300 font-body" type="button"
                   onClick={(e) => { e.stopPropagation(); if (window.confirm("确认删除？此操作不可撤销。")) onDelete(); }}>
                   <Trash2 className="h-3.5 w-3.5" />
                   删除
@@ -190,7 +190,7 @@ function PostCard({ post, onClick, onEdit, onDelete, onToggleHot }: { post: Post
         )}
       </div>
       <div className="mt-2 flex items-center gap-3 text-[10px] text-slate-400 font-body sm:mt-3 sm:gap-4 sm:text-[11px]">
-        <button type="button" onClick={handleLike} disabled={likePending} className={`inline-flex items-center gap-1 transition ${liked ? "text-red-400" : ""} ${user ? "hover:text-red-400 cursor-pointer" : "cursor-default"}`}><Heart className={`h-3 w-3 ${liked ? "fill-current" : ""}`} />{likers.length >= 1000 ? `${(likers.length / 1000).toFixed(1)}k` : likers.length}<LikeIndicator likers={likers} /></button>
+        <button type="button" onClick={handleLike} disabled={likePending} className={`inline-flex items-center gap-1 transition ${liked ? "text-red-400" : ""} ${user ? "md:hover:text-red-400 cursor-pointer" : "cursor-default"}`}><Heart className={`h-3 w-3 ${liked ? "fill-current" : ""}`} />{likers.length >= 1000 ? `${(likers.length / 1000).toFixed(1)}k` : likers.length}<LikeIndicator likers={likers} /></button>
         <span className="inline-flex items-center gap-1"><MessageCircle className="h-3 w-3" />{post.comments}</span>
         <span className="inline-flex items-center gap-1"><Bookmark className="h-3 w-3" />{post.bookmarks}</span>
       </div>
@@ -229,7 +229,7 @@ function HotSidebar({ allPosts, onPostClick }: { allPosts: (PostNode & { path: s
             </span>
             <div className="min-w-0">
               <span className="text-[10px] text-white/30 font-body">[{post.path}]</span>
-              <span className="ml-1.5 text-sm text-white/50 group-hover:text-white/80 transition font-body truncate block">
+              <span className="ml-1.5 text-sm text-white/50 transition md:group-hover:text-white/80 font-body truncate block">
                 {post.title}
               </span>
             </div>
@@ -444,7 +444,7 @@ export default function GuidesPage() {
                 {i > 0 && <ChevronRight className="h-3 w-3 text-white/20" />}
                 <button
                   onClick={() => navigateToCrumb(i === 0 ? -1 : i - 1)}
-                  className={`hover:text-white transition ${i === breadcrumb.length - 1 ? "text-white/70" : ""}`}
+                  className={`transition ${i === breadcrumb.length - 1 ? "text-white/70" : ""} active:text-white active:scale-[0.98] md:hover:text-white`}
                   type="button"
                 >
                   {crumb.name}
@@ -475,7 +475,7 @@ export default function GuidesPage() {
                     <div />
                   )}
                   {hasRealData && (
-                    <button onClick={openEditFolder} className="text-xs text-white/30 hover:text-white/60 transition font-body">更改</button>
+                    <button onClick={openEditFolder} className="text-xs text-white/30 transition active:text-white/60 active:scale-[0.98] md:hover:text-white/60 font-body">更改</button>
                   )}
                 </div>
 
@@ -531,7 +531,7 @@ export default function GuidesPage() {
                   >
                     <div className="flex items-center gap-3">
                       <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.05] sm:h-9 sm:w-9">
-                        <Folder className="h-4 w-4 text-white/50 transition group-hover:text-white/80 sm:h-5 sm:w-5" />
+                        <Folder className="h-4 w-4 text-white/50 transition md:group-hover:text-white/80 sm:h-5 sm:w-5" />
                       </span>
                       <div className="min-w-0 flex-1">
                         <h2 className="truncate text-[13px] font-semibold text-white sm:text-[14px]">{folder.name}</h2>
@@ -550,12 +550,12 @@ export default function GuidesPage() {
                           <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>
                         </button>
                         <div className="hidden absolute right-0 top-full mt-1 w-28 rounded-xl border border-white/10 bg-[#09090b]/90 backdrop-blur py-1 shadow-xl z-30">
-                          <button className="flex w-full items-center gap-2 px-3 py-2 text-xs text-white/60 transition active:bg-white/10 hover:bg-white/10 hover:text-white font-body" type="button"
+                          <button className="flex w-full items-center gap-2 px-3 py-2 text-xs text-white/60 transition active:bg-white/10 md:hover:bg-white/10 md:hover:text-white font-body" type="button"
                             onClick={(e) => { e.stopPropagation(); openEditFolder(); }}>
                             <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                             编辑
                           </button>
-                          <button className="flex w-full items-center gap-2 px-3 py-2 text-xs text-red-400 hover:bg-red-400/10 hover:text-red-300 transition font-body" type="button"
+                          <button className="flex w-full items-center gap-2 px-3 py-2 text-xs text-red-400 transition active:bg-red-400/10 active:text-red-300 md:hover:bg-red-400/10 md:hover:text-red-300 font-body" type="button"
                             onClick={(e) => { e.stopPropagation(); handleDeleteFolder(dbId, folder.name); }}>
                             <Trash2 className="h-3.5 w-3.5" />
                             删除
@@ -581,10 +581,10 @@ export default function GuidesPage() {
                           key={(folder as any).dbId ?? folder.name}
                           onClick={() => navigateToChild(i)}
                           type="button"
-                          className="liquid-glass rounded-xl p-4 text-left transition active:scale-[0.98] active:bg-white/10 hover:bg-white/10 group"
+                          className="liquid-glass rounded-xl p-4 text-left transition active:scale-[0.98] active:bg-white/10 md:hover:bg-white/10 group"
                         >
                           <div className="flex items-center gap-2.5">
-                            <Folder className="h-5 w-5 text-white/40 group-hover:text-white/70 transition" />
+                            <Folder className="h-5 w-5 text-white/40 transition md:group-hover:text-white/70" />
                             <span className="text-sm font-heading italic text-white">{folder.name}</span>
                           </div>
                           <p className="mt-1.5 text-xs text-white/30 font-body">
@@ -636,7 +636,7 @@ export default function GuidesPage() {
               <div className="liquid-glass rounded-2xl p-5 text-center">
                 <p className="text-sm text-white/40 font-body mb-4">有好的项目想分享？</p>
                 <button
-                  className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-5 py-2.5 text-sm font-medium text-white transition active:scale-[0.98] active:bg-white/20 hover:bg-white/20 font-body"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-5 py-2.5 text-sm font-medium text-white transition active:scale-[0.98] active:bg-white/20 md:hover:bg-white/20 font-body"
                   type="button"
                   onClick={() => { setCreateMode("post"); setCreateOpen(true); }}
                 >

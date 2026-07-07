@@ -84,10 +84,11 @@ export function EditPanelModal({ open, mode, targetId, initialName, initialDesc,
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[110] flex items-end justify-center bg-[#09090b]/50 px-0 backdrop-blur-xl sm:items-center sm:px-4" onClick={onClose}>
-      <div className="relative w-full max-h-[88dvh] overflow-hidden rounded-t-2xl border border-white/10 bg-zinc-950/95 pb-[env(safe-area-inset-bottom,0px)] shadow-2xl sm:max-w-5xl sm:rounded-3xl sm:border-white/15 sm:bg-[#09090b]/80 sm:pb-0" onClick={(e) => e.stopPropagation()}>
-        <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-white/20 sm:hidden" />
-        <button onClick={onClose} className="absolute right-3 top-3 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white/50 transition active:scale-95 active:bg-white/20 hover:bg-white/20 hover:text-white sm:right-4 sm:top-4" type="button"><X className="h-4 w-4" /></button>
+    <div className="fixed inset-0 z-[110] flex items-end sm:items-center justify-center bg-[#09090b]/50 px-0 backdrop-blur-xl sm:px-4" onClick={onClose}>
+      <div className="relative w-full max-h-[88dvh] overflow-hidden rounded-t-3xl sm:rounded-3xl border border-white/10 bg-zinc-950/95 pb-[env(safe-area-inset-bottom,0px)] shadow-2xl sm:max-w-5xl sm:border-white/15 sm:bg-[#09090b]/80 sm:pb-0" onClick={(e) => e.stopPropagation()}>
+        {/* Drag handle for mobile */}
+        <div className="w-12 h-1.5 bg-zinc-300 dark:bg-zinc-700 rounded-full mx-auto mt-3 mb-1 shrink-0 sm:hidden" />
+        <button onClick={onClose} className="absolute right-3 top-3 z-20 flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white/50 transition active:scale-95 active:bg-white/20 active:scale-[0.98] md:hover:bg-white/20 md:hover:text-white sm:right-4 sm:top-4" type="button"><X className="h-5 w-5" /></button>
 
         <div className="grid max-h-[88dvh] grid-cols-1 lg:max-h-[85vh] lg:grid-cols-[7fr_3fr]">
           {/* Left: Form */}
@@ -125,7 +126,7 @@ export function EditPanelModal({ open, mode, targetId, initialName, initialDesc,
                         type="button"
                         onClick={triggerUpload}
                         disabled={uploading}
-                        className="inline-flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-200 transition-colors disabled:opacity-40 font-body"
+                        className="inline-flex items-center gap-1 text-xs text-zinc-500 transition-colors disabled:opacity-40 font-body active:text-zinc-200 active:scale-[0.98] md:hover:text-zinc-200"
                         title="上传图片 (Ctrl+V 粘贴)"
                       >
                         {uploading ? (
@@ -153,12 +154,12 @@ export function EditPanelModal({ open, mode, targetId, initialName, initialDesc,
             <FileInput />
             {error && <p className="mt-4 text-sm text-red-400 font-body">{error}</p>}
 
-            <div className="mt-5 flex items-center gap-2 sm:mt-6 sm:gap-3">
+            <div className="mt-5 flex items-center gap-2 sm:mt-6 sm:gap-3" style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 16px)' }}>
               <button onClick={handleSave} disabled={saving}
-                className="rounded-full bg-white/15 px-4 py-2 text-xs font-medium text-white transition active:scale-[0.98] active:bg-white/25 hover:bg-white/25 disabled:opacity-50 font-body sm:px-5 sm:py-2.5 sm:text-sm">
+                className="rounded-full bg-white/15 px-4 py-2 text-xs font-medium text-white transition active:scale-[0.98] active:bg-white/25 md:hover:bg-white/25 disabled:opacity-50 font-body sm:px-5 sm:py-2.5 sm:text-sm">
                 {saving ? "保存中..." : "保存修改"}
               </button>
-              <button onClick={onClose} className="rounded-full px-4 py-2 text-xs text-white/40 transition hover:text-white font-body sm:py-2.5 sm:text-sm">取消</button>
+              <button onClick={onClose} className="rounded-full px-4 py-2 text-xs text-white/40 transition active:text-white active:scale-[0.98] md:hover:text-white font-body sm:py-2.5 sm:text-sm">取消</button>
             </div>
           </div>
 

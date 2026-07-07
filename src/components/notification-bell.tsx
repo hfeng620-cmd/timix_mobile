@@ -207,7 +207,7 @@ export function NotificationBell() {
       {/* Bell button */}
       <button
         aria-label={`通知${unreadCount > 0 ? `，${unreadCount} 条未读` : ""}`}
-        className="relative flex h-10 w-10 items-center justify-center rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] text-[var(--color-muted)] transition hover:border-[var(--color-brand)] hover:bg-[var(--color-brand-soft)] hover:text-[var(--color-brand-deep)]"
+        className="relative flex h-10 w-10 items-center justify-center rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] text-[var(--color-muted)] transition active:border-[var(--color-brand)] active:bg-[var(--color-brand-soft)] active:text-[var(--color-brand-deep)] active:scale-[0.98] md:hover:border-[var(--color-brand)] md:hover:bg-[var(--color-brand-soft)] md:hover:text-[var(--color-brand-deep)]"
         onClick={() => setOpen(true)}
         type="button"
       >
@@ -250,13 +250,13 @@ export function NotificationBell() {
               </div>
               <div className="flex items-center gap-3">
                 {unreadCount > 0 && (
-                  <button className="text-xs font-semibold text-[var(--color-brand-deep)] transition hover:underline" onClick={markAllRead} type="button">
+                  <button className="text-xs font-semibold text-[var(--color-brand-deep)] transition active:underline active:scale-[0.98] md:hover:underline" onClick={markAllRead} type="button">
                     全部已读
                   </button>
                 )}
                 <button
                   aria-label="关闭通知"
-                  className="touch-press flex h-11 w-11 items-center justify-center rounded-full border border-[var(--color-line)] text-sm text-[var(--color-muted)] transition active:bg-white/10 hover:bg-[var(--color-soft)] hover:text-[var(--color-ink)]"
+                  className="touch-press flex h-11 w-11 items-center justify-center rounded-full border border-[var(--color-line)] text-sm text-[var(--color-muted)] transition active:bg-white/10 active:scale-[0.98] md:hover:bg-[var(--color-soft)] md:hover:text-[var(--color-ink)]"
                   onClick={() => setOpen(false)}
                   type="button"
                 >
@@ -288,7 +288,7 @@ export function NotificationBell() {
                   .map((item) => (
                     <div
                       key={item.id}
-                      className={`flex w-full items-start gap-4 border-b border-[var(--color-line)] px-6 py-4 transition last:border-b-0 hover:bg-[var(--color-soft)] ${
+                      className={`flex w-full items-start gap-4 border-b border-[var(--color-line)] px-6 py-4 transition last:border-b-0 active:bg-[var(--color-soft)] md:hover:bg-[var(--color-soft)] ${
                         !item.read ? "bg-white/5" : "opacity-60"
                       }`}
                     >
@@ -316,7 +316,7 @@ export function NotificationBell() {
                       </button>
                       {/* Delete button */}
                       <button
-                        className="touch-press mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[12px] text-[var(--color-muted)] transition active:bg-white/10 hover:bg-[var(--color-soft)] hover:text-red-400"
+                        className="touch-press mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[12px] text-[var(--color-muted)] transition active:bg-white/10 active:scale-[0.98] md:hover:bg-[var(--color-soft)] md:hover:text-red-400"
                         onClick={(e) => { e.stopPropagation(); handleDelete(item.id); }}
                         title="删除通知"
                         type="button"

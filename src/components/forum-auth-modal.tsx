@@ -549,13 +549,15 @@ export function ForumAuthModal({ open, onClose }: ForumAuthModalProps) {
   return (
     <div
       aria-modal="true"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-[#09090b]/40 px-4 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-[#09090b]/40 px-4 backdrop-blur-sm"
       onClick={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
       role="dialog"
     >
-      <div ref={panelRef} aria-labelledby="auth-modal-title" className="w-full max-w-md rounded-[12px] border border-[var(--color-line)] bg-[var(--color-panel)] p-6 shadow-[0_24px_80px_rgba(15,23,42,0.14)]">
+      <div ref={panelRef} aria-labelledby="auth-modal-title" className="w-full max-w-md rounded-t-3xl sm:rounded-[12px] border border-[var(--color-line)] bg-[var(--color-panel)] p-6 shadow-[0_24px_80px_rgba(15,23,42,0.14)]">
+        {/* Drag Handle */}
+        <div className="w-12 h-1.5 bg-zinc-300 dark:bg-zinc-700 rounded-full mx-auto -mt-3 mb-4 shrink-0 sm:hidden" />
         {!isConfigured ? (
           <div className="space-y-4">
             <div>
@@ -567,7 +569,7 @@ export function ForumAuthModal({ open, onClose }: ForumAuthModalProps) {
               </p>
             </div>
             <button
-              className="w-full rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-bold text-[var(--color-on-brand)] transition hover:bg-[var(--color-brand-deep)]"
+              className="w-full rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-bold text-[var(--color-on-brand)] transition active:bg-[var(--color-brand-deep)] active:scale-[0.98] md:hover:bg-[var(--color-brand-deep)]"
               onClick={onClose}
               type="button"
             >
@@ -656,7 +658,7 @@ export function ForumAuthModal({ open, onClose }: ForumAuthModalProps) {
                   value={confirmPassword}
                 />
                 <button
-                  className="w-full rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-bold text-[var(--color-on-brand)] transition hover:bg-[var(--color-brand-deep)] disabled:opacity-60"
+                  className="w-full rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-bold text-[var(--color-on-brand)] transition active:bg-[var(--color-brand-deep)] active:scale-[0.98] md:hover:bg-[var(--color-brand-deep)] disabled:opacity-60"
                   disabled={loading || Boolean(registrationPasswordError) || !confirmPassword}
                   onClick={handleSetPassword}
                   type="button"
@@ -679,7 +681,7 @@ export function ForumAuthModal({ open, onClose }: ForumAuthModalProps) {
                     type="file"
                   />
                   <button
-                    className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-[var(--color-line)] bg-[var(--color-soft)] transition hover:border-[var(--color-brand)] disabled:opacity-60"
+                    className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-[var(--color-line)] bg-[var(--color-soft)] transition active:border-[var(--color-brand)] active:scale-[0.98] md:hover:border-[var(--color-brand)] disabled:opacity-60"
                     disabled={avatarUploading}
                     onClick={() => avatarFileRef.current?.click()}
                     title="点击上传头像"
@@ -727,7 +729,7 @@ export function ForumAuthModal({ open, onClose }: ForumAuthModalProps) {
                 />
                 <div className="flex flex-col gap-3">
                   <button
-                    className="w-full rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-bold text-[var(--color-on-brand)] transition hover:bg-[var(--color-brand-deep)] disabled:opacity-60"
+                    className="w-full rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-bold text-[var(--color-on-brand)] transition active:bg-[var(--color-brand-deep)] active:scale-[0.98] md:hover:bg-[var(--color-brand-deep)] disabled:opacity-60"
                     disabled={loading || !displayNameInput.trim()}
                     onClick={async () => {
                       if (!displayNameInput.trim()) return;
@@ -746,14 +748,14 @@ export function ForumAuthModal({ open, onClose }: ForumAuthModalProps) {
                     保存昵称
                   </button>
                   <button
-                    className="w-full rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] px-5 py-3 text-sm font-bold text-[var(--color-muted)] transition hover:bg-[var(--color-soft)] hover:text-[var(--color-ink)]"
+                    className="w-full rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] px-5 py-3 text-sm font-bold text-[var(--color-muted)] transition active:bg-[var(--color-soft)] active:text-[var(--color-ink)] active:scale-[0.98] md:hover:bg-[var(--color-soft)] md:hover:text-[var(--color-ink)]"
                     onClick={onClose}
                     type="button"
                   >
                     关闭
                   </button>
                   <button
-                    className="w-full rounded-full border border-red-500/30 bg-red-500/10 px-5 py-3 text-sm font-bold text-red-400 transition hover:bg-red-500/20"
+                    className="w-full rounded-full border border-red-500/30 bg-red-500/10 px-5 py-3 text-sm font-bold text-red-400 transition active:bg-red-500/20 active:scale-[0.98] md:hover:bg-red-500/20"
                     onClick={() => void signOut()}
                     type="button"
                   >
@@ -788,7 +790,7 @@ export function ForumAuthModal({ open, onClose }: ForumAuthModalProps) {
                 className={`rounded-full px-4 py-2 text-sm font-bold transition ${
                   mode === "login"
                     ? "bg-[var(--color-panel)] text-[var(--color-ink)] shadow-sm"
-                    : "text-[var(--color-muted)] hover:text-[var(--color-ink)]"
+                    : "text-[var(--color-muted)] active:text-[var(--color-ink)] active:scale-[0.98] md:hover:text-[var(--color-ink)]"
                 }`}
                 onClick={switchToLogin}
                 type="button"
@@ -799,7 +801,7 @@ export function ForumAuthModal({ open, onClose }: ForumAuthModalProps) {
                 className={`rounded-full px-4 py-2 text-sm font-bold transition ${
                   mode === "register"
                     ? "bg-[var(--color-panel)] text-[var(--color-ink)] shadow-sm"
-                    : "text-[var(--color-muted)] hover:text-[var(--color-ink)]"
+                    : "text-[var(--color-muted)] active:text-[var(--color-ink)] active:scale-[0.98] md:hover:text-[var(--color-ink)]"
                 }`}
                 onClick={switchToRegister}
                 type="button"
@@ -953,7 +955,7 @@ export function ForumAuthModal({ open, onClose }: ForumAuthModalProps) {
                       />
                       <div className="flex items-center justify-between">
                         <button
-                          className="text-xs text-[var(--color-muted)] hover:text-[var(--color-brand)]"
+                          className="text-xs text-[var(--color-muted)] active:text-[var(--color-brand)] active:scale-[0.98] md:hover:text-[var(--color-brand)]"
                           onClick={() => {
                             setOtpSent(false);
                             setOtpCode("");
@@ -965,7 +967,7 @@ export function ForumAuthModal({ open, onClose }: ForumAuthModalProps) {
                           ← 返回修改信息
                         </button>
                         <button
-                          className="text-xs text-[var(--color-brand)] hover:underline"
+                          className="text-xs text-[var(--color-brand)] active:underline active:scale-[0.98] md:hover:underline"
                           onClick={handleSendCode}
                           disabled={loading}
                           type="button"
@@ -984,16 +986,19 @@ export function ForumAuthModal({ open, onClose }: ForumAuthModalProps) {
               <p className="text-sm font-semibold text-emerald-600" id="auth-notice" role="status">{notice}</p>
             ) : null}
 
-            <div className="flex items-center justify-end gap-3">
+            <div
+              className="flex items-center justify-end gap-3"
+              style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 0px)' }}
+            >
               <button
-                className="rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] px-5 py-3 text-sm font-bold text-[var(--color-muted)] transition hover:bg-[var(--color-soft)] hover:text-[var(--color-ink)]"
+                className="rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] px-5 py-3 text-sm font-bold text-[var(--color-muted)] transition active:bg-[var(--color-soft)] active:text-[var(--color-ink)] active:scale-[0.98] md:hover:bg-[var(--color-soft)] md:hover:text-[var(--color-ink)]"
                 onClick={onClose}
                 type="button"
               >
                 取消
               </button>
               <button
-                className="rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-bold text-[var(--color-on-brand)] transition hover:bg-[var(--color-brand-deep)] disabled:opacity-60"
+                className="rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-bold text-[var(--color-on-brand)] transition active:bg-[var(--color-brand-deep)] active:scale-[0.98] md:hover:bg-[var(--color-brand-deep)] disabled:opacity-60"
                 disabled={
                   loading ||
                   !normalizedEmail ||

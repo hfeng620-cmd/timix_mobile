@@ -127,7 +127,7 @@ export function CampaignAdmin() {
         <button
           type="button"
           onClick={() => setShowForm((value) => !value)}
-          className="rounded-full bg-zinc-100 px-5 py-2 text-sm font-semibold text-zinc-950 transition hover:bg-white"
+          className="rounded-full bg-zinc-100 px-5 py-2 text-sm font-semibold text-zinc-950 transition active:bg-white active:scale-[0.98] md:hover:bg-white"
         >
           {showForm ? "收起表单" : "新建活动"}
         </button>
@@ -219,7 +219,7 @@ export function CampaignAdmin() {
             type="button"
             onClick={handleCreate}
             disabled={saving}
-            className="mt-5 rounded-full bg-zinc-100 px-6 py-2.5 text-sm font-semibold text-zinc-950 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+            className="mt-5 rounded-full bg-zinc-100 px-6 py-2.5 text-sm font-semibold text-zinc-950 transition active:bg-white active:scale-[0.98] md:hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
           >
             {saving ? "创建中..." : "确认创建并生成兑换码"}
           </button>
@@ -251,13 +251,13 @@ export function CampaignAdmin() {
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <button type="button" onClick={() => openSubmissions(campaign.id)} className="rounded-full border border-white/10 px-4 py-2 text-sm text-zinc-200 transition hover:border-emerald-300/35">
+                  <button type="button" onClick={() => openSubmissions(campaign.id)} className="rounded-full border border-white/10 px-4 py-2 text-sm text-zinc-200 transition active:border-emerald-300/35 active:scale-[0.98] md:hover:border-emerald-300/35">
                     领取记录
                   </button>
-                  <button type="button" onClick={() => handleToggle(campaign)} className="rounded-full border border-white/10 px-4 py-2 text-sm text-zinc-200 transition hover:border-amber-300/50">
+                  <button type="button" onClick={() => handleToggle(campaign)} className="rounded-full border border-white/10 px-4 py-2 text-sm text-zinc-200 transition active:border-amber-300/50 active:scale-[0.98] md:hover:border-amber-300/50">
                     {campaign.is_active ? "暂停" : "▶ 恢复"}
                   </button>
-                  <button type="button" onClick={() => handleDelete(campaign)} className="rounded-full border border-red-400/30 px-4 py-2 text-sm text-red-300 transition hover:bg-red-400/10">
+                  <button type="button" onClick={() => handleDelete(campaign)} className="rounded-full border border-red-400/30 px-4 py-2 text-sm text-red-300 transition active:bg-red-400/10 active:scale-[0.98] md:hover:bg-red-400/10">
                     删除
                   </button>
                 </div>

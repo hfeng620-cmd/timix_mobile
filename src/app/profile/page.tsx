@@ -355,16 +355,14 @@ export default function ProfilePage() {
 
   return (
     <div className="mobile-tab-scroll profile-mobile-app flex-1 min-h-0 h-full overflow-y-auto overscroll-y-contain pb-24 bg-[#09090b] text-white">
-      <Navbar />
-
-      <main className="mx-auto max-w-md px-4 pb-24 pt-20 sm:max-w-2xl lg:max-w-3xl">
+      <main className="mx-auto max-w-md px-4 pb-24 pt-4 sm:max-w-2xl lg:max-w-3xl">
         <header className="-mx-4 rounded-b-[30px] border-b border-white/5 bg-[#09090b]/80 px-4 pb-5 pt-3 shadow-[0_14px_42px_rgba(0,0,0,0.34)] sm:-mx-6 sm:px-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs font-semibold text-zinc-300">TiMix</p>
               <h1 className="mt-1 text-xl font-black tracking-normal text-white">我的</h1>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <MobileThemeToggle />
               {isConnected ? (
                 <>
@@ -431,9 +429,6 @@ export default function ProfilePage() {
                     ) : (
                       <span>{initial}</span>
                     )}
-                    <span className="absolute inset-x-0 bottom-0 bg-[#09090b]/72 py-1.5 text-[10px] font-bold text-white/86 transition-opacity group-active:opacity-100 sm:opacity-0 sm:group-hover:opacity-100">
-                      {avatarUploading ? "上传中" : "换头像"}
-                    </span>
                     <input
                       ref={avatarInputRef}
                       accept={FORUM_IMAGE_ACCEPT}
@@ -480,7 +475,7 @@ export default function ProfilePage() {
                   </div>
                   {email ? <p className="mt-1 truncate text-xs text-zinc-500">{email}</p> : null}
 
-                  <p className="mt-3 rounded-2xl border border-white/5 bg-white/[0.03] px-4 py-3 text-sm leading-6 text-zinc-200 shadow-[inset_0_1px_0_rgba(255,255,255,0.045)]">
+                  <p className="mt-3 px-1 text-sm leading-6 text-zinc-400">
                     {profileHint}
                   </p>
 
@@ -494,7 +489,7 @@ export default function ProfilePage() {
                   </div>
                 </div>
 
-                <div className="mt-4 grid grid-cols-4 divide-x divide-white/5 rounded-2xl border border-white/5 bg-white/[0.035] py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.045)]">
+                <div className="mt-4 flex items-center justify-around border-t border-white/5 dark:border-white/5 py-4">
                   {stats.map((item) => (
                     <div key={item.label} className="min-w-0 text-center">
                       <p className="truncate text-base font-black leading-6 text-white">{item.value}</p>
@@ -509,17 +504,17 @@ export default function ProfilePage() {
 
         {isConnected ? (
           <>
-            <nav className="sticky top-[64px] z-30 -mx-4 mt-3 border-y border-white/5 bg-[#09090b]/86 px-4 py-2 shadow-[0_10px_30px_rgba(0,0,0,0.26)] backdrop-blur-xl sm:-mx-6 sm:px-6" aria-label="个人主页内容切换">
-              <div className="grid grid-cols-3 rounded-2xl bg-white/[0.035] p-1 ring-1 ring-white/5">
+            <nav className="sticky top-[64px] z-30 -mx-4 mt-3 border-y border-white/40 dark:border-white/5 bg-white/60 dark:bg-[#09090b]/86 px-4 py-2 shadow-[0_10px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_10px_30px_rgba(0,0,0,0.26)] backdrop-blur-md sm:-mx-6 sm:px-6" aria-label="个人主页内容切换">
+              <div className="grid grid-cols-3 rounded-xl bg-transparent p-1">
                 {activityTabs.map((tab) => {
                   const count = tab.key === "feed" ? totalContribution + likedPosts.length : tab.key === "posts" ? posts.length : profileCompleteness;
                   return (
                     <button
                       key={tab.key}
-                      className={`btn-press min-h-11 rounded-xl px-2 text-xs font-bold transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] ${
+                      className={`btn-press min-h-11 rounded-lg px-2 text-xs font-bold transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] ${
                         activeTab === tab.key
-                          ? "bg-zinc-100 text-zinc-950 shadow-[0_8px_18px_rgba(255,255,255,0.06)]"
-                          : "text-zinc-400 active:bg-white/[0.06]"
+                          ? "bg-white dark:bg-zinc-100 text-zinc-900 shadow-sm"
+                          : "text-zinc-500 dark:text-zinc-400 bg-transparent active:bg-zinc-100/50 dark:active:bg-white/[0.06]"
                       }`}
                       aria-pressed={activeTab === tab.key}
                       onClick={() => setActiveTab(tab.key)}

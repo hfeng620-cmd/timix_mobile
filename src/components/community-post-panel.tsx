@@ -146,7 +146,6 @@ export function CommunityPostPanel({ onPostCreated }: CommunityPostPanelProps) {
     }
 
     if (trimmedBody.length < 5) {
-      console.warn("[发帖] 正文不足5字符:", trimmedBody.length);
       setStatus("正文至少需要5个字符，再写详细一点吧。");
       return;
     }
@@ -161,7 +160,6 @@ export function CommunityPostPanel({ onPostCreated }: CommunityPostPanelProps) {
 
     setSubmitting(true);
     try {
-      console.log("[发帖] 准备发布:", { body: trimmedBody, station: station.trim(), tags: allTags });
       await createDiscussionPost({
         author: displayName || "噜噜",
         handle: "@forum",
@@ -195,7 +193,7 @@ export function CommunityPostPanel({ onPostCreated }: CommunityPostPanelProps) {
 
   return (
     <div
-      className="surface-in card-lift rounded-[22px] border border-[var(--color-line)] bg-[linear-gradient(180deg,var(--color-panel),color-mix(in_srgb,var(--color-panel)_82%,var(--color-soft)))] p-4 shadow-[var(--shadow-card)] backdrop-blur transition-all duration-300 sm:p-5"
+      className="surface-in card-lift rounded-2xl border border-[var(--color-line)] bg-[linear-gradient(180deg,var(--color-panel),color-mix(in_srgb,var(--color-panel)_82%,var(--color-soft)))] p-4 shadow-[var(--shadow-card)] backdrop-blur transition-all duration-300 sm:p-5"
       data-selection-comments="off"
     >
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--color-line)] pb-2.5">
@@ -204,7 +202,7 @@ export function CommunityPostPanel({ onPostCreated }: CommunityPostPanelProps) {
           <p className="text-xs text-[var(--color-muted)]">短反馈、价格变化、试用记录。</p>
         </div>
         <a
-          className="hidden rounded-full border border-[var(--color-line)] px-3 py-2 text-xs font-bold text-[var(--color-muted)] transition hover:border-[var(--color-brand)] hover:text-[var(--color-brand-deep)] sm:inline-flex"
+          className="hidden rounded-full border border-[var(--color-line)] px-3 py-2 text-xs font-bold text-[var(--color-muted)] transition active:border-[var(--color-brand)] active:text-[var(--color-brand-deep)] active:scale-[0.98] md:hover:border-[var(--color-brand)] md:hover:text-[var(--color-brand-deep)] sm:inline-flex"
           href="https://github.com/hfeng620-cmd/timin_api_test_and_forum/discussions"
           rel="noopener noreferrer"
           target="_blank"
@@ -214,19 +212,19 @@ export function CommunityPostPanel({ onPostCreated }: CommunityPostPanelProps) {
       </div>
 
       {!open ? (
-        <div className="mt-3 grid gap-2.5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+        <div className="mt-3 grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
           <button
-            className="min-h-11 rounded-[14px] border border-[var(--color-line)] bg-[var(--color-input)] px-4 py-2.5 text-left text-sm text-[var(--color-muted)] transition hover:border-[var(--color-brand)] hover:text-[var(--color-ink)]"
+            className="min-h-11 rounded-xl border border-[var(--color-line)] bg-[var(--color-input)] px-4 py-3 text-left text-sm text-[var(--color-muted)] transition active:border-[var(--color-brand)] active:text-[var(--color-ink)] active:scale-[0.98] md:hover:border-[var(--color-brand)] md:hover:text-[var(--color-ink)]"
             onClick={handlePlaceholderClick}
             type="button"
           >
             {isConnected
-              ? "写一句反馈..."
+              ? "写点反馈..."
               : "登录后发帖..."}
           </button>
-          <div className="flex flex-col items-stretch gap-2.5 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
+          <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
             <button
-              className="btn-press w-full cursor-pointer rounded-full bg-[var(--color-brand)] px-5 py-2.5 text-sm font-bold text-[var(--color-on-brand)] shadow-[0_10px_22px_var(--color-panel-glow)] transition hover:bg-[var(--color-brand-deep)] sm:w-auto"
+              className="btn-press w-full cursor-pointer rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-bold text-[var(--color-on-brand)] shadow-[0_10px_22px_var(--color-panel-glow)] transition active:bg-[var(--color-brand-deep)] active:scale-[0.98] md:hover:bg-[var(--color-brand-deep)] sm:w-auto"
               onClick={handlePlaceholderClick}
               type="button"
             >
@@ -239,17 +237,17 @@ export function CommunityPostPanel({ onPostCreated }: CommunityPostPanelProps) {
         <div className="mt-4">
           <div className="relative">
             <input
-              className="w-full rounded-[12px] border border-[var(--color-line)] bg-[var(--color-input)] px-4 py-3 text-sm outline-none transition focus:border-[var(--color-brand)]"
+              className="w-full rounded-xl border border-[var(--color-line)] bg-[var(--color-input)] px-4 py-3 text-sm outline-none transition focus:border-[var(--color-brand)]"
               onChange={(event) => setStation(event.target.value)}
               placeholder="关联站点或标签"
               value={station}
             />
             {tagSuggestions.length > 0 ? (
-              <div className="absolute left-0 right-0 top-full z-20 mt-1 overflow-hidden rounded-[12px] border border-[var(--color-line)] bg-[var(--color-panel)] shadow-[var(--shadow-card)]">
+              <div className="absolute left-0 right-0 top-full z-20 mt-1 overflow-hidden rounded-xl border border-[var(--color-line)] bg-[var(--color-panel)] shadow-[var(--shadow-card)]">
                 {tagSuggestions.map((tag) => (
                   <button
                     key={tag}
-                    className="block w-full px-4 py-2.5 text-left text-sm font-semibold text-[var(--color-muted)] transition hover:bg-[var(--color-soft)] hover:text-[var(--color-ink)]"
+                    className="block w-full px-4 py-3 text-left text-sm font-semibold text-[var(--color-muted)] transition active:bg-[var(--color-soft)] active:text-[var(--color-ink)] active:scale-[0.98] md:hover:bg-[var(--color-soft)] md:hover:text-[var(--color-ink)]"
                     onClick={() => handleSelectSuggestion(tag)}
                     type="button"
                   >
@@ -270,7 +268,7 @@ export function CommunityPostPanel({ onPostCreated }: CommunityPostPanelProps) {
                   className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition border sm:px-3 sm:py-1.5 sm:text-xs ${
                     active
                       ? "border-current text-[var(--color-on-brand)] shadow-sm"
-                      : "border-[var(--color-line)] bg-[var(--color-panel)] text-[var(--color-muted)] hover:border-[var(--color-brand)] hover:text-[var(--color-ink)]"
+                      : "border-[var(--color-line)] bg-[var(--color-panel)] text-[var(--color-muted)] active:border-[var(--color-brand)] active:text-[var(--color-ink)] active:scale-[0.98] md:hover:border-[var(--color-brand)] md:hover:text-[var(--color-ink)]"
                   }`}
                   onClick={() => setSelectedCategory(cat)}
                   style={
@@ -289,7 +287,7 @@ export function CommunityPostPanel({ onPostCreated }: CommunityPostPanelProps) {
           <div className="relative mt-3">
             <textarea
               ref={textareaRef}
-              className="min-h-28 w-full resize-none rounded-[12px] border border-[var(--color-line)] bg-[var(--color-input)] px-4 py-3 text-sm leading-7 outline-none transition focus:border-[var(--color-brand)]"
+              className="min-h-28 w-full resize-none rounded-xl border border-[var(--color-line)] bg-[var(--color-input)] px-4 py-3 text-sm leading-7 outline-none transition focus:border-[var(--color-brand)]"
               onChange={(event) => {
                 setBody(event.target.value);
                 setMentionIndex(0);
@@ -320,20 +318,20 @@ export function CommunityPostPanel({ onPostCreated }: CommunityPostPanelProps) {
                   }
                 }
               }}
-              placeholder="写反馈、价格变化或试用记录。"
+              placeholder="反馈、价格变化或试用记录"
               value={body}
             />
 
             {/* @mention autocomplete popup */}
             {mentionState.active && mentionSuggestions.length > 0 ? (
-              <div className="absolute left-0 right-0 top-full z-20 mt-1 overflow-hidden rounded-[12px] border border-[var(--color-line)] bg-[var(--color-panel)] shadow-[var(--shadow-card)]">
+              <div className="absolute left-0 right-0 top-full z-20 mt-1 overflow-hidden rounded-xl border border-[var(--color-line)] bg-[var(--color-panel)] shadow-[var(--shadow-card)]">
                 {mentionSuggestions.map((name, idx) => (
                   <button
                     key={name}
-                    className={`block w-full px-4 py-2.5 text-left text-sm font-semibold transition ${
+                    className={`block w-full px-4 py-3 text-left text-sm font-semibold transition ${
                       idx === mentionIndex
                         ? "bg-[var(--color-brand-soft)] text-[var(--color-brand)]"
-                        : "text-[var(--color-muted)] hover:bg-[var(--color-soft)] hover:text-[var(--color-ink)]"
+                        : "text-[var(--color-muted)] active:bg-[var(--color-soft)] active:text-[var(--color-ink)] active:scale-[0.98] md:hover:bg-[var(--color-soft)] md:hover:text-[var(--color-ink)]"
                     }`}
                     onClick={() => handleSelectMention(name)}
                     onMouseEnter={() => setMentionIndex(idx)}
@@ -346,7 +344,7 @@ export function CommunityPostPanel({ onPostCreated }: CommunityPostPanelProps) {
             ) : null}
           </div>
 
-          <div className="mt-2 flex items-center gap-3">
+          <div className="mt-3 flex items-center gap-3">
             <input
               accept={FORUM_IMAGE_ACCEPT}
               className="hidden"
@@ -368,19 +366,19 @@ export function CommunityPostPanel({ onPostCreated }: CommunityPostPanelProps) {
               type="file"
             />
             <button
-              className="rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] px-3 py-1.5 text-xs font-semibold text-[var(--color-muted)] transition hover:bg-[var(--color-soft)] hover:text-[var(--color-ink)] disabled:opacity-50"
+              className="rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] px-3 py-2 text-sm font-semibold text-[var(--color-muted)] transition active:bg-[var(--color-soft)] active:text-[var(--color-ink)] active:scale-[0.98] md:hover:bg-[var(--color-soft)] md:hover:text-[var(--color-ink)] disabled:opacity-50"
               disabled={uploadingImage}
               onClick={() => fileInputRef.current?.click()}
               type="button"
             >
               {uploadingImage ? "上传中..." : "📷 插图"}
             </button>
-            <span className="hidden text-[11px] text-[var(--color-muted)] sm:inline">支持粘贴图片</span>
+            <span className="hidden text-xs text-[var(--color-muted)] sm:inline">支持粘贴图片</span>
           </div>
 
-          <div className="mt-3 grid grid-cols-2 gap-2 sm:flex sm:items-center sm:justify-between">
+          <div className="mt-3 grid grid-cols-2 gap-3 sm:flex sm:items-center sm:justify-between">
             <button
-              className="w-full rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] px-4 py-2.5 text-xs font-semibold text-[var(--color-muted)] transition hover:bg-[var(--color-soft)] hover:text-[var(--color-ink)] sm:w-auto sm:text-sm"
+              className="w-full rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] px-4 py-3 text-xs font-semibold text-[var(--color-muted)] transition active:bg-[var(--color-soft)] active:text-[var(--color-ink)] active:scale-[0.98] md:hover:bg-[var(--color-soft)] md:hover:text-[var(--color-ink)] sm:w-auto sm:text-sm"
               onClick={() => setOpen(false)}
               type="button"
             >
@@ -388,7 +386,7 @@ export function CommunityPostPanel({ onPostCreated }: CommunityPostPanelProps) {
             </button>
 
             <button
-              className="btn-press w-full cursor-pointer rounded-full bg-[var(--color-brand)] px-5 py-2.5 text-xs font-bold text-[var(--color-on-brand)] transition hover:bg-[var(--color-brand-deep)] disabled:opacity-60 sm:w-auto sm:text-sm"
+              className="btn-press w-full cursor-pointer rounded-full bg-[var(--color-brand)] px-5 py-3 text-xs font-bold text-[var(--color-on-brand)] transition active:bg-[var(--color-brand-deep)] active:scale-[0.98] md:hover:bg-[var(--color-brand-deep)] disabled:opacity-60 sm:w-auto sm:text-sm"
               disabled={submitting}
               onClick={handleSubmit}
               type="button"

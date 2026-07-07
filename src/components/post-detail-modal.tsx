@@ -7,9 +7,11 @@ import {
   Send, Loader2, Pencil, Trash2, ChevronDown, ImageIcon, ExternalLink, Link as LinkIcon,
 } from "lucide-react";
 import { lockBodyScroll } from "@/lib/body-scroll-lock";
+import { haptic, hapticDouble } from "@/lib/haptic";
 import { useForumAuth } from "@/lib/forum-auth";
 import { useToast } from "@/lib/toast-context";
 import { getUserProfileHref } from "@/lib/user-profile-url";
+import { useBackButtonClose } from "@/lib/use-back-button-close";
 import { EmojiPickerButton } from "@/components/emoji-picker-button";
 import { ImageLightbox } from "@/components/image-lightbox";
 import { LikeIndicator } from "@/components/like-indicator";
@@ -169,7 +171,7 @@ function SlashEmojiSuggestions({
           className={`flex w-full items-center gap-3 px-3 py-2 text-left text-xs transition ${
             activeSlash.exactMatch?.insertText === item.insertText
               ? "bg-white/[0.08] text-white"
-              : "text-zinc-400 hover:bg-white/[0.05] hover:text-white"
+              : "text-zinc-400 active:bg-white/[0.05] active:text-white active:scale-[0.98] md:hover:bg-white/[0.05] md:hover:text-white"
           }`}
           onMouseDown={(event) => {
             event.preventDefault();
@@ -361,7 +363,7 @@ function NestedReplyModal({
         {/* Header */}
         <div className="shrink-0 flex items-center justify-between border-b border-white/10 px-4 py-3 sm:px-6 sm:py-4">
           <h3 className="text-sm font-heading italic text-white sm:text-base">回复</h3>
-          <button onClick={onClose} className="p-1.5 text-white/30 hover:text-white transition" type="button">
+          <button onClick={onClose} className="p-2.5 text-white/30 active:text-white active:scale-[0.98] transition md:hover:text-white" type="button" aria-label="关闭">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -380,21 +382,21 @@ function NestedReplyModal({
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-sm font-medium text-white/80 font-body">{rootComment.authorName}</span>
                 <RoleTitleBadges role={rootComment.authorRole} customTitle={rootComment.authorCustomTitle} />
-                <span className="text-[11px] text-gray-500 font-body">{formatRelativeTime(rootComment.createdAt)}</span>
+                <span className="text-xs text-gray-500 font-body">{formatRelativeTime(rootComment.createdAt)}</span>
               </div>
-              <div className="mt-1 whitespace-pre-wrap break-words text-sm leading-relaxed text-white/60 font-body">
+              <div className="mt-1.5 whitespace-pre-wrap break-words text-sm leading-relaxed text-white/60 font-body">
                 <MarkdownContent
                   text={rootComment.content}
                   imageClassName="max-h-48 w-auto cursor-zoom-in rounded-md border border-white/10 object-cover mt-2 transition-opacity hover:opacity-90"
                   onImageClick={onOpenLightbox}
                 />
               </div>
-              <div className="mt-2 flex items-center gap-4">
-                <button onClick={() => onToggleLike(rootComment.id)} className={`text-xs transition font-body ${rootComment.likedBy.has(currentUserId ?? "") ? "text-rose-400" : "text-gray-500 hover:text-gray-300"}`} type="button">
+              <div className="mt-2 flex items-center gap-3">
+                <button onClick={() => onToggleLike(rootComment.id)} className={`text-xs transition font-body ${rootComment.likedBy.has(currentUserId ?? "") ? "text-rose-400" : "text-gray-500 active:text-gray-300 active:scale-[0.98] md:hover:text-gray-300"}`} type="button">
                   <Heart className={`h-3.5 w-3.5 inline mr-1 ${rootComment.likedBy.has(currentUserId ?? "") ? "fill-current" : ""}`} />
                   {rootComment.likedBy.size > 0 ? rootComment.likedBy.size : ""}
                 </button>
-                <button onClick={() => focusReplyTo(rootComment.authorName)} className="text-xs text-zinc-500 hover:text-zinc-800 sm:text-gray-500 sm:hover:text-gray-300 transition font-body" type="button">
+                <button onClick={() => focusReplyTo(rootComment.authorName)} className="text-xs text-zinc-500 active:text-zinc-800 sm:text-gray-500 sm:active:text-gray-300 active:scale-[0.98] transition md:hover:text-zinc-800 sm:md:hover:text-gray-300 font-body" type="button">
                   <MessageCircle className="h-3.5 w-3.5 inline mr-1" />回复
                 </button>
               </div>
@@ -403,9 +405,9 @@ function NestedReplyModal({
         </div>
 
         {/* 全部回复列表 */}
-        <div className="flex-1 space-y-3 overflow-y-auto px-4 py-3 sm:space-y-4 sm:px-6 sm:py-4">
+        <div className="flex-1 space-y-3 overflow-y-auto px-4 py-3 sm:space-y-3 sm:px-6 sm:py-4">
           {allReplies.length === 0 ? (
-            <p className="text-sm text-gray-500 font-body text-center py-8">暂无回复</p>
+            <p className="text-sm text-gray-500 font-body text-center py-6">暂无回复</p>
           ) : (
             allReplies.map((reply) => (
               <div key={reply.id} className="flex gap-3 pl-4 border-l-2 border-white/5">
@@ -417,10 +419,10 @@ function NestedReplyModal({
                   </span>
                 )}
                 <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-1.5">
                     <span className="text-xs font-medium text-zinc-700 font-body sm:text-sm sm:text-white/70">{reply.authorName}</span>
                     <RoleTitleBadges role={reply.authorRole} customTitle={reply.authorCustomTitle} />
-                    <span className="text-[11px] text-gray-500 font-body">{formatRelativeTime(reply.createdAt)}</span>
+                    <span className="text-xs text-gray-500 font-body">{formatRelativeTime(reply.createdAt)}</span>
                   </div>
                   <div className="mt-1 whitespace-pre-wrap break-words text-xs leading-relaxed text-zinc-700 font-body sm:text-sm sm:text-white/45">
                     <MarkdownContent
@@ -429,12 +431,12 @@ function NestedReplyModal({
                       onImageClick={onOpenLightbox}
                     />
                   </div>
-                  <div className="mt-1.5 flex items-center gap-4">
-                    <button onClick={() => onToggleLike(reply.id)} className={`text-xs transition font-body ${reply.likedBy.has(currentUserId ?? "") ? "text-rose-400" : "text-gray-500 hover:text-gray-300"}`} type="button">
+                  <div className="mt-1.5 flex items-center gap-3">
+                    <button onClick={() => onToggleLike(reply.id)} className={`text-xs transition font-body ${reply.likedBy.has(currentUserId ?? "") ? "text-rose-400" : "text-gray-500 active:text-gray-300 active:scale-[0.98] md:hover:text-gray-300"}`} type="button">
                       <Heart className={`h-3 w-3 inline mr-1 ${reply.likedBy.has(currentUserId ?? "") ? "fill-current" : ""}`} />
                       {reply.likedBy.size > 0 ? reply.likedBy.size : ""}
                     </button>
-                    <button onClick={() => focusReplyTo(reply.authorName)} className="text-xs text-zinc-500 hover:text-zinc-800 sm:text-gray-500 sm:hover:text-gray-300 transition font-body" type="button">
+                    <button onClick={() => focusReplyTo(reply.authorName)} className="text-xs text-zinc-500 active:text-zinc-800 sm:text-gray-500 sm:active:text-gray-300 active:scale-[0.98] transition md:hover:text-zinc-800 sm:md:hover:text-gray-300 font-body" type="button">
                       <MessageCircle className="h-3 w-3 inline mr-1" />回复
                     </button>
                   </div>
@@ -445,7 +447,10 @@ function NestedReplyModal({
         </div>
 
         {/* 底部输入框 */}
-        <div className="shrink-0 border-t border-white/10 bg-zinc-900/50 px-4 pb-[max(env(safe-area-inset-bottom,0px),0.75rem)] pt-3 sm:px-6 sm:py-4">
+        <div
+          className="shrink-0 border-t border-white/10 bg-zinc-900/50 px-4 pb-[max(env(safe-area-inset-bottom,0px),0.75rem)] pt-3 sm:px-6 sm:py-4"
+          style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 12px)' }}
+        >
           {replyTarget && (
             <p className="text-[11px] text-gray-500 font-body mb-2">
               回复 <span className="text-zinc-300">@{replyTarget.authorName}</span>
@@ -456,7 +461,7 @@ function NestedReplyModal({
             <textarea
               ref={inputRef}
               className="flex-1 min-h-[44px] resize-none rounded-xl bg-white/5 border border-white/10 px-4 py-3 pr-28 text-sm text-white placeholder:text-white/25 font-body outline-none focus:border-white/30 transition"
-              placeholder="输入回复..."
+              placeholder="回复..."
               value={replyText}
               onChange={(e) => setReplyText(e.target.value)}
               onPaste={handleReplyPaste}
@@ -482,17 +487,18 @@ function NestedReplyModal({
               }}
             />
             <button
-              className="shrink-0 cursor-pointer rounded-full p-2 text-zinc-500 transition hover:text-white disabled:opacity-40"
+              className="shrink-0 cursor-pointer rounded-full p-2.5 text-zinc-500 transition active:text-white active:scale-[0.98] disabled:opacity-40 md:hover:text-white"
               onClick={() => replyFileInputRef.current?.click()}
               disabled={replyUploading}
               title="上传图片"
               type="button"
+              aria-label="上传图片"
             >
               {replyUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImageIcon className="h-4 w-4" />}
             </button>
             <EmojiPickerButton
               align="right"
-              buttonClassName="shrink-0 rounded-full p-2 text-zinc-500 transition hover:text-white disabled:opacity-40"
+              buttonClassName="shrink-0 rounded-full p-2.5 text-zinc-500 transition active:text-white active:scale-[0.98] disabled:opacity-40 md:hover:text-white"
               iconClassName="h-4 w-4"
               onClose={() => setShowEmojiPicker(false)}
               onEmojiSelect={insertEmojiAtCursor}
@@ -500,10 +506,11 @@ function NestedReplyModal({
               open={showEmojiPicker}
             />
             <button
-              className="shrink-0 cursor-pointer rounded-full bg-white/15 px-4 py-2 text-xs text-white/50 hover:bg-white/25 transition disabled:opacity-30 font-body"
+              className="shrink-0 cursor-pointer rounded-full bg-white/15 px-4 py-2.5 text-sm text-white/50 active:bg-white/25 active:scale-[0.98] transition disabled:opacity-30 font-body md:hover:bg-white/25"
               onClick={() => { if (replyText.trim()) { onSendReply(rootComment.id, replyText); setReplyText(""); setReplyTarget(null); } }}
               disabled={!replyText.trim()}
               type="button"
+              aria-label="发送"
             >
               <Send className="h-4 w-4" />
             </button>
@@ -528,6 +535,8 @@ export function PostDetailModal({ post, onClose, onEdit }: Props) {
   const { user, isAdmin, isOwner, showAuthModal } = useForumAuth();
   const { addToast } = useToast();
   const canEdit = !!(user && (isAdmin || isOwner || user.id === post.authorId));
+
+  useBackButtonClose(true, onClose);
 
   /* ── 评论状态 ── */
   const [comments, setComments] = useState<CommentItem[]>([]);
@@ -635,12 +644,10 @@ export function PostDetailModal({ post, onClose, onEdit }: Props) {
 
     const body = commentText.trim();
     if (!body) {
-      console.warn("[评论] 内容为空，拦截发送");
       return;
     }
 
     try {
-      console.log("[评论] 发送根评论 → Supabase:", { postId: post.id, body, userId: user.id });
       const saved = await createSharedComment(post.id, body, null);
       const newComment: CommentItem = {
         id: saved.id,
@@ -676,12 +683,10 @@ export function PostDetailModal({ post, onClose, onEdit }: Props) {
 
       const body = text.trim();
       if (!body) {
-        console.warn("[评论] 回复内容为空，拦截发送");
         return;
       }
 
       try {
-        console.log("[评论] 发送楼中楼回复 → Supabase:", { postId: post.id, parentId, body, userId: user.id });
         const saved = await createSharedComment(post.id, body, parentId);
         const newReply: CommentItem = {
           id: saved.id,
@@ -863,26 +868,26 @@ export function PostDetailModal({ post, onClose, onEdit }: Props) {
       <div
         ref={overlayRef}
         tabIndex={-1}
-        className="fixed inset-0 z-[100] flex items-end justify-center bg-zinc-950/35 px-0 outline-none sm:items-center sm:bg-[#09090b]/60 sm:px-4 sm:backdrop-blur-xl"
+        className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-zinc-950/35 px-0 outline-none sm:bg-[#09090b]/60 sm:px-4 sm:backdrop-blur-xl"
         onKeyDown={handleMainKeyDown}
         onClick={onClose}
       >
-        <button onClick={onClose} className="absolute right-4 top-[calc(8dvh+0.75rem)] z-[999] rounded-full bg-white/90 p-2 text-zinc-500 shadow-lg ring-1 ring-zinc-200 transition-colors hover:text-zinc-900 sm:right-6 sm:top-6 sm:bg-transparent sm:text-white/50 sm:shadow-none sm:ring-0 sm:hover:text-white" type="button">
+        <button onClick={onClose} className="absolute right-4 top-[calc(8dvh+0.75rem)] z-[999] rounded-full bg-white/90 p-2.5 text-zinc-500 shadow-lg ring-1 ring-zinc-200 transition-colors active:text-zinc-900 active:scale-[0.98] sm:right-6 sm:top-6 sm:bg-transparent sm:text-white/50 sm:shadow-none sm:ring-0 sm:active:text-white md:hover:text-zinc-900 sm:md:hover:text-white" type="button" aria-label="关闭">
           <X className="h-6 w-6" />
         </button>
         <div
-          className="relative flex h-[92dvh] max-h-[calc(100dvh_-_var(--safe-top))] w-full max-w-6xl flex-col overflow-hidden rounded-t-2xl border border-zinc-200 border-b-0 bg-white text-zinc-900 shadow-2xl sm:h-[85dvh] sm:flex-row sm:rounded-2xl sm:border-white/10 sm:border-b sm:bg-zinc-950/90 sm:text-zinc-100"
+          className="relative flex h-[92dvh] max-h-[calc(100dvh_-_var(--safe-top))] w-full max-w-6xl flex-col overflow-hidden rounded-t-3xl sm:rounded-2xl border border-zinc-200 border-b-0 bg-white text-zinc-900 shadow-2xl sm:h-[85dvh] sm:flex-row sm:border-white/10 sm:border-b sm:bg-zinc-950/90 sm:text-zinc-100"
           onClick={(e) => e.stopPropagation()}
         >
-          {/* ── Left: 分享内容 ── */}
-          <div className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-zinc-300 sm:hidden" />
+          {/* ── Drag Handle ── */}
+          <div className="w-12 h-1.5 bg-zinc-300 dark:bg-zinc-700 rounded-full mx-auto mt-3 mb-1 shrink-0 sm:hidden" />
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden sm:border-r sm:border-white/10">
             <div className="post-detail-modal-scroll flex-1 overflow-y-auto overscroll-contain p-4 sm:p-8">
               <div className="mb-4 flex flex-wrap items-start justify-between gap-3 sm:mb-6">
                 <span className="inline-block rounded-full bg-zinc-100 px-2.5 py-1 text-[11px] text-zinc-600 font-body sm:bg-white/10 sm:px-3 sm:text-xs sm:text-white/50">{post.tag}</span>
                 <div className="flex items-center gap-2">
                   {canEdit && onEdit && (
-                    <button onClick={onEdit} className="rounded-lg p-1.5 text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-900 sm:text-white/30 sm:hover:bg-white/10 sm:hover:text-white" title="编辑" type="button">
+                    <button onClick={onEdit} className="rounded-lg p-1.5 text-zinc-500 transition active:bg-zinc-100 active:text-zinc-900 active:scale-[0.98] sm:text-white/30 sm:active:bg-white/10 sm:active:text-white md:hover:bg-zinc-100 md:hover:text-zinc-900 sm:md:hover:bg-white/10 sm:md:hover:text-white" title="编辑" type="button">
                       <Pencil className="h-4 w-4" />
                     </button>
                   )}
@@ -956,14 +961,14 @@ export function PostDetailModal({ post, onClose, onEdit }: Props) {
                       return (
                         <div
                           key={`${segment}-${index}`}
-                          className="flex items-center justify-between rounded-xl border border-emerald-200 bg-white/80 p-3 shadow-sm transition-colors hover:bg-white sm:border-emerald-500/20 sm:bg-zinc-900/60 sm:p-4 sm:hover:bg-zinc-900/80"
+                          className="flex items-center justify-between rounded-xl border border-emerald-200 bg-white/80 p-3 shadow-sm transition-colors active:bg-white sm:border-emerald-500/20 sm:bg-zinc-900/60 sm:p-4 sm:active:bg-zinc-900/80 md:hover:bg-white sm:md:hover:bg-zinc-900/80"
                         >
                           <div className="flex min-w-0 flex-col overflow-hidden pr-4">
                             <span className="mb-1 text-xs font-semibold uppercase tracking-wider text-emerald-500">
                               分享链接 {linkSegments.length > 1 ? index + 1 : ""}
                             </span>
                             <a
-                              className="truncate text-[13px] text-zinc-800 transition-colors hover:text-emerald-700 sm:text-sm sm:text-white sm:hover:text-emerald-400"
+                              className="truncate text-[13px] text-zinc-800 transition-colors active:text-emerald-700 sm:text-sm sm:text-white sm:active:text-emerald-400 md:hover:text-emerald-700 sm:md:hover:text-emerald-400"
                               href={actualUrl}
                               onClick={(event) => event.stopPropagation()}
                               rel="noopener noreferrer"
@@ -975,7 +980,7 @@ export function PostDetailModal({ post, onClose, onEdit }: Props) {
                           {actualUrl !== "#" && (
                             <a
                               aria-label={`打开分享链接 ${index + 1}`}
-                              className="shrink-0 rounded-lg bg-emerald-500/10 p-2.5 text-emerald-400 shadow-lg shadow-emerald-500/10 transition-all hover:bg-emerald-500 hover:text-white sm:p-3"
+                              className="shrink-0 rounded-lg bg-emerald-500/10 p-2.5 text-emerald-400 shadow-lg shadow-emerald-500/10 transition-all active:bg-emerald-500 active:text-white active:scale-[0.98] sm:p-3 md:hover:bg-emerald-500 md:hover:text-white"
                               href={actualUrl}
                               onClick={(event) => event.stopPropagation()}
                               rel="noopener noreferrer"
@@ -1005,16 +1010,18 @@ export function PostDetailModal({ post, onClose, onEdit }: Props) {
               </div>
             </div>
 
-            {/* Bottom action bar */}
-            <div className="shrink-0 flex items-center gap-4 border-t border-zinc-200 bg-white/90 px-4 pb-[max(env(safe-area-inset-bottom,0px),0.75rem)] pt-3 text-zinc-600 backdrop-blur-xl sm:gap-5 sm:border-white/10 sm:bg-zinc-950/50 sm:px-8 sm:py-4 sm:text-white/40">
-              <button onClick={handlePostLike} disabled={postLikePending} className={`cursor-pointer inline-flex items-center gap-1.5 text-xs transition font-body disabled:cursor-not-allowed disabled:opacity-60 sm:text-sm ${postIsLiked ? "text-rose-500 sm:text-rose-400" : "text-zinc-500 hover:text-rose-500 sm:text-white/40 sm:hover:text-rose-300"}`} type="button">
+            <div
+              className="shrink-0 flex items-center gap-3 border-t border-zinc-200 bg-white/90 px-4 pb-[max(env(safe-area-inset-bottom,0px),0.75rem)] pt-3 text-zinc-600 backdrop-blur-xl sm:gap-4 sm:border-white/10 sm:bg-zinc-950/50 sm:px-8 sm:py-4 sm:text-white/40"
+              style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 12px)' }}
+            >
+              <button onClick={() => { handlePostLike(); hapticDouble(); }} disabled={postLikePending} className={`cursor-pointer inline-flex items-center gap-1.5 text-sm transition font-body disabled:cursor-not-allowed disabled:opacity-60 sm:text-sm ${postIsLiked ? "text-rose-500 sm:text-rose-400" : "text-zinc-500 active:text-rose-500 active:scale-[0.98] sm:text-white/40 sm:active:text-rose-300 md:hover:text-rose-500 sm:md:hover:text-rose-300"}`} type="button">
                 <Heart className={`h-4 w-4 transition ${postIsLiked ? "fill-current" : ""}`} />{postLikesCount}
               </button>
               <LikeIndicator likers={postLikers} />
-              <button onClick={() => setRightTab("comments")} className="cursor-pointer inline-flex items-center gap-1.5 text-xs text-zinc-500 transition hover:text-zinc-900 font-body sm:text-sm sm:text-white/40 sm:hover:text-zinc-300" type="button">
+              <button onClick={() => { setRightTab("comments"); haptic("light"); }} className="cursor-pointer inline-flex items-center gap-1.5 text-sm text-zinc-500 transition active:text-zinc-900 active:scale-[0.98] font-body sm:text-sm sm:text-white/40 sm:active:text-zinc-300 md:hover:text-zinc-900 sm:md:hover:text-zinc-300" type="button">
                 <MessageCircle className="h-4 w-4" />{commentsLoading ? "..." : comments.length}
               </button>
-              <button onClick={() => setSaved(!saved)} className={`ml-auto cursor-pointer inline-flex items-center gap-1.5 text-xs transition font-body sm:text-sm ${saved ? "text-amber-500 sm:text-amber-400" : "text-zinc-500 hover:text-amber-600 sm:text-white/40 sm:hover:text-amber-300"}`} type="button">
+              <button onClick={() => { setSaved(!saved); haptic("light"); }} className={`ml-auto cursor-pointer inline-flex items-center gap-1.5 text-sm transition font-body sm:text-sm ${saved ? "text-amber-500 sm:text-amber-400" : "text-zinc-500 active:text-amber-600 active:scale-[0.98] sm:text-white/40 sm:active:text-amber-300 md:hover:text-amber-600 sm:md:hover:text-amber-300"}`} type="button">
                 <Bookmark className={`h-4 w-4 transition ${saved ? "fill-current" : ""}`} />{saved ? "已收藏" : "收藏"}
               </button>
             </div>
@@ -1024,11 +1031,11 @@ export function PostDetailModal({ post, onClose, onEdit }: Props) {
           <div className="flex h-[42dvh] max-h-[42dvh] min-h-0 w-full shrink-0 flex-col border-t border-zinc-200 bg-white sm:h-auto sm:max-h-none sm:w-[380px] sm:border-t-0 sm:border-white/10 sm:bg-zinc-900/30">
             {/* Tab header */}
             <div className="shrink-0 flex items-center gap-6 border-b border-zinc-100 bg-white px-4 py-3 sm:border-white/5 sm:bg-zinc-950/60">
-              <button onClick={() => setRightTab("comments")} className={`relative cursor-pointer pb-2 text-sm font-bold transition-colors font-body ${rightTab === "comments" ? "text-zinc-900 sm:text-white" : "text-zinc-400 hover:text-zinc-600 sm:text-zinc-500 sm:hover:text-zinc-300"}`} type="button">
+              <button onClick={() => setRightTab("comments")} className={`relative cursor-pointer pb-2 text-sm font-bold transition-colors font-body ${rightTab === "comments" ? "text-zinc-900 sm:text-white" : "text-zinc-400 active:text-zinc-600 active:scale-[0.98] sm:text-zinc-500 sm:active:text-zinc-300 md:hover:text-zinc-600 sm:md:hover:text-zinc-300"}`} type="button">
                 评论
                 {rightTab === "comments" && <span className="absolute bottom-0 left-1/2 h-1 w-4 -translate-x-1/2 rounded-full bg-emerald-500" />}
               </button>
-              <button onClick={() => setRightTab("logs")} className={`relative cursor-pointer pb-2 text-sm font-bold transition-colors font-body ${rightTab === "logs" ? "text-zinc-900 sm:text-white" : "text-zinc-400 hover:text-zinc-600 sm:text-zinc-500 sm:hover:text-zinc-300"}`} type="button">
+              <button onClick={() => setRightTab("logs")} className={`relative cursor-pointer pb-2 text-sm font-bold transition-colors font-body ${rightTab === "logs" ? "text-zinc-900 sm:text-white" : "text-zinc-400 active:text-zinc-600 active:scale-[0.98] sm:text-zinc-500 sm:active:text-zinc-300 md:hover:text-zinc-600 sm:md:hover:text-zinc-300"}`} type="button">
                 日志
                 {rightTab === "logs" && <span className="absolute bottom-0 left-1/2 h-1 w-4 -translate-x-1/2 rounded-full bg-emerald-500" />}
               </button>
@@ -1088,16 +1095,16 @@ export function PostDetailModal({ post, onClose, onEdit }: Props) {
                                 />
                               </div>
                               <div className="mt-1.5 flex items-center gap-4">
-                                <button onClick={() => handleToggleCommentLike(root.id)} className={`cursor-pointer text-xs transition font-body ${isRootLiked ? "text-rose-500 sm:text-rose-400" : "text-zinc-500 hover:text-zinc-800 sm:text-gray-500 sm:hover:text-gray-300"}`} type="button">
+                                <button onClick={() => handleToggleCommentLike(root.id)} className={`cursor-pointer text-xs transition font-body ${isRootLiked ? "text-rose-500 sm:text-rose-400" : "text-zinc-500 active:text-zinc-800 active:scale-[0.98] sm:text-gray-500 sm:active:text-gray-300 md:hover:text-zinc-800 sm:md:hover:text-gray-300"}`} type="button">
                                   <Heart className={`h-3.5 w-3.5 inline mr-1 ${isRootLiked ? "fill-current" : ""}`} />
                                   {root.likedBy.size > 0 ? root.likedBy.size : ""}
                                 </button>
-                                <button onClick={() => setNestedRootId(root.id)} className="cursor-pointer text-xs text-zinc-500 hover:text-zinc-800 sm:text-gray-500 sm:hover:text-gray-300 transition font-body" type="button">
+                                <button onClick={() => setNestedRootId(root.id)} className="cursor-pointer text-xs text-zinc-500 active:text-zinc-800 active:scale-[0.98] sm:text-gray-500 sm:active:text-gray-300 transition font-body md:hover:text-zinc-800 sm:md:hover:text-gray-300" type="button">
                                   <MessageCircle className="h-3.5 w-3.5 inline mr-1" />回复
                                 </button>
                                 {/* Delete: only own comments */}
                                 {user?.id === root.authorId && (
-                                  <button onClick={() => handleDeleteComment(root.id)} className="cursor-pointer text-xs text-gray-600 hover:text-red-400 transition font-body" type="button">
+                                  <button onClick={() => handleDeleteComment(root.id)} className="cursor-pointer text-xs text-gray-600 active:text-red-400 active:scale-[0.98] transition font-body md:hover:text-red-400" type="button">
                                     <Trash2 className="h-3 w-3 inline" />
                                   </button>
                                 )}
@@ -1148,7 +1155,7 @@ export function PostDetailModal({ post, onClose, onEdit }: Props) {
                                           onImageClick={setLightboxImage}
                                         />
                                       </div>
-                                      <button onClick={() => handleToggleCommentLike(reply.id)} className={`cursor-pointer text-[10px] transition font-body mt-0.5 ${isReplyLiked ? "text-rose-500 sm:text-rose-400" : "text-zinc-500 hover:text-zinc-800 sm:text-gray-600 sm:hover:text-gray-400"}`} type="button">
+                                      <button onClick={() => handleToggleCommentLike(reply.id)} className={`cursor-pointer text-[10px] transition font-body mt-0.5 ${isReplyLiked ? "text-rose-500 sm:text-rose-400" : "text-zinc-500 active:text-zinc-800 active:scale-[0.98] sm:text-gray-600 sm:active:text-gray-400 md:hover:text-zinc-800 sm:md:hover:text-gray-400"}`} type="button">
                                         <Heart className={`h-3 w-3 inline mr-0.5 ${isReplyLiked ? "fill-current" : ""}`} />
                                         {reply.likedBy.size > 0 ? reply.likedBy.size : ""}
                                       </button>
@@ -1163,7 +1170,7 @@ export function PostDetailModal({ post, onClose, onEdit }: Props) {
                           {replies.length > 2 ? (
                             <button
                               onClick={() => setNestedRootId(root.id)}
-                              className="ml-10 mt-2 text-xs text-emerald-600 hover:text-emerald-700 sm:text-zinc-300 sm:hover:text-zinc-300 transition font-body inline-flex items-center gap-1 cursor-pointer"
+                              className="ml-10 mt-2 text-xs text-emerald-600 active:text-emerald-700 active:scale-[0.98] sm:text-zinc-300 sm:active:text-zinc-300 transition font-body inline-flex items-center gap-1 cursor-pointer md:hover:text-emerald-700 sm:md:hover:text-zinc-300"
                               type="button"
                             >
                               查看全部 {replies.length} 条回复 <ChevronDown className="h-3 w-3" />
@@ -1171,7 +1178,7 @@ export function PostDetailModal({ post, onClose, onEdit }: Props) {
                           ) : replies.length > 0 && replies.length <= 2 ? (
                             <button
                               onClick={() => setNestedRootId(root.id)}
-                              className="ml-10 mt-1 text-xs text-zinc-500 hover:text-zinc-800 sm:text-gray-500 sm:hover:text-gray-300 transition font-body cursor-pointer"
+                              className="ml-10 mt-1 text-xs text-zinc-500 active:text-zinc-800 active:scale-[0.98] sm:text-gray-500 sm:active:text-gray-300 transition font-body cursor-pointer md:hover:text-zinc-800 sm:md:hover:text-gray-300"
                               type="button"
                             >
                               查看全部 {replies.length} 条回复
@@ -1184,12 +1191,15 @@ export function PostDetailModal({ post, onClose, onEdit }: Props) {
                 </div>
 
                 {/* 底部评论输入框 */}
-                <div className="shrink-0 border-t border-zinc-200 bg-white/90 p-3 backdrop-blur-xl sm:border-white/10 sm:bg-zinc-950/90 sm:p-4">
+                <div
+                  className="shrink-0 border-t border-zinc-200 bg-white/90 p-3 backdrop-blur-xl sm:border-white/10 sm:bg-zinc-950/90 sm:p-4"
+                  style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 12px)' }}
+                >
                   <div className="relative">
                     <SlashEmojiSuggestions activeSlash={activeCommentSlashEmoji} onPick={(item) => applyCommentSlashEmoji(item, true)} />
                     <textarea
                       ref={commentTextareaRef}
-                      className="w-full min-h-[40px] resize-none rounded-xl border border-zinc-200 bg-zinc-50 py-2.5 pl-9 pr-20 text-[13px] text-zinc-900 placeholder:text-zinc-400 outline-none transition focus:border-emerald-400 font-body sm:min-h-[44px] sm:border-white/10 sm:bg-white/5 sm:py-3 sm:pl-10 sm:pr-24 sm:text-sm sm:text-white sm:placeholder:text-white/25 sm:focus:border-white/30"
+                      className="w-full min-h-[44px] resize-none rounded-xl border border-zinc-200 bg-zinc-50 py-2.5 pl-10 pr-24 text-sm text-zinc-900 placeholder:text-zinc-400 outline-none transition focus:border-emerald-400 font-body sm:min-h-[44px] sm:border-white/10 sm:bg-white/5 sm:py-3 sm:pl-11 sm:pr-28 sm:text-sm sm:text-white sm:placeholder:text-white/25 sm:focus:border-white/30"
                       placeholder="说点什么..."
                       onKeyDown={(e) => {
                         if (e.nativeEvent.isComposing) return;
@@ -1237,18 +1247,19 @@ export function PostDetailModal({ post, onClose, onEdit }: Props) {
                       }}
                     />
                     <button
-                      className="absolute bottom-2 left-2 cursor-pointer rounded-full p-1.5 text-zinc-500 transition hover:text-zinc-900 disabled:opacity-40 sm:hover:text-white"
+                      className="absolute bottom-2 left-2 cursor-pointer rounded-full p-2.5 text-zinc-500 transition active:text-zinc-900 active:scale-[0.98] disabled:opacity-40 sm:active:text-white md:hover:text-zinc-900 sm:md:hover:text-white"
                       type="button"
                       onClick={() => commentFileInputRef.current?.click()}
                       disabled={commentUploading}
                       title="上传图片"
+                      aria-label="上传图片"
                     >
                       {commentUploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ImageIcon className="h-3.5 w-3.5" />}
                     </button>
                     <div className="absolute right-2 bottom-2 flex items-center gap-1">
                       <EmojiPickerButton
                         align="right"
-                        buttonClassName="cursor-pointer rounded-full p-1.5 text-zinc-500 transition hover:text-zinc-900 disabled:opacity-40 sm:hover:text-white"
+                        buttonClassName="cursor-pointer rounded-full p-2.5 text-zinc-500 transition active:text-zinc-900 active:scale-[0.98] disabled:opacity-40 sm:active:text-white md:hover:text-zinc-900 sm:md:hover:text-white"
                         iconClassName="h-3.5 w-3.5"
                         onClose={() => setShowCommentEmojiPicker(false)}
                         onEmojiSelect={insertCommentEmojiAtCursor}
@@ -1256,10 +1267,11 @@ export function PostDetailModal({ post, onClose, onEdit }: Props) {
                         open={showCommentEmojiPicker}
                       />
                       <button
-                        className="cursor-pointer rounded-full bg-zinc-900 p-1.5 text-white transition hover:bg-zinc-800 disabled:opacity-30 sm:bg-white/15 sm:text-white/50 sm:hover:bg-white/25 sm:hover:text-white"
+                        className="cursor-pointer rounded-full bg-zinc-900 p-2.5 text-white transition active:bg-zinc-800 active:scale-[0.98] disabled:opacity-30 sm:bg-white/15 sm:text-white/50 sm:active:bg-white/25 sm:active:text-white md:hover:bg-zinc-800 sm:md:hover:bg-white/25 sm:md:hover:text-white"
                         type="button"
                         onClick={handleSendComment}
                         disabled={!commentText.trim()}
+                        aria-label="发送"
                       >
                         <Send className="h-3.5 w-3.5" />
                       </button>

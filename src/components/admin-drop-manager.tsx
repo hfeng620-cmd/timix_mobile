@@ -220,7 +220,7 @@ export function AdminDropManager() {
               <button
                 type="button"
                 onClick={addQuestion}
-                className="inline-flex items-center justify-center gap-1 rounded-full border border-emerald-300/20 bg-emerald-300/10 px-3 py-2 text-xs font-semibold text-emerald-200 transition hover:border-emerald-300/40 hover:bg-emerald-300/15"
+                className="inline-flex items-center justify-center gap-1 rounded-full border border-emerald-300/20 bg-emerald-300/10 px-3 py-2 text-xs font-semibold text-emerald-200 transition active:border-emerald-300/40 active:scale-[0.98] active:bg-emerald-300/15 md:hover:border-emerald-300/40 md:hover:bg-emerald-300/15"
               >
                 <Plus className="h-4 w-4" />
                 添加问题
@@ -247,7 +247,7 @@ export function AdminDropManager() {
                             className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
                               surveyQuestion.type === typeOption.value
                                 ? "border-emerald-300/50 bg-emerald-300/15 text-emerald-100"
-                                : "border-white/10 bg-white/5 text-zinc-400 hover:border-white/20 hover:text-zinc-200"
+                                : "border-white/10 bg-white/5 text-zinc-400 active:border-white/20 active:scale-[0.98] active:text-zinc-200 md:hover:border-white/20 md:hover:text-zinc-200"
                             }`}
                           >
                             {typeOption.label}
@@ -284,7 +284,7 @@ export function AdminDropManager() {
                     <button
                       type="button"
                       onClick={() => removeQuestion(surveyQuestion.id)}
-                      className="mt-8 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-zinc-500 transition hover:border-red-300/30 hover:bg-red-400/10 hover:text-red-300"
+                      className="mt-8 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-zinc-500 transition active:border-red-300/30 active:scale-[0.98] active:bg-red-400/10 active:text-red-300 md:hover:border-red-300/30 md:hover:bg-red-400/10 md:hover:text-red-300"
                       aria-label={`删除问题 ${index + 1}`}
                     >
                       <Trash2 className="h-4 w-4" />
@@ -314,7 +314,7 @@ export function AdminDropManager() {
             type="button"
             onClick={() => void handlePublish()}
             disabled={isSubmitting}
-            className="inline-flex items-center justify-center gap-2 rounded-full bg-emerald-400 px-6 py-3 text-sm font-bold text-zinc-950 shadow-[0_0_30px_rgba(52,211,153,0.22)] transition hover:bg-emerald-300 disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex items-center justify-center gap-2 rounded-full bg-emerald-400 px-6 py-3 text-sm font-bold text-zinc-950 shadow-[0_0_30px_rgba(52,211,153,0.22)] transition active:bg-emerald-300 active:scale-[0.98] md:hover:bg-emerald-300 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <UploadCloud className="h-4 w-4" />}
             {isSubmitting ? "正在发布..." : "一键发布活动并入库"}
