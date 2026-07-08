@@ -1135,6 +1135,74 @@ a:focus-visible,
     border-color: rgba(255, 255, 255, 0.075) !important;
   }
 }
+
+/* Mobile admin guardrail: keep the owner panel readable on the mint app theme. */
+@media (max-width: 767px) {
+  .admin-mobile-app {
+    min-height: 100dvh;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    touch-action: pan-y !important;
+    background: var(--mobile-app-surface) !important;
+    color: var(--mobile-app-ink) !important;
+    padding-bottom: calc(6rem + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  .admin-mobile-app h1,
+  .admin-mobile-app h2,
+  .admin-mobile-app h3,
+  .admin-mobile-app .text-white,
+  .admin-mobile-app [class*="text-zinc-900"],
+  .admin-mobile-app [class*="text-[var(--color-ink)]"] {
+    color: var(--mobile-app-ink) !important;
+  }
+
+  .admin-mobile-app [class*="text-white/"],
+  .admin-mobile-app [class*="text-zinc-3"],
+  .admin-mobile-app [class*="text-zinc-4"],
+  .admin-mobile-app [class*="text-zinc-5"],
+  .admin-mobile-app [class*="text-zinc-6"],
+  .admin-mobile-app [class*="text-[var(--color-muted)]"] {
+    color: var(--mobile-app-muted) !important;
+  }
+
+  .admin-mobile-app [class*="bg-white"],
+  .admin-mobile-app [class*="bg-[var(--color-panel)]"],
+  .admin-mobile-app [class*="bg-[var(--color-soft)]"] {
+    background-color: var(--mobile-app-panel) !important;
+  }
+
+  .admin-mobile-app [class*="bg-zinc"],
+  .admin-mobile-app [class*="bg-[#09090b]"] {
+    background-color: color-mix(in srgb, var(--mobile-app-panel) 78%, transparent) !important;
+  }
+
+  .admin-mobile-app [class*="border-white"],
+  .admin-mobile-app [class*="border-zinc"],
+  .admin-mobile-app [class*="border-[var(--color-line)]"] {
+    border-color: var(--mobile-app-line) !important;
+  }
+
+  .admin-mobile-app input,
+  .admin-mobile-app textarea,
+  .admin-mobile-app select {
+    border-color: var(--mobile-app-line) !important;
+    background: var(--mobile-app-panel-strong) !important;
+    color: var(--mobile-app-ink) !important;
+  }
+
+  .admin-mobile-app input::placeholder,
+  .admin-mobile-app textarea::placeholder {
+    color: var(--mobile-app-muted) !important;
+  }
+
+  .admin-mobile-app :where(a, button, [role="button"]) {
+    min-height: 44px;
+    min-width: 44px;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
 /* Mobile native touch ergonomics pass: keep desktop hover, make app shells feel tappable. */
 @media (max-width: 767px) {
   .timix-mobile-shell :where(a, button, [role="button"]),

@@ -1233,7 +1233,7 @@ export default function AdminPage() {
 
   // ---- Full admin dashboard ----
   return (
-    <div className="min-h-screen text-white">
+    <div className="admin-mobile-app min-h-screen text-white">
       <Navbar />
 
       <div className="mx-auto max-w-7xl px-3 md:px-8 px-6 pt-28 lg:px-10">
